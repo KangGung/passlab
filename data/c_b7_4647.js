@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "수치는 유리전극, 액성은 리트머스 / 3 아래 강산성 · 11 위 강알칼리성",
     source: { law: null, guide: "4판 p.305", asof: "2026-09", confidence: "high" },
     related: ["Q-B7-01"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -18,7 +18,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "절대점도(포아스) ÷ 밀도 = 운동점도(스톡스)",
     source: { law: null, guide: "4판 p.305", asof: "2026-09", confidence: "high" },
     related: ["Q-B7-02", "Q-B7-06"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -29,7 +29,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "투명하면 가용화, 유백색이면 유화, 고체가 떠 있으면 분산",
     source: { law: null, guide: "4판 p.297~298", asof: "2026-09", confidence: "high" },
     related: ["Q-B7-04"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "성적서 → 손 → 용기 → 장비 / 저장·기한·도구·용기위생·용기적합",
     source: { law: "화장품법 시행규칙 제12조의2제2호", guide: "4판 p.299·310", asof: "2026-09", confidence: "high" },
     related: ["Q-B7-04", "Q-B7-05", "Q-B7-10"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -51,18 +51,18 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "아세톤 · 탄화수소 10 % · 메틸살리실레이트 5 % / 일회용 · 펌프분무 · 압축분무는 빼고 / 5세 미만",
     source: { law: "화장품법 시행규칙 제18조(화장품법 제9조)", guide: null, asof: "2026-09", confidence: "high" },
     related: ["Q-B7-06", "Q-B7-07"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
     id: "C-B7-06", subject: 4, topic: "4.7.1", category: "충전 방법과 1차 포장 기재사항", kind: "procedure",
     importance: "H", short_prone: true,
     front: "충전이란 무엇이고 충전기 여섯 가지는 각각 어디에 쓰는가? 1차 포장에 반드시 기재할 네 가지는? 맞춤형화장품의 제조번호는 무엇으로 갈음하는가?",
-    back: "충전 = 일정한 규격의 용기에 내용물을 넣어서 채우는 작업이며 1차 포장작업에 포함된다. 피스톤 방식(용량이 큰 액상타입 샴푸·린스·컨디셔너), 파우치(견본품 등 1회용 파우치 포장), 파우더(페이스파우더 등 파우더류), 카톤(박스에 테이프를 붙이는 테이핑기), 액체(스킨로션·토너·앰플), 튜브(폼클렌징·선크림). 1차 포장재는 내용물과 직접 접하는 포장재를 말한다. 1차 포장 필수 기재 4가지는 화장품의 명칭, 영업자의 상호, 제조번호, 사용기한 또는 개봉 후 사용기간이며(법 제10조제2항), 화장비누는 제외된다. 맞춤형화장품은 식별번호를 제조번호로 한다(4판 p.136~137·193·312~313).",
+    back: "충전 = 일정한 규격의 용기에 내용물을 넣어서 채우는 작업이며 1차 포장작업에 포함된다. 피스톤 방식(용량이 큰 액상타입 샴푸·린스·컨디셔너), 파우치(견본품 등 1회용 파우치 포장), 파우더(페이스파우더 등 파우더류), 카톤(박스에 테이프를 붙이는 테이핑기), 액체(스킨로션·토너·앰플), 튜브(폼클렌징·선크림). 1차 포장재는 내용물과 직접 접하는 포장재를 말한다. 1차 포장 필수 기재 4가지는 화장품의 명칭, 영업자의 상호, 제조번호, 사용기한 또는 개봉 후 사용기간이며(법 제10조제2항), 화장비누는 제외된다. 맞춤형화장품은 식별번호를 제조번호로 한다(4판 p.136~137·193·312~313). 단 '식별번호'는 가이드·고시가 쓰는 말이고 시행규칙 조문 표기는 '제조번호'다.",
     mnemonic: "1차 포장 4총사 = 명칭 · 상호 · 제조번호(맞춤형은 식별번호) · 사용기한",
     source: { law: "화장품법 제10조제2항", guide: "4판 p.136~137·193·312~313", asof: "2026-09", confidence: "high" },
     related: ["Q-B7-03", "Q-B7-08", "Q-B7-09", "Q-B7-10"],
-    verified: false,
-    history: [{ date: "2026-09-05", note: "신규 B7" }]
+    verified: true,
+    history: [{ date: "2026-09-05", note: "신규 B7" }, { date: "2026-09-05", note: "검증 수정: back에 식별번호(가이드·고시 용어) vs 조문 표기 제조번호 구분 추가" }]
   }
 ]);
