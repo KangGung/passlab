@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "1급 클린벤치 10/20, 2급 만들고 채우는 방 30/200, 3급 포장실, 4급 보관소·탈의실",
     source: { law: null, guide: "4판 p.173", asof: "2026-09", confidence: "high" },
     related: ["Q-B4-02"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -18,7 +18,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "세척제는 pH 0.2–5.5–8.5–12.5–14 네 칸. 포자 못 잡는 3인방 = 4급 암모늄·아이오도포·알코올.",
     source: { law: null, guide: "4판 p.183·186~187", asof: "2026-09", confidence: "high" },
     related: ["Q-B4-03", "Q-B4-06"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -29,7 +29,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "청소는 보이는 먼지, 위생관리는 안 보이는 미생물. 일탈은 행위, 기준일탈은 결과.",
     source: { law: "우수화장품 제조 및 품질관리기준 제2조", guide: "4판 p.174", asof: "2026-09", confidence: "high" },
     related: ["Q-B4-01"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "적심 → 비누 15초 → 헹굼 → 종이타올 건조 → 70 % 에탄올. 장갑 끼면 손 소독 예외.",
     source: { law: "화장품법 시행규칙 제12조의2제2호 나목", guide: "4판 p.198~199", asof: "2026-09", confidence: "high" },
     related: ["Q-B4-04", "Q-B4-05"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   }
 ]);

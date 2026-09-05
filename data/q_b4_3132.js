@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B4-03"],
     tags: ["CGMP", "용어정의", "작업소위생", "유지관리"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B4-01"],
     tags: ["청정도등급", "낙하균", "부유균", "작업소위생상태"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -92,7 +92,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B4-02"],
     tags: ["소독제", "차아염소산나트륨", "4급암모늄", "알코올", "과산화수소"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   },
   {
@@ -115,7 +115,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
       "② 옳다 — CGMP 제6조제3항의 격리 규정 그대로다. 회복 여부는 의사의 소견을 기준으로 판단한다.",
       "③ 옳다 — 접근 권한이 없는 직원과 방문객은 원칙적으로 제조·관리·보관 구역에 들어가지 않아야 하고, 불가피하면 안내자가 동행해야 한다.",
       "④ 옳다 — 방문객의 소속·성명·목적·입퇴장 시간·동행자 등을 기록서에 남기는 것은 기타 위생관리 기준에 포함된다.",
-      "⑤ 옳지 않다(정답) — 신규 직원의 위생교육뿐 아니라 기존 직원에 대한 정기 교육 실시 기준까지 마련해야 한다."
+      "⑤ 정답 — 옳지 않다. 가이드는 \"신규 직원에 대한 위생교육 및 기존 직원에 대한 정기교육 실시를 위한 기준 마련\"을 요구하므로, 기존 직원에 대한 정기 교육 기준까지 마련해야 한다(4판 p.188)."
     ],
     key_concept: "직원 위생관리 기준(교육·격리·복장)과 방문객 등 출입 권한 없는 사람의 통제",
     memory_sentence: "신규는 위생교육, 기존은 정기교육 — 둘 다 해야 한다. 상처·질병은 의사 소견 전까지 격리, 방문객은 동행·기록 필수.",
@@ -124,8 +124,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B4-04"],
     tags: ["직원위생", "CGMP제6조", "방문객", "위생교육"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B4" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B4" }, { date: "2026-09-05", note: "검증 수정: 정답 보기(⑤) 해설 머리표기를 규격대로 \"정답 — 근거\" 형식으로 바꾸고 가이드 원문(4판 p.188) 문장을 근거로 인용" }]
   },
   {
     id: "Q-B4-05", subject: 3, topic: "3.2.3", level: "D",
@@ -151,13 +151,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     key_concept: "혼합·소분 안전관리기준 — 품질성적서·손 소독(장갑 예외)·포장용기 확인·기구 사용 전 점검 및 사용 후 세척·미리 혼합 금지",
     memory_sentence: "기구는 '사용 전 점검 + 사용 후 세척'까지 한 쌍, 손 소독은 일회용 장갑을 끼면 예외, 소비자 확인 없이 미리 만들어 두는 것은 금지.",
-    trap: "일회용 장갑을 껴도 손 소독을 반드시 해야 한다고 착각하기 쉽다(단서로 예외). 반대로 기구는 '사용 전 점검'만 하면 된다고 생각하기 쉬우나 사용 후 세척까지가 의무다.",
+    trap: "일회용 장갑을 껴도 손 소독을 반드시 해야 한다고 착각하기 쉽다(단서로 예외). 반대로 기구는 '사용 전 점검'만 하면 된다고 생각하기 쉬우나 사용 후 세척까지가 의무다. (라)의 '미리 혼합·소분 금지'는 시행규칙 제12조의2제2호 마목의 위임을 받은 「맞춤형화장품판매업자의 준수사항에 관한 규정」(식약처 고시)의 내용으로, 교수·학습 가이드 4판 p.192·196 참고자료에 같은 문장이 그대로 실려 있다.",
     source: { law: "화장품법 시행규칙 제12조의2제2호 가·나·다·라목", guide: "4판 p.192·196", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-04-02",
     cards: ["C-B4-04"],
     tags: ["혼합소분", "준수사항", "제12조의2", "일회용장갑", "미리혼합금지"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B4" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B4" }, { date: "2026-09-05", note: "검증 수정: (라)의 근거가 시행규칙 본문이 아니라 마목 위임 고시임을 trap에 명시. 가이드 4판 p.192·196(s3.txt:1320·1472)에 동일 문장이 인쇄된 것을 확인해 PASS" }]
   },
   {
     id: "Q-B4-06", subject: 3, topic: "3.1.4", level: "D",
@@ -188,7 +188,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B4-02"],
     tags: ["세제", "세척제", "pH", "계면활성제", "연마제"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B4" }]
   }
 ]);
