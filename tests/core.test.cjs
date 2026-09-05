@@ -133,6 +133,7 @@ test("normalizeShort: (7) 단위 통일 %·㎍/g·mg", () => {
   assert.equal(C.normalizeShort("0.5퍼센트"), "0.5%");
   assert.equal(C.normalizeShort("0.5프로"), "0.5%");
   assert.equal(C.normalizeShort("0.5％"), "0.5%");
+  assert.equal(C.normalizeShort("프로필파라벤"), "프로필파라벤");   // 성분명의 "프로"는 %로 바꾸지 않는다
   assert.equal(C.normalizeShort("10ug/g"), "10㎍/g");
   assert.equal(C.normalizeShort("10마이크로그램/g"), "10㎍/g");
   assert.equal(C.normalizeShort("5밀리그램"), "5mg");
@@ -461,18 +462,39 @@ test("applyAttemptToMistake: new → reviewing (정답·확실)", () => {
   const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 2 }), mcq(), CTX);
   assert.equal(m.stage, "reviewing");
   assert.equal(m.streak, 1);
-  assert.equal(m.interval, 2);
-  assert.equal(m.next, "2026-09-07");   // interval 1×2 = 2
+  assert.equal(m.interval, 3);
+  assert.equal(m.next, "2026-09-08");   // 사다리 1 → 3
   assert.equal(m.lastWrong, "2026-09-04");
   assert.equal(m.memo, "메모");
 });
 
-test("applyAttemptToMistake: 정답·애매는 +2일", () => {
+test("applyAttemptToMistake: 정답·애매는 +2일이고 사다리 칸을 올리지 않는다", () => {
   const prev = { count: 1, last: "2026-09-04", stage: "new", streak: 0, next: "2026-09-05", interval: 1, lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
   const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 1 }), mcq(), CTX);
   assert.equal(m.stage, "reviewing");
-  assert.equal(m.next, "2026-09-07");
-  assert.equal(m.interval, 2);
+  assert.equal(m.next, "2026-09-07");   // today + 2
+  assert.equal(m.interval, 1);          // 칸 유지
+  // 3칸에서 애매하게 맞혀도 칸은 그대로, 다음 복습만 +2일
+  const prev3 = Object.assign({}, prev, { stage: "reviewing", streak: 1, interval: 3 });
+  const m3 = C.applyAttemptToMistake(prev3, att({ correct: true, conf: 1 }), mcq(), CTX);
+  assert.equal(m3.interval, 3);
+  assert.equal(m3.next, "2026-09-07");
+});
+
+test("applyAttemptToMistake: 오답 재출제 사다리는 1 → 3 → 6 (상한 6)", () => {
+  let m = C.applyAttemptToMistake(null, att({ correct: false, conf: 2 }), mcq(), { todayStr: "2026-09-01", examDate: "2026-10-31" });
+  assert.equal(m.interval, 1);
+  assert.equal(m.next, "2026-09-02");                       // 첫 오답 → +1일
+  m = C.applyAttemptToMistake(m, att({ correct: true, conf: 2 }), mcq(), { todayStr: "2026-09-02", examDate: "2026-10-31" });
+  assert.equal(m.interval, 3);
+  assert.equal(m.next, "2026-09-05");                       // +3일
+  m = C.applyAttemptToMistake(m, att({ correct: true, conf: 2 }), mcq(), { todayStr: "2026-09-05", examDate: "2026-10-31" });
+  assert.equal(m.stage, "graduated");                       // 오답 후 4일 경과 + 다른 날 → 졸업
+  // 졸업이 안 걸리는 경로로 6칸까지 확인
+  const base = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
+  const m6 = C.applyAttemptToMistake(Object.assign({}, base, { interval: 3 }), att({ correct: true, conf: 2 }), mcq(), CTX);
+  assert.equal(m6.interval, 6);
+  assert.equal(m6.next, "2026-09-11");                      // +6일
 });
 
 test("applyAttemptToMistake: reviewing → graduated (streak 2 + 마지막 오답 3일 경과 + 다른 날)", () => {
@@ -484,26 +506,29 @@ test("applyAttemptToMistake: reviewing → graduated (streak 2 + 마지막 오�
 });
 
 test("applyAttemptToMistake: 마지막 오답 후 3일이 안 지나면 졸업 못 한다", () => {
-  const prev = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 2, lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
+  const prev = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 3, lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
   const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 2 }), mcq(), CTX);
   assert.equal(m.stage, "reviewing");
   assert.equal(m.streak, 2);
-  assert.equal(m.next, "2026-09-09");   // interval 2×2 = 4
-  assert.equal(m.interval, 4);
+  assert.equal(m.next, "2026-09-11");   // 사다리 3 → 6
+  assert.equal(m.interval, 6);
 });
 
 test("applyAttemptToMistake: 두 정답이 같은 날이면 졸업 못 한다", () => {
-  const prev = { count: 1, last: "2026-09-05", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 2, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" };
+  const prev = { count: 1, last: "2026-09-05", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 3, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" };
   const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 2 }), mcq(), CTX);
   assert.equal(m.stage, "reviewing");
   assert.equal(m.streak, 2);
 });
 
-test("applyAttemptToMistake: interval 상한 6", () => {
-  const prev = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 4, lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
-  const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 2 }), mcq(), CTX);
-  assert.equal(m.interval, 6);
-  assert.equal(m.next, "2026-09-11");
+test("applyAttemptToMistake: 사다리 상한 6에서 멈춘다", () => {
+  const base = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", lastWrong: "2026-09-04", guessed: 0, relapse: false, memo: "" };
+  const m3 = C.applyAttemptToMistake(Object.assign({}, base, { interval: 3 }), att({ correct: true, conf: 2 }), mcq(), CTX);
+  assert.equal(m3.interval, 6);
+  assert.equal(m3.next, "2026-09-11");
+  const m6 = C.applyAttemptToMistake(Object.assign({}, base, { interval: 6 }), att({ correct: true, conf: 2 }), mcq(), CTX);
+  assert.equal(m6.interval, 6);         // 더 올라가지 않는다
+  assert.equal(m6.next, "2026-09-11");
 });
 
 test("applyAttemptToMistake: graduated에서 재오답 → reviewing + relapse", () => {
@@ -519,7 +544,7 @@ test("applyAttemptToMistake: graduated에서 재오답 → reviewing + relapse",
 });
 
 test("applyAttemptToMistake: reviewing에서 오답이어도 new로 내려가지 않는다", () => {
-  const prev = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 2, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" };
+  const prev = { count: 1, last: "2026-09-04", stage: "reviewing", streak: 1, next: "2026-09-05", interval: 3, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" };
   const m = C.applyAttemptToMistake(prev, att({ correct: false, conf: 1 }), mcq(), CTX);
   assert.equal(m.stage, "reviewing");
   assert.equal(m.streak, 0);
@@ -529,7 +554,7 @@ test("applyAttemptToMistake: reviewing에서 오답이어도 new로 내려가지
 
 test("applyAttemptToMistake: 스프린트 D-3 규칙 — next는 내일 이하", () => {
   const ctx = { todayStr: "2026-09-17", examDate: "2026-09-19", track: "sprint" };  // D-2
-  const prev = { count: 1, last: "2026-09-16", stage: "reviewing", streak: 1, next: "2026-09-17", interval: 4, lastWrong: "2026-09-16", guessed: 0, relapse: false, memo: "" };
+  const prev = { count: 1, last: "2026-09-16", stage: "reviewing", streak: 1, next: "2026-09-17", interval: 3, lastWrong: "2026-09-16", guessed: 0, relapse: false, memo: "" };
   const m = C.applyAttemptToMistake(prev, att({ correct: true, conf: 2 }), mcq(), ctx);
   assert.equal(m.next, "2026-09-18");
   // D-4에서는 상한이 걸리지 않는다
@@ -538,7 +563,7 @@ test("applyAttemptToMistake: 스프린트 D-3 규칙 — next는 내일 이하",
   assert.equal(C.applyAttemptToMistake(prev2, att({ correct: true, conf: 2 }), mcq(), ctx2).next, "2026-09-21");
   // 졸업은 next를 null로 유지한다
   const ctx3 = { todayStr: "2026-09-17", examDate: "2026-09-19", track: "sprint" };
-  const prev3 = { count: 1, last: "2026-09-15", stage: "reviewing", streak: 1, next: "2026-09-17", interval: 2, lastWrong: "2026-09-10", guessed: 0, relapse: false, memo: "" };
+  const prev3 = { count: 1, last: "2026-09-15", stage: "reviewing", streak: 1, next: "2026-09-17", interval: 3, lastWrong: "2026-09-10", guessed: 0, relapse: false, memo: "" };
   assert.equal(C.applyAttemptToMistake(prev3, att({ correct: true, conf: 2 }), mcq(), ctx3).next, null);
 });
 

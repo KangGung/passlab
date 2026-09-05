@@ -418,6 +418,11 @@
   /* ================================================================
    * 5. 오답 단계 전이 (new → reviewing → graduated)
    * ================================================================ */
+  // 오답 재출제 사다리(CLAUDE.md 「학습 알고리즘 상수」): 첫 오답 +1일 → +3일 → +6일.
+  // 정답·확실이면 한 칸 오르고(1 → 3 → 6), 6에서 멈춘다.
+  // 정답·애매는 칸을 올리지 않는다 — interval은 그대로 두고 다음 복습만 today+2로 잡는다.
+  // 이 위에 스프린트 D-3 상한(next ≤ 내일)이 따로 걸린다.
+  const MISTAKE_LADDER = [1, 3, 6];
   const MISTAKE_MAX_INTERVAL = 6;
 
   /**
@@ -480,13 +485,15 @@
     if (m.stage === "reviewing" && streak >= 2 && gap != null && gap >= 3 && differentDay) {
       return Object.assign({}, m, { last: t, stage: "graduated", streak: streak, next: null, memo: m.memo || "" });
     }
-    const step = Math.min(MISTAKE_MAX_INTERVAL, conf === 2 ? Math.max(1, m.interval || 1) * 2 : 2);
+    const rung = Math.max(1, Number(m.interval) || 1);
+    const nextRung = MISTAKE_LADDER.find(function (v) { return v > rung; });
+    const step = conf === 2 ? (nextRung || MISTAKE_MAX_INTERVAL) : 2;   // 애매는 항상 +2일
     const stage = m.stage === "new" ? "reviewing" : (m.stage || "reviewing");
     return Object.assign({}, m, {
       last: t,
       stage: stage,
       streak: streak,
-      interval: step,
+      interval: conf === 2 ? step : rung,      // 애매는 사다리 칸을 유지한다
       next: stage === "graduated" ? null : capNext(addDays(t, step)),
       memo: m.memo || ""
     });
