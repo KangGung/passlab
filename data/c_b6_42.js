@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "기·유·과·투·각 — '기유과 투각'",
     source: { law: null, guide: "4판 p.271~272", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-01", "Q-B6-03"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -18,30 +18,30 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "약산성 4.5~5.5 / 세라 50 · 콜레 25 · 지방산 15 / NMF는 필라그린이 잘린 것",
     source: { law: null, guide: "4판 p.272", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-02", "Q-B6-03", "Q-B6-05"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
     id: "C-B6-03", subject: 4, topic: "4.2.1", category: "표피 vs 진피", kind: "compare",
     importance: "H", short_prone: false,
     front: "진피는 피부의 몇 %를 차지하고 주된 세포는 무엇인가? 멜라닌형성세포는 어디에 있나?",
-    back: "진피는 피부의 90 % 이상을 차지하고 표피 두께의 10~40배이며, 유두진피와 망상진피로 나뉜다. 주된 세포는 섬유아세포(콜라겐·엘라스틴·히알루론산 생산)이고 대식세포·비만세포도 있다. 멜라닌형성세포는 표피에 있는 세포의 약 5 %로 대부분 기저층에 위치한다(4판 p.272~273).",
+    back: "진피는 피부의 90 % 이상을 차지하고 표피보다 두꺼우며(두께 비는 가이드가 p.273 10~40배, p.270 15~40배로 달리 적어 시험 숫자로 외우지 않는다), 유두진피와 망상진피로 나뉜다. 주된 세포는 섬유아세포(콜라겐·엘라스틴·히알루론산 생산)이고 대식세포·비만세포도 있다. 멜라닌형성세포는 표피에 있는 세포의 약 5 %로 대부분 기저층에 위치한다(4판 p.272~273).",
     mnemonic: "진피 90 % · 섬유아세포 / 멜라닌형성세포 5 %는 표피 기저층",
     source: { law: null, guide: "4판 p.272~273", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-04"],
-    verified: false,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    verified: true,
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정(S2-V): '표피 두께의 10~40배' 단정을 가이드 내부 불일치(p.270 15~40배) 병기로 바꿈" }]
   },
   {
     id: "C-B6-04", subject: 4, topic: "4.2.2", category: "모발 성장주기 숫자", kind: "number",
     importance: "H", short_prone: true,
     front: "모발 성장주기 3기의 수명과 전체 모발 중 비율은?",
-    back: "성장기 수명 3~6년·약 88 %, 퇴행기 2~3주·약 1 %, 휴지기 3~4개월·약 11 %. 성장 속도는 0.2~0.5 mm/일, 한 달에 1.2~1.5 cm 정도다(4판 p.276).",
+    back: "성장기 수명 3~6년·약 88 %, 퇴행기 2~3주·약 1 %, 휴지기 3~4개월·약 11 %. 성장 속도는 0.2~0.5 mm/일이다(월 성장량은 같은 문단에 '1~1.5 cm/월'과 '한 달에 1.2~1.5 cm'가 함께 적혀 있어 외우지 않는다)(4판 p.276).",
     mnemonic: "88 : 1 : 11 (성장기·퇴행기·휴지기)",
     source: { law: null, guide: "4판 p.276", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-06"],
-    verified: false,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    verified: true,
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정(S2-V): 월 성장량 1.2~1.5 cm 단정을 가이드 내부 불일치(1~1.5 cm/월) 병기로 바꿈" }]
   },
   {
     id: "C-B6-05", subject: 4, topic: "4.2.2", category: "모발 구조 용어", kind: "definition",
@@ -51,7 +51,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "뿌리는 구·유두·모모·근초 / 줄기는 표피 10~15 · 피질 85~90 · 수질",
     source: { law: null, guide: "4판 p.275~280", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-07", "Q-B6-08"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -62,7 +62,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "수-corneo / 피지-sebu(30초) / 탄력-음압 / 주름-replica / 색소-우즈램프 365 / 모발-trichoscopy",
     source: { law: null, guide: "4판 p.281~282", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-09", "Q-B6-10"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   }
 ]);
