@@ -16,7 +16,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     explanation: "「화장품법」 제2조제1호는 화장품을 “인체를 청결ㆍ미화하여 매력을 더하고 용모를 밝게 변화시키거나 피부ㆍ모발의 건강을 유지 또는 증진하기 위하여 인체에 바르고 문지르거나 뿌리는 등 이와 유사한 방법으로 사용되는 물품으로서 인체에 대한 작용이 경미한 것”으로 정의하고, 단서에서 「약사법」 제2조제4호의 의약품에 해당하는 물품은 제외한다고 규정한다. 즉 정의는 ①목적(청결·미화·용모 변화·건강 유지 증진) ②방법(바르고 문지르거나 뿌리는 등 이와 유사한 방법) ③작용 정도(경미)의 세 요소로 이루어지며, 기능성화장품은 제2조제2호에서 “화장품 중에서” 정한 것이므로 화장품에 포함된다.",
     wrong_option_explanations: [
       "① 작용이 “현저한” 것이 아니라 “경미한” 것이 화장품이다. 질병의 치료를 목적으로 하는 물품은 「약사법」상 의약품으로 화장품에서 제외된다.",
-      "② 정답 — 제2조제1호의 목적·방법·작용 정도(경미) 요건을 그대로 옮긴 문장이다.",
+      "② 정답 — 제2조제1호가 정한 사용 목적(청결·미화하여 매력을 더하고 용모를 밝게 변화)과 작용 정도(“인체에 대한 작용이 경미한 것”)에 부합한다. 조문은 여기에 “피부·모발의 건강을 유지 또는 증진”이라는 목적과 “바르고 문지르거나 뿌리는 등 이와 유사한 방법”이라는 사용 방법을 더해 정의한다.",
       "③ 조문은 “바르고 문지르거나 뿌리는 등 이와 유사한 방법”이라고 하여 유사한 방법까지 포함한다. “~만 해당”으로 좁힌 것이 오류다.",
       "④ 제2조제1호 단서는 「약사법」 제2조제4호의 의약품에 해당하는 물품을 예외 없이 화장품에서 제외한다. 사용 목적으로 되살아나지 않는다.",
       "⑤ 제2조제2호는 기능성화장품을 “화장품 중에서” 어느 하나에 해당하는 것으로 정의한다. 기능성화장품도 화장품이며, 기능성화장품을 제외한 나머지를 일반 화장품이라 부른다."
@@ -28,8 +28,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B1-01"],
     tags: ["화장품법", "정의", "제2조", "경미한 작용"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B1" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B1" }, { date: "2026-09-05", note: "검증 수정: 보기②의 해설이 ‘목적·방법·작용 정도를 그대로 옮긴 문장’이라고 했으나 보기② 문장에는 사용 방법이 빠져 있어, 법 제2조제1호 조문과 대응하도록 해설을 정확히 함" }]
   },
   {
     id: "Q-B1-02", subject: 1, topic: "1.1.2", level: "D",
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-B1-02"],
     tags: ["화장품법", "유형", "13가지", "인체 세정용"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B1" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B1-03"],
     tags: ["화장품법", "영업의 종류", "등록", "신고", "단답"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B1" }]
   },
   {
@@ -113,7 +113,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B1-03"],
     tags: ["화장품법", "등록", "신고", "변경등록", "결격사유"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B1" }]
   },
   {
@@ -145,7 +145,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B1-04"],
     tags: ["화장품법", "품질 요소", "안전성", "안정성", "유효성"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B1" }]
   },
   {
@@ -166,7 +166,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B1-04"],
     tags: ["화장품법", "사후관리", "회수", "기한", "단답"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B1" }]
   }
 ]);
