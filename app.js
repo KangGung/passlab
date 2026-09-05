@@ -150,7 +150,8 @@ function saveSession() {
   Store.set("session", {
     sid: Q.sid, mode: Q.mode, preset: Q.preset, qids: Q.qids, idx: Q.idx,
     answers: Q.answers, startedAt: Q.startedAt, deadlineAt: null, savedAt: nowISO(),
-    stats: Q.stats
+    stats: Q.stats,
+    done: Q.done                 // 이미 채점·기록까지 끝난 qid — 이어하기에서 두 번 세지 않으려고 남긴다
   });
 }
 function clearSession() { Store.del("session"); }
@@ -543,16 +544,21 @@ function viewQuiz() {
   } else {
     var attrs = ' type="text" class="shortin" autocomplete="off" autocorrect="off" autocapitalize="none"' +
                 ' spellcheck="false" enterkeyhint="done"' + (revealed ? " disabled" : "");
-    if (Array.isArray(q.blanks) && q.blanks.length) {
+    var hasBlanks = Array.isArray(q.blanks) && q.blanks.length > 0;
+    // 열거형(grade:"set")은 쉼표로 나눠 채점한다 — 띄어쓰기는 구분자가 아니다.
+    // core.js는 blanks가 있으면 그쪽을 먼저 보므로, 안내도 빈칸이 없을 때만 띄운다.
+    var isSet = !hasBlanks && q.grade === "set";
+    if (hasBlanks) {
       var gv = Array.isArray(a.given) ? a.given : [];
       q.blanks.forEach(function (b, i) {
         h += '<label class="blankrow"><span class="blab">' + esc(b.label || (i + 1)) + '</span>' +
              '<input' + attrs + ' data-blank="' + i + '" value="' + esc(gv[i] || "") + '"></label>';
       });
     } else {
-      h += '<input' + attrs + ' data-blank="0" value="' +
+      h += '<input' + attrs + (isSet ? ' placeholder="예) 가, 나, 다"' : '') + ' data-blank="0" value="' +
            esc(typeof a.given === "string" ? a.given : "") + '">';
     }
+    if (isSet) h += '<p class="small muted">쉼표(,)로 구분해 입력하세요</p>';
     if (q.unit) h += '<p class="small muted">단위: ' + esc(q.unit) + ' (숫자만 써도 됩니다)</p>';
     if (!revealed) {
       h += '<button type="button" class="btn mt" data-act="short-done">답 입력 완료</button>';
@@ -1029,7 +1035,8 @@ function startQuiz(mode, qids, preset, warnings) {
   S.quiz = {
     sid: newSid(), mode: mode, preset: preset || {}, qids: qids, idx: 0, answers: {},
     startedAt: nowISO(), qStart: Date.now(), graded: null, awaitSelf: false,
-    attIndex: null, warnings: warnings || [], stats: { correct: 0, added: 0 }
+    attIndex: null, warnings: warnings || [], stats: { correct: 0, added: 0 },
+    done: {}
   };
   S.claudeText = null;
   saveSession();
@@ -1070,15 +1077,30 @@ function startStudy(over) {
 function resumeSession() {
   var s = Store.get("session", null);
   if (!s || !s.qids || !s.qids.length) { toast("이어서 풀 세션이 없습니다."); return; }
-  S.quiz = {
+  var Q = {
     sid: s.sid || newSid(), mode: s.mode || "study", preset: s.preset || {},
     qids: s.qids, idx: clamp(Number(s.idx) || 0, 0, s.qids.length - 1),
     answers: s.answers || {}, startedAt: s.startedAt || nowISO(), qStart: Date.now(),
     graded: null, awaitSelf: false, attIndex: null, warnings: [],
-    stats: s.stats || { correct: 0, added: 0 }
+    stats: s.stats || { correct: 0, added: 0 },
+    done: s.done || {}
   };
+  S.quiz = Q;
   S.claudeText = null;
-  S.screen = (S.quiz.mode === "diag") ? "diag" : "quiz";
+
+  // 이미 채점까지 끝난 문항은 건너뛴다(제출 → 그만하기 → 이어하기로 같은 문항이 두 번 기록되는 것 방지).
+  var i = Q.idx;
+  while (i < Q.qids.length && Q.done[Q.qids[i]]) i++;
+  if (i >= Q.qids.length) {                       // 전부 끝난 세션이면 요약으로 보낸다
+    Q.idx = Q.qids.length - 1;
+    if (Q.mode === "diag") { S.quiz = null; clearSession(); S.screen = "home"; toast("이미 끝난 진단입니다."); }
+    else { finishStudy(); return; }
+    render({ top: true });
+    return;
+  }
+  if (i !== Q.idx) { Q.idx = i; saveSession(); }
+
+  S.screen = (Q.mode === "diag") ? "diag" : "quiz";
   render({ top: true });
 }
 
@@ -1105,9 +1127,13 @@ function readShortInputs() {
 function storeShortAnswer() {
   var Q = S.quiz;
   if (!Q) return;
+  // 문항 화면이 떠 있을 때만 입력칸을 읽는다. [그만하기]·탭 이동 뒤에도 S.quiz는 살아 있는데
+  // 그때 읽으면 입력칸이 없어 빈 값으로 덮어써서 쓰던 답이 날아간다.
+  if (S.screen !== "quiz" && S.screen !== "diag") return;
   var q = S.byQid[Q.qids[Q.idx]];
   if (!q || q.type !== "short") return;
   var vals = readShortInputs();
+  if (!vals.length) return;                 // 입력칸이 하나도 없으면 아무것도 건드리지 않는다
   var a = curAnswer();
   if (!a) return;
   a.given = (Array.isArray(q.blanks) && q.blanks.length) ? vals : (vals[0] || "");
@@ -1139,7 +1165,8 @@ function commitAttempt(correct, selfMarked, nearMiss) {
   if (m) S.mistakes[qid] = m;               // null이면 바꾸지 않는다
   if (!hadMistake && S.mistakes[qid]) Q.stats.added += 1;
   if (correct) Q.stats.correct += 1;
-  saveAttempts(); saveMistakes(); rebuildAttIndex();
+  Q.done[qid] = true;                       // 이 문항은 기록 끝 — 이어하기에서 다시 채점하지 않는다
+  saveAttempts(); saveMistakes(); rebuildAttIndex(); saveSession();
 }
 
 function submitStudy() {
@@ -1147,6 +1174,7 @@ function submitStudy() {
   if (!Q) return;
   var q = S.byQid[Q.qids[Q.idx]];
   if (!q) { nextQuestion(); return; }
+  if (Q.done[Q.qids[Q.idx]]) { nextQuestion(); return; }   // 이미 기록한 문항은 다시 채점하지 않는다
   if (q.type === "short") storeShortAnswer();
   markSec();
   var a = curAnswer();
