@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B3-01"],
     tags: ["유통화장품", "안전관리기준", "검출허용한도", "중금속", "숫자"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -45,7 +45,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     answer: 4, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "제6조제2항제9호는 \"포름알데하이드 : 2000㎍/g이하, 물휴지는 20㎍/g이하\"로 정한다. ⑤는 이 두 값을 뒤집어 놓았다. 물휴지는 피부에 닿은 채 씻어내지 않고 영·유아에게도 쓰이므로 메탄올·포름알데하이드 모두 일반 제품보다 100배 엄격하다(메탄올 0.2 %→0.002 %, 포름알데하이드 2000→20 ㎍/g). 나머지 보기는 각각 제6조제2항제1호(납)·제2호(니켈)·제8호(메탄올), 제6조제5항제1호 단서와 제9항(화장 비누)의 내용 그대로다.",
+    explanation: "제6조제2항제9호는 \"포름알데하이드 : 2000㎍/g이하, 물휴지는 20㎍/g이하\"로 정한다. ⑤는 이 두 값을 뒤집어 놓았다. 메탄올과 포름알데하이드는 모두 물휴지 값이 일반 제품의 100분의 1로 더 엄격하다(메탄올 0.2 %→0.002 %, 포름알데하이드 2000→20 ㎍/g). 나머지 보기는 각각 제6조제2항제1호(납)·제2호(니켈)·제8호(메탄올), 제6조제5항제1호 단서와 제9항(화장 비누)의 내용 그대로다.",
     wrong_option_explanations: [
       "① 옳다. 제6조제2항제1호 \"납 : 점토를 원료로 사용한 분말제품은 50㎍/g이하, 그 밖의 제품은 20㎍/g이하\".",
       "② 옳다. 제6조제2항제2호. 니켈만 세 구간(눈 35 / 색조 30 / 그 밖 10)으로 나뉜다.",
@@ -60,8 +60,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B3-01", "C-B3-03"],
     tags: ["유통화장품", "안전관리기준", "검출허용한도", "물휴지", "화장비누"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B3" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-05", note: "검증 수정: 해설에서 근거 없는 이유 서술('물휴지는 씻어내지 않고 영·유아에게도 쓰이므로')을 삭제하고 조문 값 비교(100분의 1)로 바꿈. 숫자·정답은 제6조제2항제1·2·8·9호, 제5항제1호 단서, 제9항과 일치 확인" }]
   },
   {
     id: "Q-B3-03", subject: 3, topic: "3.4.2", level: "D",
@@ -92,7 +92,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B3-01", "C-B3-02"],
     tags: ["유통화장품", "안전관리기준", "물휴지", "메탄올", "미생물한도"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -124,7 +124,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B3-02"],
     tags: ["유통화장품", "안전관리기준", "미생물한도", "불검출", "숫자"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -156,7 +156,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B3-03"],
     tags: ["유통화장품", "안전관리기준", "내용량", "계산", "97%"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -177,19 +177,19 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     wrong_option_explanations: [
       "① 영·유아용 샴푸는 영·유아용 제품류의 괄호 안 제외 목록(영·유아용 샴푸·린스, 영·유아 인체 세정용, 영·유아 목욕용)에 명시되어 있어 제외된다.",
       "② 클렌징 오일은 기초화장용 제품류의 괄호 안 메이크업 리무버 제외 목록에 명시되어 있어 제외된다.",
-      "③ 정답 — 색조 화장용 제품류는 조문에 제외 괄호가 붙어 있지 않고, 물을 포함한 액상제품이므로 pH 3.0∼9.0이 적용된다.",
+      "③ 정답 — 리퀴드 파운데이션은 색조 화장용 제품류의 세부 유형이고(가이드 4판 p.6 「리퀴드·크림·케이크 파운데이션」), 색조 화장용 제품류에는 조문에 제외 괄호가 붙어 있지 않으며 물을 포함한 액상제품이므로 pH 3.0∼9.0이 적용된다.",
       "④ 셰이빙 폼은 면도용 제품류의 괄호 안 제외 목록(셰이빙 크림, 셰이빙 폼)에 명시되어 있어 제외된다.",
       "⑤ 린스는 두발용 제품류의 괄호 안 제외 목록(샴푸, 린스)에 명시되어 있어 제외된다."
     ],
     key_concept: "pH 3.0∼9.0 적용 제품류 6종과 각 괄호 안 제외 품목, 그리고 공통 제외 2가지",
     memory_sentence: "'영유아·눈·색조·두발·면도·기초' 중 액상제품은 pH 3.0∼9.0. 단 물이 없거나 곧바로 씻어내는 것, 그리고 각 괄호 안(영유아 샴푸·린스, 샴푸·린스, 셰이빙 크림·폼, 메이크업 리무버)은 빠진다.",
-    trap: "제품류 이름만 보고 '영·유아용 제품류니까 대상'이라고 판단하면 틀린다. 괄호 안 제외 품목이 실제 정답을 가른다. 색조 화장용 제품류만 괄호 제외가 없다는 점을 기억한다.",
-    source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.231", asof: "2026-09", confidence: "high" },
+    trap: "제품류 이름만 보고 '영·유아용 제품류니까 대상'이라고 판단하면 틀린다. 괄호 안 제외 품목이 실제 정답을 가른다. 조문에서 괄호 제외가 붙지 않은 제품류는 눈 화장용 제품류와 색조 화장용 제품류 둘뿐이다.",
+    source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.231, 6~7", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-03-18",
     cards: ["C-B3-04"],
     tags: ["유통화장품", "안전관리기준", "pH", "액상제품", "제외대상"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B3" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-05", note: "검증 수정: trap의 '색조 화장용 제품류만 괄호 제외가 없다'는 사실과 다름 — 제6조제6항에서 눈 화장용 제품류에도 괄호가 없다. '눈 화장용·색조 화장용 둘뿐'으로 정정" }]
   },
   {
     id: "Q-B3-07", subject: 3, topic: "3.4.7", level: "D",
@@ -220,7 +220,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B3-06"],
     tags: ["변질", "검체", "관능검사", "CGMP"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -252,7 +252,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B3-05"],
     tags: ["입고", "원자재", "격리", "CGMP", "상태표시"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -284,7 +284,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B3-05"],
     tags: ["보관", "출고", "선입선출", "FIFO", "CGMP"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -316,7 +316,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B3-06"],
     tags: ["기준일탈", "재작업", "용어정의", "CGMP", "폐기"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
@@ -348,39 +348,39 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-B3-06"],
     tags: ["폐기절차", "격리", "분리수거", "순서"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B3" }]
   },
   {
     id: "Q-B3-12", subject: 3, topic: "3.4.2", level: "D",
     type: "mcq", qtype: "case", points: 18, difficulty: 4, importance: "H", vg: null,
-    stem: "다음은 유통 전 자가 품질검사를 마친 아이크림(눈 화장용 제품류, 표기량 30 g, 물을 포함하고 사용 후 씻어내지 않는 크림)의 시험성적서 일부다.\n\n[시험 결과]\n· 납 15 ㎍/g   · 니켈 32 ㎍/g\n· 총호기성생균수 700 개/g\n· 대장균·녹농균·황색포도상구균 : 모두 불검출\n· pH 6.5\n· 내용량(제품 3개 평균) 29.4 g\n\n「화장품 안전기준 등에 관한 규정」 제6조에 비추어 이 결과에 대한 판단으로 옳은 것은?",
+    stem: "다음은 유통 전 자가 품질검사를 마친 리퀴드 아이라이너(눈 화장용 제품류, 표기량 10 g, 물을 포함하고 사용한 후 곧바로 물로 씻어 내지 않는 액상제품)의 시험성적서 일부다.\n\n[시험 결과]\n· 납 15 ㎍/g   · 니켈 32 ㎍/g\n· 총호기성생균수 700 개/g\n· 대장균·녹농균·황색포도상구균 : 모두 불검출\n· pH 6.5\n· 내용량(제품 3개 평균) 9.8 g\n\n「화장품 안전기준 등에 관한 규정」 제6조에 비추어 이 결과에 대한 판단으로 옳은 것은?",
     choices: [
       "총호기성생균수 700 개/g은 눈 화장용 제품류의 한도 500 개/g(mL)을 넘으므로 부적합이고, 기준일탈 제품으로 처리하여야 한다.",
       "니켈 32 ㎍/g은 눈 화장용 제품의 한도 30 ㎍/g을 넘으므로 부적합이고, 기준일탈 제품으로 처리하여야 한다.",
       "납 15 ㎍/g은 분말제품이 아닌 그 밖의 제품 한도 10 ㎍/g을 넘으므로 부적합이고, 기준일탈 제품으로 처리하여야 한다.",
-      "내용량 3개 평균 29.4 g은 표기량의 97 % 미만이므로 6개를 더 취하여 9개의 평균으로 다시 판정하여야 한다.",
+      "내용량 3개 평균 9.8 g은 표기량의 97 % 미만이므로 6개를 더 취하여 9개의 평균으로 다시 판정하여야 한다.",
       "pH 6.5는 씻어내지 않는 액상 제품의 pH 기준 4.5∼5.5를 벗어나므로 부적합이고, 기준일탈 제품으로 처리하여야 한다."
     ],
     answer: 0, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "항목별로 대조하면 ⓐ 납 15 ㎍/g은 '그 밖의 제품' 한도 20 ㎍/g 이하를 만족(제6조제2항제1호), ⓑ 니켈 32 ㎍/g은 눈 화장용 제품 한도 35 ㎍/g 이하를 만족(제2항제2호), ⓒ 총호기성생균수 700 개/g은 눈화장용 제품류 한도 500 개/g(mL) 이하를 초과하여 부적합(제4항제1호), ⓓ 병원성균 3종은 불검출로 적합(제4항제4호), ⓔ pH 6.5는 3.0∼9.0 범위 안이라 적합(제6항), ⓕ 내용량 29.4 g은 표기량 30 g의 98.0 %로 97 % 이상이라 적합(제5항제1호)이다. 따라서 유일한 부적합 항목은 총호기성생균수이며, 적합판정기준을 만족시키지 못한 결과이므로 기준일탈 제품으로 지정된 절차에 따라 처리하고 그 내용을 모두 기록으로 남겨야 한다(가이드 §3.4.5).",
+    explanation: "항목별로 대조하면 ⓐ 납 15 ㎍/g은 '그 밖의 제품' 한도 20 ㎍/g 이하를 만족(제6조제2항제1호), ⓑ 니켈 32 ㎍/g은 눈 화장용 제품 한도 35 ㎍/g 이하를 만족(제2항제2호), ⓒ 총호기성생균수 700 개/g은 눈화장용 제품류 한도 500 개/g(mL) 이하를 초과하여 부적합(제4항제1호), ⓓ 병원성균 3종은 불검출로 적합(제4항제4호), ⓔ pH 6.5는 3.0∼9.0 범위 안이라 적합(제6항), ⓕ 내용량 9.8 g은 표기량 10 g의 98.0 %로 97 % 이상이라 적합(제5항제1호)이다. 따라서 유일한 부적합 항목은 총호기성생균수이며, 적합판정기준을 만족시키지 못한 결과이므로 기준일탈 제품으로 지정된 절차에 따라 처리하고 그 내용을 모두 기록으로 남겨야 한다(가이드 §3.4.5).",
     wrong_option_explanations: [
       "① 정답 — 눈화장용 제품류의 총호기성생균수 한도는 500 개/g(mL) 이하이므로 700 개/g은 부적합이고, 적합판정기준 미달은 곧 기준일탈이다.",
       "② 30 ㎍/g은 '색조 화장용 제품'의 니켈 한도다. 눈 화장용 제품은 35 ㎍/g 이하이므로 32 ㎍/g은 적합이다.",
       "③ 10 ㎍/g은 니켈의 '그 밖의 제품' 한도다. 납의 그 밖의 제품 한도는 20 ㎍/g 이하이므로 15 ㎍/g은 적합이다.",
-      "④ 29.4 ÷ 30 = 98.0 %로 이미 97 % 이상이다. 6개를 더 취하는 절차는 3개 평균이 97 % 미만일 때만 밟는다.",
-      "⑤ 4.5∼5.5는 사람 각질층의 pH이지 제품 규격이 아니다. 제6조제6항의 액상제품 pH 기준은 3.0∼9.0이므로 6.5는 적합이다."
+      "④ 9.8 ÷ 10 = 98.0 %로 이미 97 % 이상이다. 6개를 더 취하는 절차는 3개 평균이 97 % 미만일 때만 밟는다.",
+      "⑤ 4.5∼5.5는 사람 각질층의 pH(가이드 4판 p.272 「각질층의 pH: 4.5 ~ 5.5 정도로 약산성」)이지 제품 규격이 아니다. 제6조제6항의 액상제품 pH 기준은 3.0∼9.0이므로 6.5는 적합이다."
     ],
     key_concept: "여러 항목의 시험 결과를 제6조 각 항과 대조해 부적합 항목을 가려내고 기준일탈로 처리하는 판단",
     memory_sentence: "눈 화장용 제품은 니켈 35까지 봐주지만 총호기성생균수는 500까지만 — 한 항목이라도 벗어나면 기준일탈이다.",
     trap: "눈 화장용 제품은 니켈 한도가 오히려 완화(35)되고 미생물 한도는 강화(500)된다. 방향을 반대로 기억하면 니켈에서 부적합을 잘못 잡아낸다. pH도 각질층 pH(4.5∼5.5)와 제품 규격(3.0∼9.0)을 섞으면 안 된다.",
-    source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.230~231, 237", asof: "2026-09", confidence: "high" },
+    source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.230~231, 237, 272, 9", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-03-18",
     cards: ["C-B3-01", "C-B3-02", "C-B3-04"],
     tags: ["사례판단", "유통화장품", "안전관리기준", "기준일탈", "눈화장용"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B3" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-05", note: "검증 수정: 제시 제품 '아이크림'은 유형 분류상 기초화장용 제품류의 '눈 주위 제품'(가이드 4판 p.7)이어서 눈 화장용 제품류로 단정할 수 없음 → 눈 화장용 제품류 세부유형인 '리퀴드 아이라이너'(표기량 10 g, 3개 평균 9.8 g)로 교체하고 내용량 계산을 98.0 %로 맞춤. 각질층 pH 4.5~5.5 출처(4판 p.272) 명시" }]
   }
 ]);
