@@ -17,7 +17,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-01"],
     tags: ["보존제", "사용한도", "페녹시에탄올", "숫자", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -49,7 +49,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-01"],
     tags: ["보존제", "사용한도", "벤질알코올", "별표2", "짝짓기"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -62,7 +62,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
       { label: "㉠", accepted: ["0.5%", "0.5", "0.50%", "0.50", ".5%", ".5", "0.5 %"] },
       { label: "㉡", accepted: ["13", "13세", "만 13", "만 13세", "만13세", "십삼"] }
     ],
-    grade: "exact", strict_term: false, unit: "%", number_tolerance: 0,
+    grade: "exact", strict_term: false, unit: null, number_tolerance: 0,
     near_miss: ["2%", "3%", "0.05%", "3세", "36개월", "만 3세"],
     explanation: "별표 2 보존제 성분 표는 '살리실릭애씨드 및 그 염류'의 사용한도를 살리실릭애씨드로서 0.5%로 정하고, 비고란에 '영유아용 제품류 또는 만 13세 이하 어린이가 사용할 수 있음을 특정하여 표시하는 제품에는 사용금지(다만, 샴푸는 제외)'라고 명시한다. 즉 어린이용 표시가 있어도 샴푸에는 쓸 수 있다는 예외가 함께 붙는다.",
     wrong_option_explanations: null,
@@ -73,8 +73,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-02"],
     tags: ["보존제", "살리실릭애씨드", "연령제한", "빈칸", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B2" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B2" }, { date: "2026-09-05", note: "검증 수정: unit \"%\"→null (㉡ 빈칸은 나이라 % 단위 힌트가 오도). 값·문구는 별표 2 보존제 원문과 일치 확인" }]
   },
   {
     id: "Q-B2-04", subject: 2, topic: "2.3.1", level: "D",
@@ -105,7 +105,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-02"],
     tags: ["사용제한원료", "살리실릭애씨드", "기타항목", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -137,7 +137,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-04"],
     tags: ["자외선차단", "사용한도", "짝짓기", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -158,7 +158,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-04"],
     tags: ["자외선차단", "무기차단제", "숫자", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -185,13 +185,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     key_concept: "자외선 차단성분의 개별 한도와 포지티브 리스트 원칙(별표 2에 없는 자외선 차단제는 사용 불가)",
     memory_sentence: "드로메트리졸 1.0% / 드로메트리졸트리실록산 15% — 이름이 길면 숫자도 크다. 벤조페논-3은 2.4%(얼굴·손·입술 5%).",
-    trap: "벤조페논-3을 예전 값인 5% 하나로만 외우면 틀린다. 현행 별표 2는 기본 2.4%이고 얼굴·손 및 입술 제품에만 5%다. 2026-09-02 시행된 알레르기 표시 규정 별표 1의 주의사항 문구도 '2.4퍼센트 이하의 벤조페논-3가 함유된 제품은 제외'라고 하여 같은 기준선을 쓴다. 또 '드로메트리졸'과 '드로메트리졸트리실록산'은 이름이 비슷한 다른 원료다. 가이드 4판은 2024-02-07 고시 기준이므로 숫자는 시행 2026-03-18 별표 2를 따른다.",
+    trap: "벤조페논-3을 예전 값인 5% 하나로만 외우면 틀린다. 현행 별표 2는 기본 2.4%이고 얼굴·손 및 입술 제품에만 5%다. 2026-09-02 시행된 알레르기 표시 규정 별표 1의 주의사항 문구도 '2.4 퍼센트 이하의 벤조페논-3가 함유된 제품은 제외한다'라고 하여 같은 기준선을 쓴다. 또 '드로메트리졸'과 '드로메트리졸트리실록산'은 이름이 비슷한 다른 원료다. 가이드 4판은 2024-02-07 고시 기준이므로 숫자는 시행 2026-03-18 별표 2를 따른다.",
     source: { law: "화장품 안전기준 등에 관한 규정 제4조·별표 2(자외선 차단성분)", guide: null, asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-03-18",
     cards: ["C-B2-04", "C-B2-07"],
     tags: ["자외선차단", "벤조페논-3", "포지티브리스트", "별표2", "개정"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B2" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B2" }, { date: "2026-09-05", note: "검증 수정: trap의 별표 1 인용을 원문 표기 \"2.4 퍼센트 … 제외한다\"로 정정. 한도 값은 별표 2 자외선 표와 일치 확인" }]
   },
   {
     id: "Q-B2-08", subject: 2, topic: "2.3.1", level: "D",
@@ -214,7 +214,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-03"],
     tags: ["보존제", "파라벤", "단일·혼합", "빈칸", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -246,7 +246,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-08"],
     tags: ["사용제한원료", "기타항목", "톨루엔", "징크피리치온", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -273,7 +273,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-B2-05"],
     tags: ["알레르기", "착향제", "고시명", "법정용어"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -287,7 +287,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
       { label: "㉡", accepted: ["0.001%", "0.001", "0.0010", "0.0010%", ".001%", ".001", "0.001 %"] }
     ],
     grade: "exact", strict_term: false, unit: "%", number_tolerance: 0,
-    near_miss: ["0.1%", "0.0001%", "1%", "0.01"],
+    near_miss: ["0.1%", "0.0001%", "1%", "0.002%", "0.02%"],
     explanation: "「화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정」 별표 2 아래 단서는 '다만, 사용 후 씻어내는 제품에는 0.01% 초과, 사용 후 씻어내지 않는 제품에는 0.001% 초과 함유하는 경우에 한한다'고 정한다. 씻어내지 않고 피부에 남는 제품일수록 노출이 커서 기준이 10배 엄격하다.",
     wrong_option_explanations: null,
     key_concept: "알레르기 유발성분 표시 기준 — 씻어내는 0.01% 초과 / 씻어내지 않는 0.001% 초과",
@@ -297,8 +297,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-B2-06"],
     tags: ["알레르기", "표시기준", "숫자", "빈칸"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B2" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B2" }, { date: "2026-09-05", note: "검증 수정: near_miss에 정답값 \"0.01\"이 들어 있어 오답 표기 목록에서 제거·교체" }]
   },
   {
     id: "Q-B2-12", subject: 2, topic: "2.3.2", level: "D",
@@ -329,7 +329,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-B2-05"],
     tags: ["알레르기", "25종", "성분식별", "착향제"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   },
   {
@@ -358,11 +358,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     memory_sentence: "없으면 '향료', 있으면 성분명 — 전성분란에 적고 별도 문구는 붙이지 않는다.",
     trap: "'알레르기 유발성분'이라고 따로 써 줘야 친절할 것 같지만 지침은 부적절하다고 본다. 또 기준 계산의 분모는 착향제가 아니라 제품 내용량이다(예: 200 g 제품에 리모넨 0.04 g이면 0.02%).",
     source: { law: "화장품법 시행규칙 별표 4 제3호마목", guide: "4판 p.124~125", asof: "2026-09", confidence: "high" },
-    law_effective_date: "2026-08-05",
+    law_effective_date: "2026-04-02",
     cards: ["C-B2-06"],
     tags: ["알레르기", "표시방법", "전성분", "지침"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B2" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B2" }, { date: "2026-09-05", note: "검증 수정: law_effective_date 2026-08-05 → 2026-04-02 (근거가 시행규칙 별표 4, 총리령 제2109호 2026-04-02 시행)" }]
   },
   {
     id: "Q-B2-14", subject: 2, topic: "2.3.1", level: "D",
@@ -393,7 +393,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-B2-07", "C-B2-06", "C-B2-01"],
     tags: ["맞춤형화장품", "제5조", "사례판단", "알레르기", "18점"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B2" }]
   }
 ]);
