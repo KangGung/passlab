@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>조제관리사 시험앱, 지금 어디까지? — 아주 쉽게</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'Apple SD Gothic Neo','Pretendard',sans-serif; background:#F7F5F0; color:#1a1a1a; line-height:1.5; padding:32px 16px 80px; }
+  .wrap { max-width:860px; margin:0 auto; }
+  .hero { background:#1a1a1a; color:#fff; border-radius:20px; padding:36px 28px; text-align:center; margin-bottom:28px; }
+  .hero .big { font-size:52px; }
+  .hero h1 { font-size:26px; margin:12px 0 8px; }
+  .hero p { font-size:16px; color:#ccc; }
+  .hero .dday { display:inline-block; margin-top:14px; background:#A82A1F; color:#fff; border-radius:999px; padding:6px 16px; font-weight:700; font-size:15px; }
+  .card { background:#fff; border-radius:16px; padding:26px 24px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size:20px; margin-bottom:16px; }
+  .card h2 .n { display:inline-block; background:#A82A1F; color:#fff; border-radius:50%; width:28px; height:28px; text-align:center; line-height:28px; font-size:15px; margin-right:8px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .box { flex:1; min-width:200px; background:#F7F5F0; border-radius:12px; padding:18px 14px; text-align:center; }
+  .box .ico { font-size:44px; }
+  .box .title { font-size:16px; font-weight:700; margin:8px 0 4px; }
+  .box .sub { font-size:13px; color:#555; }
+  .box .tag { display:inline-block; margin-top:8px; font-size:12px; font-weight:700; border-radius:999px; padding:3px 10px; }
+  .tag.ok { background:#DCEBDF; color:#2A6F46; }
+  .tag.no { background:#F7DED7; color:#B9331F; }
+  .tag.mid { background:#F4E7C5; color:#8A5E10; }
+  .vs { align-self:center; font-size:22px; font-weight:800; color:#888; padding:0 4px; }
+  .compare { width:100%; border-collapse:collapse; font-size:14px; margin-top:8px; }
+  .compare th, .compare td { padding:10px 8px; border-bottom:1px solid #eee; text-align:center; }
+  .compare th { background:#F7F5F0; font-weight:700; }
+  .compare td:first-child { text-align:left; font-weight:600; color:#444; }
+  .fix { display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .fix .old, .fix .new { border-radius:12px; padding:18px 20px; text-align:center; min-width:180px; }
+  .fix .old { background:#F7DED7; text-decoration:line-through; color:#7a2a1f; }
+  .fix .new { background:#DCEBDF; color:#1f4f33; font-weight:700; }
+  .fix .big { font-size:34px; display:block; margin-bottom:4px; text-decoration:none; }
+  .fix .arrow { font-size:28px; color:#888; }
+  .coins { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+  .coin { border-radius:12px; padding:12px 16px; text-align:center; min-width:120px; }
+  .coin .v { font-size:26px; font-weight:800; }
+  .coin .c { font-size:12px; color:#555; }
+  .c8 { background:#EAF2F8; } .c12 { background:#FBF1D6; } .c18 { background:#F7DED7; }
+  ul.plain { list-style:none; }
+  ul.plain li { padding:10px 0; border-bottom:1px solid #eee; font-size:15px; display:flex; gap:10px; align-items:flex-start; }
+  ul.plain li:last-child { border-bottom:none; }
+  ul.plain .ico { font-size:22px; flex:none; }
+  .ask { background:#FFF9E6; border:2px dashed #E0B94A; }
+  .ask li .q { font-weight:700; }
+  .ask li .d { font-size:13px; color:#666; }
+  .rec { background:#1a1a1a; color:#fff; border-radius:16px; padding:22px 24px; margin-bottom:22px; }
+  .rec h2 { font-size:18px; margin-bottom:10px; color:#fff; }
+  .rec p { font-size:15px; color:#ddd; }
+  .rec b { color:#fff; }
+  .foot { text-align:center; color:#888; font-size:12px; margin-top:30px; }
+  .small { font-size:13px; color:#666; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="big">🧪📱</div>
+    <h1>조제관리사 시험앱, 지금 어디까지 왔나?</h1>
+    <p>2026-09-05 점검 · 아주 쉽게 한 장으로</p>
+    <div class="dday">시험 9/19 · 오늘은 D-14</div>
+  </div>
+
+  <!-- 1 -->
+  <div class="card">
+    <h2><span class="n">1</span>어젯밤, 요리사 둘이 서로 모르고 따로 요리했어요</h2>
+    <div class="row">
+      <div class="box">
+        <div class="ico">📐</div>
+        <div class="title">설계도 팀</div>
+        <div class="sub">폴더 <b>조제관리사시험/</b><br>레시피·그림(목업)은 아주 꼼꼼하게 그렸는데</div>
+        <span class="tag no">앱은 아직 없음</span>
+      </div>
+      <div class="vs">VS</div>
+      <div class="box">
+        <div class="ico">🍳</div>
+        <div class="title">바로 만든 팀</div>
+        <div class="sub">폴더 <b>custom-cosmetics-exam/</b><br>진짜 켜지는 앱을 만들었는데 문제는 20개뿐</div>
+        <span class="tag ok">앱 있음 · 오류 0</span>
+      </div>
+    </div>
+    <p class="small">둘은 서로 있는 줄도 몰랐어요. 그래서 오늘 처음으로 나란히 놓고 봤어요.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="card">
+    <h2><span class="n">2</span>둘 다 같은 시험을 보고 만들었어요</h2>
+    <div class="row">
+      <div class="box">
+        <div class="ico">📅</div>
+        <div class="title">제12회 시험</div>
+        <div class="sub">2026년 9월 19일(토) 오전 10시<br>접수는 9월 2일에 끝났음</div>
+      </div>
+      <div class="box">
+        <div class="ico">📝</div>
+        <div class="title">100문제 · 120분</div>
+        <div class="sub">5지선다 80개 + 짧은 답 쓰기 20개<br>1,000점 만점</div>
+      </div>
+      <div class="box">
+        <div class="ico">🎯</div>
+        <div class="title">합격 = 600점 이상</div>
+        <div class="sub">+ 네 과목 모두 40% 넘어야 함<br>한 과목만 못 봐도 떨어짐</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="box">
+        <div class="ico">📚</div>
+        <div class="title">공부 재료</div>
+        <div class="sub">법령(law.go.kr) · 식약처 · 상공회의소 공식자료<br>교수학습가이드 4판 · 공개 예시문제 29개</div>
+      </div>
+      <div class="box">
+        <div class="ico">🔒</div>
+        <div class="title">진짜 기출은 비공개</div>
+        <div class="sub">그래서 문제는 전부 <b>우리가 새로 만든 것</b><br>블로그·복원문제는 근거로 안 씀</div>
+      </div>
+      <div class="box">
+        <div class="ico">⚖️</div>
+        <div class="title">법은 시험 날 기준</div>
+        <div class="sub">화장품법은 2026-04-02 시행분까지<br>개인정보보호법은 9/11 개정 시행 주의</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="card">
+    <h2><span class="n">3</span>틀린 것 하나를 찾아서 고쳤어요</h2>
+    <div class="fix">
+      <div class="old"><span class="big">🪙</span>문제마다 10점씩</div>
+      <div class="arrow">→</div>
+      <div class="new"><span class="big">🪙🪙🪙</span>문제마다 8·12·18점 다름</div>
+    </div>
+    <div class="coins">
+      <div class="coin c8"><div class="v">8점</div><div class="c">56문제 · 개념·정의</div></div>
+      <div class="coin c12"><div class="v">12점</div><div class="c">40문제 · 적용·비교</div></div>
+      <div class="coin c18"><div class="v">18점</div><div class="c">4문제 · 어려운 사례</div></div>
+    </div>
+    <p class="small">설계도 팀은 인터넷 요약만 보고 "10점 균일"로 적었어요. 오늘 상공회의소 <b>공식 원본 파일</b>을 직접 받아 보니 차등 배점이었고, 바로 만든 팀은 처음부터 맞게 알고 있었어요. 설계 문서 5곳을 고쳤고, 원본 4개는 <b>sources/official/</b>에 넣어 두었어요.</p>
+  </div>
+
+  <!-- 4 -->
+  <div class="card">
+    <h2><span class="n">4</span>두 팀 성적표</h2>
+    <table class="compare">
+      <tr><th></th><th>📐 설계도 팀</th><th>🍳 바로 만든 팀</th></tr>
+      <tr><td>켜지는 앱</td><td>❌</td><td>✅</td></tr>
+      <tr><td>문제 개수</td><td>0</td><td>20 (필요 500)</td></tr>
+      <tr><td>배점 8·12·18 반영</td><td>오늘 고침</td><td>✅ 처음부터</td></tr>
+      <tr><td>내 약점 찾아 다시 묻기</td><td>✅ 숫자까지 설계</td><td>❌ 단순 복습만</td></tr>
+      <tr><td>예상 점수 · 합격 가능성</td><td>✅ 설계</td><td>❌</td></tr>
+      <tr><td>아이폰</td><td>✅ 계획(GitHub Pages)</td><td>❌</td></tr>
+      <tr><td>자동 테스트</td><td>❌</td><td>✅ 38개 통과</td></tr>
+      <tr><td>잔버그</td><td>—</td><td>D-0 표시 · 탭 잘림 · 검사기 오류</td></tr>
+    </table>
+  </div>
+
+  <!-- 5 -->
+  <div class="card">
+    <h2><span class="n">5</span>아직 빠진 것</h2>
+    <ul class="plain">
+      <li><span class="ico">🔀</span><div><b>두 팀을 어떻게 합칠지</b> 안 정했어요. (아래 추천 있음)</div></li>
+      <li><span class="ico">🪙</span><div>배점이 바뀌었으니 <b>채점·과락·예상점수 계산</b>도 따라 바꿔야 해요. 원칙만 적었고 세부는 첫 빌드 세션에서.</div></li>
+      <li><span class="ico">📕</span><div><b>교수학습가이드 PDF(500쪽)·법령 조문</b>이 아직 없어요. 만든 팀이 받았던 건 임시 폴더라 지워졌어요.</div></li>
+      <li><span class="ico">🆕</span><div><b>개인정보보호법 9/11 개정</b>과 <b>알레르기 표시 규정 8/5 개정</b>이 설계 문서에 빠져 있었어요.</div></li>
+      <li><span class="ico">🔤</span><div>목업은 인터넷 글꼴을 쓰는데 앱 규칙은 "인터넷 글꼴 금지"라 빌드 때 바꿔야 해요.</div></li>
+    </ul>
+  </div>
+
+  <!-- 6 -->
+  <div class="rec">
+    <h2>💡 추천: 설계도 팀을 몸통으로, 바로 만든 팀의 좋은 부품을 붙이기</h2>
+    <p>설계도 팀은 <b>합격에 필요한 머리</b>(약점 찾기·찍은 건 안 쳐주기·예상점수·막판 압축 복습)를 숫자까지 정했어요. 바로 만든 팀은 <b>배점표·자동 테스트·출처 목록·문제 20개</b>를 이미 맞게 만들어 놨어요. 합치면 하루가 절약돼요.</p>
+    <p style="margin-top:8px">시간이 정말 없으면 <b>바로 만든 팀 앱을 그대로 키우는 것</b>도 가능해요. 오늘 당장 문제 20개로 공부는 시작할 수 있어요.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="card ask">
+    <h2><span class="n">7</span>지훈님이 답해 주실 것 4개</h2>
+    <ul class="plain">
+      <li><span class="ico">🎫</span><div><span class="q">12회 접수했나요? 수험표 출력 되나요?</span><div class="d">안 했으면 13회(2027년 5월쯤)용으로 일정을 다시 짜요</div></div></li>
+      <li><span class="ico">📂</span><div><span class="q">교재·강의 자료가 있나요?</span><div class="d">있으면 <b>조제관리사시험/sources/user/</b> 폴더에 넣어 주세요. PDF·요약 노트만, 영상은 빼고. 없으면 비워 둬도 돼요</div></div></li>
+      <li><span class="ico">⏰</span><div><span class="q">하루 공부 시간은? 아이폰도 쓰나요? 지금까지 공부량은?</span><div class="d">기본값: 90분 · 예 · 0</div></div></li>
+      <li><span class="ico">🔀</span><div><span class="q">합치기 방식은?</span><div class="d">추천안(설계 몸통 + 부품 흡수) / 바로 만든 앱 그대로 키우기</div></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">8</span>답이 오면 이렇게 진행돼요</h2>
+    <div class="row">
+      <div class="box"><div class="ico">📄</div><div class="title">규칙 파일 저장</div><div class="sub">03 프롬프트팩 ①을<br>CLAUDE.md로</div></div>
+      <div class="box"><div class="ico">🚀</div><div class="title">S0 세션 시작</div><div class="sub">공식 자료 받기 · 청사진 확정<br>+ 바로 만든 팀 부품 흡수</div></div>
+      <div class="box"><div class="ico">🌙</div><div class="title">오늘 밤 첫 사용</div><div class="sub">진단 30문제 풀고<br>약점 확인</div></div>
+    </div>
+  </div>
+
+  <div class="foot">자세한 내용: 조제관리사시험/04_현황점검_2026-09-05.md · 공식 원본: sources/official/</div>
+</div>
+</body>
+</html>

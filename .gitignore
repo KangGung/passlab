@@ -1,0 +1,5 @@
+.DS_Store
+.superpowers/
+app/backup/
+*.pdf.bak
+node_modules/

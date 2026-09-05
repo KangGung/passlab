@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PASS LAB · 조제관리사 합격 연습장 — 목업</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F0E6; --paper-2:#EDE6D8; --paper-3:#E3DAC7;
+  --ink:#1D1B17; --ink-2:#4A463F; --ink-3:#8A857A; --rule:#CFC6B3;
+  --red:#B9331F; --red-bg:#F7DED7; --green:#2A6F46; --green-bg:#DCEBDF;
+  --amber:#B8821A; --amber-bg:#F4E7C5; --blue:#2F5D8A; --blue-bg:#DCE6F0;
+  --shadow:0 1px 0 rgba(29,27,23,.08), 0 8px 24px -16px rgba(29,27,23,.35);
+  --serif:"Gowun Batang","Nanum Myeongjo",serif;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Pretendard",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.35;z-index:0;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+.app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 90px}
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;padding:18px 0 10px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:baseline;gap:12px}
+.brand b{font-family:var(--serif);font-size:22px;letter-spacing:.02em;white-space:nowrap}
+.brand span{color:var(--ink-3);font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ink);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:500;background:var(--paper)}
+.chip.red{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+.chip.green{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.chip.amber{border-color:var(--amber);color:var(--amber);background:var(--amber-bg)}
+.chip.blue{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.chip.ghost{border-color:var(--rule);color:var(--ink-2)}
+.topbtns{display:flex;gap:8px}
+.btn{border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:8px;padding:8px 14px;font-weight:500;transition:transform .08s ease,background .15s}
+.btn:hover{background:var(--paper-2)} .btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--paper)} .btn.primary:hover{background:#000}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:6px}
+.btn.ghost{border-color:var(--rule);color:var(--ink-2)}
+/* nav */
+.nav{display:flex;gap:4px;margin:14px 0 22px;border-bottom:1px solid var(--rule)}
+.nav button{background:none;border:0;padding:10px 14px;color:var(--ink-3);font-weight:500;border-bottom:3px solid transparent;margin-bottom:-1px;font-size:14px}
+.nav button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.nav button .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-right:6px}
+/* screens */
+.screen{display:none;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:#FBF8F1;border:1px solid var(--rule);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 12px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.grid{display:grid;gap:16px}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))} .g-2{grid-template-columns:repeat(2,minmax(0,1fr))} .g-hero{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+.g-study{grid-template-columns:minmax(0,1fr) 320px}
+.g-mock{grid-template-columns:300px minmax(0,1fr)}
+.mono{font-family:var(--mono)}
+.muted{color:var(--ink-3)} .small{font-size:12.5px}
+hr.rule{border:0;border-top:1px dashed var(--rule);margin:14px 0}
+/* dashboard hero */
+.dday{font-family:var(--serif);font-size:88px;line-height:1;letter-spacing:-.02em;margin:4px 0 0}
+.dday small{font-size:22px;letter-spacing:0;color:var(--ink-2);margin-left:6px}
+.hero-sub{display:flex;gap:16px;flex-wrap:wrap;color:var(--ink-2);margin-top:10px}
+.readiness{display:flex;align-items:center;gap:18px}
+.gauge{position:relative;width:150px;height:150px;flex:none}
+.gauge svg{transform:rotate(-90deg)} .gauge .val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gauge .val b{font-family:var(--mono);font-size:30px;font-weight:500} .gauge .val span{font-size:11px;color:var(--ink-3)}
+.ready-tag{font-family:var(--serif);font-size:26px;font-weight:700}
+.ready-tag.amber{color:var(--amber)}
+/* bars */
+.bar{position:relative;height:10px;background:var(--paper-3);border-radius:6px;overflow:visible}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--ink)}
+.bar .cut{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--red);left:40%}
+.bar .cut::after{content:"과락 40%";position:absolute;top:-16px;left:-18px;font-size:10px;color:var(--red);white-space:nowrap}
+.subj{display:grid;grid-template-columns:200px minmax(0,1fr) 90px;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--rule)}
+.subj:last-child{border:0}
+.subj .name{font-weight:500} .subj .name small{display:block;color:var(--ink-3);font-weight:400;font-size:12px}
+.subj .score{text-align:right;font-family:var(--mono)}
+.todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.todo .t{border:1px solid var(--rule);border-radius:10px;padding:14px;background:var(--paper)}
+.todo .t b{font-family:var(--mono);font-size:30px;display:block;font-weight:500}
+.todo .t span{color:var(--ink-3);font-size:12.5px}
+.list{margin:0;padding:0;list-style:none} .list li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--rule)} .list li:last-child{border:0}
+/* study */
+.qhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.qhead .crumbs{color:var(--ink-2);font-size:13.5px} .qhead .crumbs b{color:var(--ink)}
+.prog{height:6px;background:var(--paper-3);border-radius:4px;overflow:hidden;margin:0 0 18px} .prog i{display:block;height:100%;background:var(--ink)}
+.qnum{font-family:var(--serif);font-size:15px;color:var(--ink-3);margin-bottom:6px}
+.stem{font-size:18px;line-height:1.6;font-weight:500;margin:0 0 16px}
+.stem u{text-decoration-thickness:2px;text-underline-offset:3px}
+.choices{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.choice{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--paper);cursor:pointer;transition:border-color .12s,background .12s}
+.choice:hover{border-color:var(--ink-3)}
+.choice .k{font-family:var(--serif);width:26px;height:26px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;flex:none;font-size:13px}
+.choice.sel{border-color:var(--ink);background:var(--paper-2)}
+.choice.ok{border-color:var(--green);background:var(--green-bg)} .choice.ok .k{background:var(--green);color:#fff;border-color:var(--green)}
+.choice.bad{border-color:var(--red);background:var(--red-bg)} .choice.bad .k{background:var(--red);color:#fff;border-color:var(--red)}
+.choice .why{display:none;font-size:13px;color:var(--ink-2);margin-top:4px}
+.revealed .choice .why{display:block}
+.revealed .choice{cursor:default}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center}
+.verdict{display:none;margin-top:18px;border-left:4px solid var(--red);background:var(--red-bg);padding:12px 16px;border-radius:0 10px 10px 0}
+.verdict.ok{border-left-color:var(--green);background:var(--green-bg)}
+.verdict b{font-family:var(--serif);font-size:18px}
+.explain{display:none;margin-top:16px}
+.revealed .verdict,.revealed .explain{display:block}
+.ex-block{border:1px solid var(--rule);border-radius:10px;padding:14px 16px;background:#FBF8F1;margin-bottom:10px}
+.ex-block h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:var(--ink-3);text-transform:uppercase}
+.ex-block.memo{background:var(--amber-bg);border-color:#E6D19A}
+.ex-block.memo p{font-family:var(--serif);font-size:17px;margin:0}
+.src{font-size:12.5px;color:var(--ink-2)} .src code{font-family:var(--mono);font-size:12px;background:var(--paper-2);padding:1px 6px;border-radius:4px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips .c{border:1px solid var(--rule);border-radius:999px;padding:4px 11px;font-size:13px;background:var(--paper);cursor:pointer}
+.chips .c.on{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.side .card{margin-bottom:14px}
+.flash-mini{border:1px dashed var(--ink-3);border-radius:10px;padding:12px;background:var(--paper)}
+.flash-mini .f{font-weight:500} .flash-mini .b{color:var(--green);font-family:var(--mono);margin-top:4px}
+textarea{width:100%;min-height:74px;border:1px solid var(--rule);border-radius:8px;padding:10px;font:inherit;font-size:13.5px;background:var(--paper);resize:vertical}
+/* mock */
+.timer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 16px;border:1.5px solid var(--ink);border-radius:12px;background:#FBF8F1;margin-bottom:16px;flex-wrap:wrap}
+.timer .t{font-family:var(--mono);font-size:34px;font-weight:500;letter-spacing:.02em}
+.timer .t.warn{color:var(--red)}
+.timer .meta{display:flex;gap:14px;align-items:center;color:var(--ink-2);font-size:13px;flex-wrap:wrap}
+.navgrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:5px}
+.navgrid button{min-width:0;aspect-ratio:1;border:1px solid var(--rule);border-radius:5px;background:var(--paper);font-family:var(--mono);font-size:11px;color:var(--ink-3);padding:0}
+.navgrid button.done{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.navgrid button.flag{background:var(--amber-bg);border-color:var(--amber);color:var(--amber)}
+.navgrid button.cur{outline:2px solid var(--blue);outline-offset:1px;color:var(--ink)}
+.navgrid button.short{border-style:dashed}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--rule);vertical-align:-2px;margin-right:4px;background:var(--paper)}
+.legend i.done{background:var(--ink);border-color:var(--ink)} .legend i.flag{background:var(--amber-bg);border-color:var(--amber)} .legend i.short{border-style:dashed}
+.sections{display:grid;gap:6px;margin-top:12px;font-size:12.5px}
+.sections div{display:flex;justify-content:space-between;color:var(--ink-2)} .sections span.mono{color:var(--ink)}
+.short-input{display:flex;gap:10px;align-items:center;margin:8px 0 4px;flex-wrap:wrap}
+.short-input input{flex:1 1 140px;min-width:0;font:inherit;font-size:18px;padding:12px 14px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;font-family:var(--serif)}
+.short-input .unit{color:var(--ink-3)}
+.blank{display:inline-block;min-width:74px;border-bottom:2px solid var(--ink);text-align:center;font-family:var(--serif);color:var(--ink-3);font-size:14px;vertical-align:bottom}
+/* results */
+.score-hero{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+.score-big{font-family:var(--mono);font-size:72px;font-weight:500;line-height:1}
+.score-big small{font-size:20px;color:var(--ink-3)}
+.pass{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--green)}
+.rs{display:grid;grid-template-columns:190px minmax(0,1fr) 120px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--rule)}
+.rs:last-child{border:0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding:6px 8px;border-bottom:1px solid var(--rule);font-weight:600}
+td{padding:9px 8px;border-bottom:1px dashed var(--rule)} tr:last-child td{border:0}
+td.mono{font-family:var(--mono)}
+.pct{display:inline-block;padding:2px 8px;border-radius:6px;font-family:var(--mono);font-size:12.5px}
+.pct.low{background:var(--red-bg);color:var(--red)} .pct.mid{background:var(--amber-bg);color:var(--amber)} .pct.hi{background:var(--green-bg);color:var(--green)}
+/* wrong notes */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.wn{border:1px solid var(--rule);border-radius:12px;background:#FBF8F1;margin-bottom:12px;overflow:hidden}
+.wn .head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;flex-wrap:wrap}
+.wn .head .q{font-weight:500}
+.wn .body{display:none;padding:0 16px 16px;border-top:1px dashed var(--rule)}
+.wn.open .body{display:block}
+.ans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.ans div{border-radius:10px;padding:10px 12px;font-size:14px}
+.ans .mine{background:var(--red-bg);border:1px solid #E5B7AD} .ans .real{background:var(--green-bg);border:1px solid #B9D3BF}
+.ans small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
+.stage{font-size:11.5px;font-family:var(--mono)}
+/* flash */
+.flash-wrap{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px}
+.flash{perspective:1200px;height:300px}
+.flash .inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d}
+.flash.flip .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border:1.5px solid var(--ink);border-radius:16px;background:#FBF8F1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:26px;backface-visibility:hidden;box-shadow:var(--shadow)}
+.face.back{transform:rotateY(180deg);background:var(--amber-bg)}
+.face .kind{position:absolute;top:14px;left:16px}
+.face .box{position:absolute;top:14px;right:16px;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.face .q{font-family:var(--serif);font-size:24px;line-height:1.4}
+.face .a{font-family:var(--serif);font-size:30px;font-weight:700}
+.face .hint{position:absolute;bottom:14px;color:var(--ink-3);font-size:12px}
+.face .mn{margin-top:10px;color:var(--ink-2);font-size:14px}
+.rate{display:flex;gap:10px;margin-top:14px}
+.rate button{flex:1;padding:12px;border-radius:10px;border:1.5px solid var(--rule);background:var(--paper);font-weight:500}
+.rate .no{border-color:var(--red);color:var(--red)} .rate .so{border-color:var(--amber);color:var(--amber)} .rate .ok{border-color:var(--green);color:var(--green)}
+.boxes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:8px}
+.boxes div{border:1px solid var(--rule);border-radius:8px;padding:8px 4px;text-align:center;background:var(--paper)}
+.boxes b{display:block;font-family:var(--mono);font-size:18px;font-weight:500} .boxes span{font-size:11px;color:var(--ink-3)}
+/* footer / mobile nav */
+.foot{margin-top:40px;padding-top:14px;border-top:1px solid var(--rule);color:var(--ink-3);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.mnav{display:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;transition:.25s;z-index:9;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+@media (max-width:900px){
+  .g-3,.g-2,.g-hero,.g-study,.g-mock,.flash-wrap{grid-template-columns:1fr}
+  .dday{font-size:64px} .dday small{display:block;margin:6px 0 0;font-size:18px} .subj{grid-template-columns:1fr;gap:8px} .subj .bar{margin-top:14px} .subj .score{text-align:left}
+  .score-hero{grid-template-columns:1fr} .rs{grid-template-columns:1fr;gap:6px} .rs .bar{margin-top:14px} .todo{grid-template-columns:repeat(3,minmax(0,1fr))} .todo .t{padding:10px} .todo .t b{font-size:24px}
+  .top{flex-wrap:wrap;gap:8px} .topbtns{width:100%;justify-content:flex-start;flex-wrap:wrap} .app{padding:0 14px 90px}
+  .nav{display:none}
+  .mnav{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;background:#FBF8F1;border-top:1px solid var(--rule);z-index:8}
+  .mnav button{border:0;background:none;padding:10px 2px 12px;font-size:11px;color:var(--ink-3)} .mnav button.on{color:var(--ink);font-weight:600}
+  .mnav button i{display:block;font-family:var(--serif);font-size:16px;font-style:normal;margin-bottom:2px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="top">
+  <div class="brand"><b>PASS LAB</b><span>맞춤형화장품조제관리사 합격 연습장 · 목업 v0.1</span></div>
+  <div class="topbtns">
+    <span class="chip red">● D-15 · 제12회 9/19(토)</span>
+    <span class="chip ghost">마지막 백업 오늘 08:10</span>
+    <button class="btn sm" onclick="toast('진행 데이터를 JSON 파일로 저장했습니다 (예시)')">백업 내보내기</button>
+  </div>
+</header>
+
+<nav class="nav" id="nav">
+  <button class="on" data-s="dash"><span class="n">01</span>대시보드</button>
+  <button data-s="study"><span class="n">02</span>학습 모드</button>
+  <button data-s="mock"><span class="n">03</span>실전 모의고사</button>
+  <button data-s="result"><span class="n">04</span>결과·분석</button>
+  <button data-s="wrong"><span class="n">05</span>오답노트</button>
+  <button data-s="flash"><span class="n">06</span>암기카드</button>
+</nav>
+
+<!-- ============ 01 대시보드 ============ -->
+<section class="screen on" id="s-dash">
+  <div class="grid g-hero">
+    <div class="card">
+      <h3>시험까지</h3>
+      <div class="dday">D-15<small>2026.09.19 (토) 10:00~12:00</small></div>
+      <div class="hero-sub">
+        <span>오늘 <b>9/4 (목)</b></span><span>·</span>
+        <span>트랙 <b>스프린트(14일)</b></span><span>·</span>
+        <span>하루 목표 <b class="mono">90분</b></span>
+      </div>
+      <hr class="rule">
+      <div class="todo">
+        <div class="t"><b>40</b><span>오늘 풀 문제<br>취약 20 · 복습 12 · 새 문항 8</span></div>
+        <div class="t"><b>12</b><span>복습 만기 오답<br>어제 틀린 7개 포함</span></div>
+        <div class="t"><b>20</b><span>암기카드<br>숫자 12 · 목록 8</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" onclick="go('study')">오늘의 학습 시작 →</button>
+        <button class="btn" onclick="go('mock')">모의고사 보기</button>
+        <span class="muted small">지금까지 오늘 <span class="mono">18분</span> 학습</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>합격 준비도 · Pass Readiness</h3>
+      <div class="readiness">
+        <div class="gauge">
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <circle cx="75" cy="75" r="64" fill="none" stroke="#E3DAC7" stroke-width="12"/>
+            <circle cx="75" cy="75" r="64" fill="none" stroke="#B8821A" stroke-width="12" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="156"/>
+            <line x1="75" y1="5" x2="75" y2="17" stroke="#B9331F" stroke-width="3" transform="rotate(216 75 75)"/>
+          </svg>
+          <div class="val"><b>612</b><span>예상 점수 / 1000</span></div>
+        </div>
+        <div>
+          <div class="ready-tag amber">BORDERLINE · 경계</div>
+          <p class="small muted" style="margin:6px 0 10px">합격선 600점까지 여유 <b class="mono">+12</b>. 모의고사 2회 이상 반영되면 예측 신뢰도가 올라갑니다(현재: 진단 1회 + 학습 214문항).</p>
+          <div class="chips"><span class="chip red">과락 위험 · ③ 유통화장품</span><span class="chip amber">단답형 정답률 41%</span><span class="chip ghost">과락 주의 · ① 화장품법(표본 10)</span></div>
+        </div>
+      </div>
+      <hr class="rule">
+      <h3>과목별 숙달도 · 과락선 40%</h3>
+      <div class="subj"><div class="name">① 화장품법의 이해<small>10문항 · 100점</small></div><div class="bar"><i style="width:68%"></i><span class="cut"></span></div><div class="score">68% <span class="chip green" style="margin-left:6px">안전</span></div></div>
+      <div class="subj"><div class="name">② 제조 및 품질관리<small>25문항 · 250점</small></div><div class="bar"><i style="width:57%"></i><span class="cut"></span></div><div class="score">57% <span class="chip amber" style="margin-left:6px">주의</span></div></div>
+      <div class="subj"><div class="name">③ 유통화장품 안전관리<small>25문항 · 250점 · 전부 선다형</small></div><div class="bar"><i style="width:43%"></i><span class="cut"></span></div><div class="score">43% <span class="chip red" style="margin-left:6px">위험</span></div></div>
+      <div class="subj"><div class="name">④ 맞춤형화장품의 이해<small>40문항 · 400점 · 단답 12</small></div><div class="bar"><i style="width:66%"></i><span class="cut"></span></div><div class="score">66% <span class="chip green" style="margin-left:6px">안전</span></div></div>
+    </div>
+  </div>
+
+  <div class="grid g-3" style="margin-top:16px">
+    <div class="card">
+      <h3>가장 약한 세부항목 · 먼저 공부할 것</h3>
+      <ul class="list">
+        <li><span>3.4 유통화장품 안전관리 기준<br><span class="muted small">비의도적 유래물질·미생물 한도·pH</span></span><span class="pct low">42%</span></li>
+        <li><span>2.3 사용제한 원료<br><span class="muted small">보존제·자외선차단 성분 한도</span></span><span class="pct low">50%</span></li>
+        <li><span>4.6 혼합 및 소분<br><span class="muted small">배합한도·규격(pH·점도)·기구</span></span><span class="pct mid">55%</span></li>
+      </ul>
+      <div class="actions"><button class="btn sm" onclick="go('study')">약점 집중 20문항</button></div>
+    </div>
+    <div class="card">
+      <h3>최근 시험 기록</h3>
+      <ul class="list">
+        <li><span>9/4 진단 30문항<br><span class="muted small">학습모드 · 26분</span></span><span class="mono">57%</span></li>
+        <li><span class="muted">하프 모의 50문항 (9/7 예정)<br><span class="small">①②③ · 60분 · 실전</span></span><span class="mono muted">—</span></li>
+        <li><span class="muted">Full 모의 #1 (9/11 예정)<br><span class="small">100문항 · 120분 · #2 9/13 · #3 9/16</span></span><span class="mono muted">—</span></li>
+      </ul>
+      <div class="actions"><button class="btn sm" onclick="go('result')">결과 화면 예시 보기</button></div>
+    </div>
+    <div class="card">
+      <h3>오답노트 · 암기카드 현황</h3>
+      <ul class="list">
+        <li><span>오답 누적</span><span class="mono">34 <span class="muted">(신규 12 · 복습중 18 · 졸업 4)</span></span></li>
+        <li><span>암기카드 박스 분포</span><span class="mono">24 · 31 · 18 · 9 · 3</span></li>
+        <li><span>찍어서 맞힌 문제(취약 포함)</span><span class="mono">6</span></li>
+      </ul>
+      <div class="actions"><button class="btn sm ghost" onclick="toast('약점 리포트를 복사했습니다 → 클로드에 붙여넣어 코칭 요청 (예시)')">약점 리포트 복사 → 클로드 코칭</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 학습 모드 ============ -->
+<section class="screen" id="s-study">
+  <div class="grid g-study">
+    <div>
+      <div class="qhead">
+        <div class="crumbs"><b>② 화장품 제조 및 품질관리</b> › 2.3.2 착향제 알레르기 유발물질 · <span class="chip ghost">약점 집중</span></div>
+        <div class="mono small muted">7 / 20 · 경과 00:41</div>
+      </div>
+      <div class="prog"><i style="width:35%"></i></div>
+
+      <div class="card" id="qcard">
+        <div class="qnum">문항 7 · 선다형 · 난이도 ●●●○○</div>
+        <p class="stem">착향제 구성 성분 중 알레르기 유발성분을 제품에 표시해야 하는 기준으로 <u>옳은</u> 것은?</p>
+        <ul class="choices" id="choices">
+          <li class="choice" data-i="0"><span class="k">①</span><div>사용 후 씻어내는 제품 0.001% 초과, 씻어내지 않는 제품 0.01% 초과<div class="why">✕ 두 기준이 서로 바뀌었다. 씻어내는 제품이 더 느슨(0.01%)하다.</div></div></li>
+          <li class="choice" data-i="1"><span class="k">②</span><div>사용 후 씻어내는 제품 0.01% 초과, 씻어내지 않는 제품 0.001% 초과<div class="why">✓ 정답. 「화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정」 기준.</div></div></li>
+          <li class="choice" data-i="2"><span class="k">③</span><div>모든 제품 0.01% 초과 시 표시<div class="why">✕ 제품 유형(씻어내는/씻어내지 않는)에 따라 기준이 다르다.</div></div></li>
+          <li class="choice" data-i="3"><span class="k">④</span><div>모든 제품 0.1% 초과 시 표시<div class="why">✕ 0.1%는 어떤 유형에도 해당하지 않는 수치(함정: 자릿수 흔들기).</div></div></li>
+          <li class="choice" data-i="4"><span class="k">⑤</span><div>함량과 무관하게 25종 모두 표시<div class="why">✕ 25종은 '대상 성분' 수. 표시 의무는 함량 기준을 초과할 때만.</div></div></li>
+        </ul>
+        <div class="actions">
+          <button class="btn primary" id="submitBtn" onclick="submitQ()">제출</button>
+          <button class="btn ghost" onclick="toast('건너뛴 문항은 오늘 복습 목록 끝에 다시 나옵니다 (예시)')">모르겠음 · 건너뛰기</button>
+          <span class="muted small">자신감: </span>
+          <div class="chips" id="conf"><span class="c on">확실</span><span class="c">애매</span><span class="c">찍음</span></div>
+        </div>
+
+        <div class="verdict" id="verdict"><b>✕ 오답</b> — 내 답 ①, 정답 ②. 이 문항은 오답노트에 추가되고 <b class="mono">오늘 세션 끝 · 9/5 · 9/8 · 9/14</b>에 변형 문항으로 다시 나옵니다.</div>
+
+        <div class="explain">
+          <div class="ex-block">
+            <h4>왜 틀렸나 · 이유 선택</h4>
+            <div class="chips" id="why"><span class="c">몰랐다</span><span class="c on">헷갈렸다</span><span class="c">숫자·용어 착오</span><span class="c">잘못 읽었다</span><span class="c">찍었다</span></div>
+          </div>
+          <div class="ex-block memo">
+            <h4>시험 한 줄 암기</h4>
+            <p>"씻어내면 <b>0.01</b>, 남으면 <b>0.001</b>" — 피부에 남는 쪽이 10배 엄격.</p>
+          </div>
+          <div class="ex-block">
+            <h4>핵심 개념</h4>
+            착향제(향료)는 성분명 대신 '향료'로 표시할 수 있으나, 알레르기 유발성분 <b>25종</b>은 기준 함량을 초과하면 성분명을 표시해야 한다. 기준은 제품이 피부에 남는지 여부로 갈린다.
+          </div>
+          <div class="ex-block">
+            <h4>출제자의 함정</h4>
+            두 수치를 뒤집어 놓거나(①), 자릿수를 하나 옮기거나(④), '25종'을 함량 기준과 섞는다(⑤). 단답형에서는 "㉠ 0.01, ㉡ 0.001" 빈칸으로도 나온다.
+          </div>
+          <div class="ex-block">
+            <h4>근거</h4>
+            <div class="src"><code>화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 별표2</code> · <code>교수학습가이드 개정4판 2과목 3장</code> · 시행일 확인 <span class="chip green" style="font-size:11px">검증됨</span></div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" onclick="toast('다음 문항으로 (예시)')">다음 문항 →</button>
+            <button class="btn" onclick="toast('문항+내 답+틀린 이유를 프롬프트로 복사했습니다. 클로드에 붙여넣으세요 (예시)')">이 문제 클로드에게 설명 요청</button>
+            <button class="btn ghost" onclick="toast('연결 암기카드 2장을 오늘 덱에 추가 (예시)')">카드 2장 추가</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card">
+        <h3>연결된 암기카드</h3>
+        <div class="flash-mini"><div class="f">알레르기 유발 착향제 표시 기준(씻어내는 / 씻어내지 않는)</div><div class="b">0.01% / 0.001% 초과</div></div>
+        <div class="flash-mini" style="margin-top:8px"><div class="f">알레르기 유발 착향제 성분 수</div><div class="b">25종</div></div>
+      </div>
+      <div class="card">
+        <h3>내 말로 한 줄 메모</h3>
+        <textarea placeholder="예) 향수처럼 남는 건 더 조심 → 0.001. 씻는 건 0.01."></textarea>
+        <div class="actions"><button class="btn sm" onclick="toast('메모 저장 (예시)')">저장</button><span class="muted small">오답노트에 함께 표시됩니다</span></div>
+      </div>
+      <div class="card">
+        <h3>이 세션</h3>
+        <ul class="list small">
+          <li><span>정답</span><span class="mono">4 / 6</span></li>
+          <li><span>평균 풀이 시간</span><span class="mono">52초</span></li>
+          <li><span>오답노트 추가</span><span class="mono">2</span></li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 03 실전 모의고사 ============ -->
+<section class="screen" id="s-mock">
+  <div class="timer">
+    <div><div class="small muted" style="letter-spacing:.08em">남은 시간 · 120분 실전</div><div class="t" id="timer">01:47:22</div></div>
+    <div class="meta">
+      <span>답함 <b class="mono">38</b>/100</span><span>검토표시 <b class="mono">3</b></span><span>구간 <b>③ 유통화장품 안전관리</b> (36~60)</span>
+      <span class="chip green">● 자동저장 12초 전</span>
+    </div>
+    <div class="actions" style="margin:0"><button class="btn ghost sm" onclick="toast('시험을 중단해도 이어서 풀 수 있습니다. 대시보드에 [이어서 풀기]가 표시됩니다 (예시)')">잠시 중단</button><button class="btn sm" onclick="toast('종료 전 확인: 미답 62문항이 있습니다 (예시)')">시험 종료·채점</button></div>
+  </div>
+
+  <div class="grid g-mock">
+    <div class="card">
+      <h3>문항 이동</h3>
+      <div class="navgrid" id="navgrid"></div>
+      <div class="legend"><span><i class="done"></i>답함</span><span><i></i>미답</span><span><i class="flag"></i>검토표시</span><span><i class="short"></i>단답형(81~100)</span></div>
+      <div class="sections">
+        <div><span>① 화장품법 1~10</span><span class="mono">10/10</span></div>
+        <div><span>② 제조·품질 11~35</span><span class="mono">25/25</span></div>
+        <div><span>③ 유통 안전관리 36~60</span><span class="mono">3/25</span></div>
+        <div><span>④ 맞춤형 61~100</span><span class="mono">0/40</span></div>
+      </div>
+      <hr class="rule">
+      <div class="small muted">시간 배분 가이드(추정): 선다형 80문항 70분 → 단답형 20문항 35분 → 마킹 15분. 현재 페이스 <b style="color:var(--green)">양호</b>.</div>
+    </div>
+
+    <div class="card">
+      <div class="qnum">문항 39 · 선다형 · ③ 유통화장품 안전관리</div>
+      <p class="stem">「화장품 안전기준 등에 관한 규정」상 유통화장품의 안전관리 기준에서 <u>pH 3.0~9.0</u> 기준의 적용을 받지 <u>않는</u> 제품은?</p>
+      <ul class="choices">
+        <li class="choice" onclick="pick(this)"><span class="k">①</span><div>영·유아용 로션</div></li>
+        <li class="choice" onclick="pick(this)"><span class="k">②</span><div>아이섀도(눈 화장용 제품류)</div></li>
+        <li class="choice" onclick="pick(this)"><span class="k">③</span><div>사용 후 곧바로 물로 씻어내는 클렌징 폼</div></li>
+        <li class="choice" onclick="pick(this)"><span class="k">④</span><div>기초화장용 크림</div></li>
+        <li class="choice" onclick="pick(this)"><span class="k">⑤</span><div>헤어 토닉(두발용 제품류)</div></li>
+      </ul>
+      <div class="actions">
+        <button class="btn ghost" onclick="toast('이전 문항 (예시)')">← 이전</button>
+        <button class="btn" onclick="toast('검토표시 토글 (예시)')">⚑ 검토표시</button>
+        <button class="btn primary" onclick="toast('다음 문항 40 (예시)')">다음 →</button>
+        <span class="muted small">실전 모드: 해설은 종료 후에만 표시됩니다</span>
+      </div>
+      <hr class="rule">
+      <div class="qnum">미리보기 · 문항 84 · 단답형 · ④ 맞춤형화장품의 이해</div>
+      <p class="stem" style="font-size:16.5px">맞춤형화장품판매업자는 판매내역서에 제조번호, <span class="blank">㉠</span> 또는 개봉 후 사용기간, 판매일자 및 <span class="blank">㉡</span>을 기재·보관해야 한다. ㉠, ㉡에 들어갈 말을 쓰시오.</p>
+      <div class="short-input"><input placeholder="㉠ 답 입력" value="사용기한"><input placeholder="㉡ 답 입력"><span class="unit small">Enter로 다음 칸</span></div>
+      <div class="small muted">단답형 채점: 띄어쓰기·전각/반각·'%' 표기 차이는 허용, 동의어는 문항별 허용표기 목록 기준. 복수 빈칸은 전부 맞아야 정답(기본값).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 결과·분석 ============ -->
+<section class="screen" id="s-result">
+  <div class="card">
+    <h3>Full 모의고사 #1 · 9/11 (예시 데이터)</h3>
+    <div class="score-hero">
+      <div><div class="score-big">640<small> / 1000</small></div><div class="pass">✓ PASS · 합격권</div><div class="small muted">합격선 600 + 전 과목 40% 충족 · 소요 <span class="mono">1:52:10</span> · 찍음 보정 점수 <span class="mono">592</span>(찍어서 맞힌 6문항 × −8)</div></div>
+      <div>
+        <div class="rs"><div>① 화장품법의 이해</div><div class="bar"><i style="width:60%"></i><span class="cut"></span></div><div class="mono">60 / 100 <span class="chip green" style="font-size:11px">통과</span></div></div>
+        <div class="rs"><div>② 제조 및 품질관리</div><div class="bar"><i style="width:60%"></i><span class="cut"></span></div><div class="mono">150 / 250 <span class="chip green" style="font-size:11px">통과</span></div></div>
+        <div class="rs"><div>③ 유통화장품 안전관리</div><div class="bar"><i style="width:44%"></i><span class="cut"></span></div><div class="mono">110 / 250 <span class="chip amber" style="font-size:11px">과락 근접</span></div></div>
+        <div class="rs"><div>④ 맞춤형화장품의 이해</div><div class="bar"><i style="width:80%"></i><span class="cut"></span></div><div class="mono">320 / 400 <span class="chip green" style="font-size:11px">통과</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g-3" style="margin-top:16px">
+    <div class="card">
+      <h3>정확도</h3>
+      <ul class="list">
+        <li><span>선다형 80문항</span><span class="mono">55 정답 · 69%</span></li>
+        <li><span>단답형 20문항</span><span class="mono">9 정답 · <span style="color:var(--red)">45%</span></span></li>
+        <li><span>평균 풀이 시간</span><span class="mono">58초</span></li>
+        <li><span>가장 오래 걸린 문항</span><span class="mono">#37 · 3:12</span></li>
+        <li><span>찍어서 맞힌 문항 → 취약 편입</span><span class="mono">6</span></li>
+      </ul>
+    </div>
+    <div class="card" style="grid-column:span 2">
+      <h3>세부항목 정답률 · 낮은 순</h3>
+      <table>
+        <tr><th>세부항목</th><th>문항</th><th>정답률</th><th>처방</th></tr>
+        <tr><td>3.4 유통화장품 안전관리 기준(비의도적 유래물질·미생물·pH)</td><td class="mono">8</td><td><span class="pct low">38%</span></td><td>숫자 카드 14장 + 변형 10문항</td></tr>
+        <tr><td>2.3 사용제한 원료(보존제·자외선차단)</td><td class="mono">6</td><td><span class="pct low">50%</span></td><td>한도표 카드 + 단답 연습</td></tr>
+        <tr><td>3.1~3.3 작업장·작업자·설비 위생</td><td class="mono">9</td><td><span class="pct mid">56%</span></td><td>절차형 카드</td></tr>
+        <tr><td>4.6 혼합·소분(배합한도·규격·기구)</td><td class="mono">10</td><td><span class="pct mid">60%</span></td><td>사례형 5문항</td></tr>
+        <tr><td>4.2 피부·모발 생리구조</td><td class="mono">7</td><td><span class="pct hi">86%</span></td><td>유지</td></tr>
+        <tr><td>1.1 화장품법(정의·영업·품질요소)</td><td class="mono">7</td><td><span class="pct hi">86%</span></td><td>유지</td></tr>
+      </table>
+      <div class="actions">
+        <button class="btn primary" onclick="go('wrong')">오답 36개 → 오답노트</button>
+        <button class="btn" onclick="toast('약점 리포트(과목·세부항목·유형·시간)를 복사했습니다 → 클로드 코칭 (예시)')">약점 리포트 복사</button>
+        <button class="btn ghost" onclick="toast('이 결과가 예상 점수에 가중 반영됩니다 (예시)')">예상 점수 갱신</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 오답노트 ============ -->
+<section class="screen" id="s-wrong">
+  <div class="filters">
+    <span class="chip">전체 34</span><span class="chip red">신규 12</span><span class="chip amber">복습중 18</span><span class="chip green">졸업 4</span>
+    <span class="chip ghost">③ 유통 14</span><span class="chip ghost">② 제조 9</span><span class="chip ghost">④ 맞춤형 8</span><span class="chip ghost">① 법 3</span>
+    <span class="chip ghost">단답형만</span>
+    <span style="flex:1"></span>
+    <button class="btn sm primary" onclick="toast('오늘 만기 오답 12개 재시험 시작 (예시)')">만기 12개 재시험</button>
+    <button class="btn sm ghost" onclick="toast('오답노트를 파일로 내보냈습니다 (예시)')">내보내기</button>
+  </div>
+
+  <div class="wn open">
+    <div class="head" onclick="this.parentElement.classList.toggle('open')">
+      <div><span class="chip ghost">③ 3.4</span> <span class="q">비의도적 유래물질 검출 허용한도 — 납·니켈</span></div>
+      <div class="chips"><span class="chip red">신규 · 2회 오답</span><span class="stage muted">다음 복습 9/5</span></div>
+    </div>
+    <div class="body">
+      <div class="ans">
+        <div class="mine"><small>내 답 (9/4 · 헷갈렸다)</small>납 10㎍/g, 니켈 20㎍/g</div>
+        <div class="real"><small>정답</small>납 20㎍/g (점토 분말제품 50), 니켈 10㎍/g (눈 화장용 35 · 색조 30)</div>
+      </div>
+      <div class="ex-block memo"><h4>시험 한 줄 암기</h4><p>납 <b>20</b>·니켈 <b>10</b>·비소 <b>10</b>·수은 <b>1</b>·안티몬 <b>10</b>·카드뮴 <b>5</b> — "이(2)십 납, 일 수은, 오 카드뮴"</p></div>
+      <div class="grid g-2">
+        <div class="ex-block"><h4>왜 틀렸나</h4>납과 니켈의 기본 한도를 서로 바꿔 기억. 예외값(점토 50 / 눈 35 / 색조 30)이 붙는 쪽이 헷갈림의 원인.</div>
+        <div class="ex-block"><h4>출제자의 함정</h4>기본값 대신 예외값만 보기에 넣거나, 단위를 ㎍/g ↔ ppm으로 바꿔 묻는다(둘은 같은 크기).</div>
+      </div>
+      <div class="ex-block"><h4>근거</h4><div class="src"><code>화장품 안전기준 등에 관한 규정 제6조 제1항</code> · <code>가이드 개정4판 3과목 4장</code> <span class="chip green" style="font-size:11px">검증됨</span></div></div>
+      <div class="ex-block"><h4>내 메모</h4><textarea style="min-height:52px">납은 무거우니까 더 크게 20. 니켈은 눈·색조에서만 관대.</textarea></div>
+      <div class="actions">
+        <button class="btn primary" onclick="toast('같은 개념의 변형 문항(단답형)으로 다시 풀기 (예시)')">변형 문항으로 다시 풀기</button>
+        <button class="btn" onclick="toast('연결 문항 3개 (예시)')">관련 문항 3</button>
+        <button class="btn ghost" onclick="toast('연속 2회 정답(찍음 없음) + 마지막 오답 후 3일 경과 시 자동 졸업 (예시)')">졸업 조건 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wn">
+    <div class="head" onclick="this.parentElement.classList.toggle('open')">
+      <div><span class="chip ghost">② 2.3</span> <span class="q">보존제 사용한도 — 페녹시에탄올·벤질알코올·소르빅애씨드</span></div>
+      <div class="chips"><span class="chip amber">복습중 · 1회 정답</span><span class="stage muted">다음 복습 9/7</span></div>
+    </div>
+    <div class="body"><div class="ans"><div class="mine"><small>내 답 (9/3 · 숫자 착오)</small>소르빅애씨드 1.0%</div><div class="real"><small>정답</small>소르빅애씨드 및 그 염류 0.6% · 페녹시에탄올 1.0% · 벤질알코올 1.0%</div></div><div class="ex-block memo"><h4>시험 한 줄 암기</h4><p>"페·벤은 1.0, 소르빅은 0.6, 살리실릭 0.5, 클로페네신 0.3"</p></div></div>
+  </div>
+
+  <div class="wn">
+    <div class="head" onclick="this.parentElement.classList.toggle('open')">
+      <div><span class="chip ghost">④ 4.5 · 단답</span> <span class="q">맞춤형화장품 판매내역서 기재사항</span></div>
+      <div class="chips"><span class="chip amber">복습중</span><span class="stage muted">다음 복습 9/6</span></div>
+    </div>
+    <div class="body"><div class="ans"><div class="mine"><small>내 답</small>제조번호, 판매일자</div><div class="real"><small>정답</small>제조번호 · 사용기한 또는 개봉 후 사용기간 · 판매일자 및 판매량</div></div><div class="ex-block"><h4>근거</h4><div class="src"><code>화장품법 시행규칙 제12조의2</code> <span class="chip amber" style="font-size:11px">조문 번호 재확인</span></div></div></div>
+  </div>
+
+  <div class="wn">
+    <div class="head" onclick="this.parentElement.classList.toggle('open')">
+      <div><span class="chip ghost">① 1.2</span> <span class="q">개인정보 파기 시점 — "지체 없이"의 기간</span></div>
+      <div class="chips"><span class="chip green">졸업 · 연속 3회 정답</span></div>
+    </div>
+    <div class="body"><div class="ex-block memo"><h4>시험 한 줄 암기</h4><p>보유기간 경과·목적 달성 → 지체 없이(<b>5일 이내</b>) 파기</p></div></div>
+  </div>
+</section>
+
+<!-- ============ 06 암기카드 ============ -->
+<section class="screen" id="s-flash">
+  <div class="flash-wrap">
+    <div>
+      <div class="qhead">
+        <div class="crumbs"><b>오늘 만기 20장</b> · 숫자 12 · 목록 8 · <span class="chip ghost">3.4 안전관리 기준</span></div>
+        <div class="mono small muted">3 / 20</div>
+      </div>
+      <div class="prog"><i style="width:15%"></i></div>
+      <div class="flash" id="flash" onclick="this.classList.toggle('flip')">
+        <div class="inner">
+          <div class="face front"><span class="chip amber kind">숫자</span><span class="box">박스 2 · 간격 1일</span><div class="q">유통화장품 안전관리 기준<br>총호기성생균수 — <b>영·유아용 · 눈 화장용</b> 제품</div><div class="hint">카드를 누르면 뒤집힙니다</div></div>
+          <div class="face back"><span class="chip amber kind">숫자</span><span class="box">박스 2 · 간격 1일</span><div class="a">500개/g(mL) 이하</div><div class="mn">기타 화장품 1,000 · 물휴지 세균·진균 각 100 · 대장균/녹농균/황색포도상구균 불검출<br><span class="small muted">근거: 화장품 안전기준 등에 관한 규정 제6조</span></div></div>
+        </div>
+      </div>
+      <div class="rate">
+        <button class="no" onclick="toast('박스 1로 → 오늘 세션 끝에 다시 (예시)')">✕ 모름 · 오늘 다시</button>
+        <button class="so" onclick="toast('박스 유지 → 내일 (예시)')">△ 애매 · 내일</button>
+        <button class="ok" onclick="toast('박스 3으로 → 2일 후 (D-3부터는 간격 상한 1일) (예시)')">✓ 알아요 · 2일 후</button>
+      </div>
+    </div>
+    <aside>
+      <div class="card">
+        <h3>박스 분포 · Leitner 5단계</h3>
+        <div class="boxes"><div><b>24</b><span>①당일</span></div><div><b>31</b><span>②1일</span></div><div><b>18</b><span>③2일</span></div><div><b>9</b><span>④4일</span></div><div><b>3</b><span>⑤7일</span></div></div>
+        <hr class="rule">
+        <h3>카테고리</h3>
+        <div class="chips"><span class="c on">안전관리 기준 숫자</span><span class="c">보존제 한도</span><span class="c">자외선차단 한도</span><span class="c">알레르기 25종</span><span class="c">표시·기재</span><span class="c">기한·일수</span><span class="c">피부·모발</span><span class="c">행정처분</span></div>
+        <hr class="rule">
+        <div class="small muted">시험 3일 전(9/16)부터 박스 1~3은 매일, 박스 4~5는 D-1에 한 번 전체 훑기. 틀린 문항의 연결 카드는 박스 1로 자동 편입됩니다(내 메모리 노트).</div>
+        <div class="actions"><button class="btn sm ghost" onclick="toast('MEMORY NOTE(개인 취약 개념 압축본)를 한 장으로 내보냈습니다 (예시)')">암기노트 한 장으로 내보내기</button></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>PASS LAB 목업 v0.1 · 2026-09-04 · 모든 수치는 예시 데이터. 문항 근거는 빌드 단계에서 법령·가이드 원문으로 재검증.</span>
+  <span>데이터: 브라우저 저장 + JSON 백업 · 서버 없음</span>
+</footer>
+</div>
+
+<nav class="mnav" id="mnav">
+  <button class="on" data-s="dash"><i>홈</i>대시보드</button>
+  <button data-s="study"><i>學</i>학습</button>
+  <button data-s="mock"><i>試</i>모의고사</button>
+  <button data-s="result"><i>％</i>결과</button>
+  <button data-s="wrong"><i>✕</i>오답</button>
+  <button data-s="flash"><i>卡</i>카드</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+// 탭 전환
+function go(s){
+  document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on',e.id==='s-'+s));
+  document.querySelectorAll('#nav button,#mnav button').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('#nav button,#mnav button').forEach(b=>b.addEventListener('click',()=>{go(b.dataset.s);history.replaceState(null,'','#'+b.dataset.s);}));
+if(location.hash&&document.getElementById('s-'+location.hash.slice(1)))go(location.hash.slice(1));
+// 토스트
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200);}
+// 학습모드: 보기 선택 → 제출 → 즉시 해설
+let sel=null;const ANSWER=1;
+document.querySelectorAll('#choices .choice').forEach(c=>c.addEventListener('click',()=>{
+  if(document.getElementById('qcard').classList.contains('revealed'))return;
+  document.querySelectorAll('#choices .choice').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');sel=+c.dataset.i;
+}));
+function submitQ(){
+  if(sel===null){toast('보기를 먼저 선택하세요');return;}
+  const card=document.getElementById('qcard');card.classList.add('revealed');
+  document.querySelectorAll('#choices .choice').forEach(c=>{const i=+c.dataset.i;if(i===ANSWER)c.classList.add('ok');else if(i===sel)c.classList.add('bad');c.classList.remove('sel');});
+  const v=document.getElementById('verdict');
+  if(sel===ANSWER){v.classList.add('ok');v.innerHTML='<b>✓ 정답</b> — 자신감 "확실"로 기록. 자신감 "확실"로 맞힌 것만 숙달로 인정됩니다(찍음은 0.15점).';document.getElementById('why').closest('.ex-block').style.display='none';}
+  else{v.innerHTML='<b>✕ 오답</b> — 내 답 '+['①','②','③','④','⑤'][sel]+', 정답 ②. 오답노트에 추가되고 <b class="mono">오늘 세션 끝 · 9/5 · 9/8 · 9/14</b>에 변형 문항으로 다시 나옵니다.';}
+  document.getElementById('submitBtn').disabled=true;document.getElementById('submitBtn').textContent='제출됨';
+}
+// 칩 토글
+
+document.querySelectorAll('#conf .c, #why .c, aside .chips .c').forEach(c=>c.addEventListener('click',()=>{c.parentElement.querySelectorAll('.c').forEach(x=>x.classList.remove('on'));c.classList.add('on');}));
+// 모의고사: 보기 선택 표시
+function pick(el){el.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
+// 문항 네비게이터 1~100
+const ng=document.getElementById('navgrid');
+for(let i=1;i<=100;i++){const b=document.createElement('button');b.textContent=i;if(i<=38)b.classList.add('done');if([12,27,37].includes(i))b.classList.add('flag');if(i===39)b.classList.add('cur');if(i>=81)b.classList.add('short');b.onclick=()=>toast('문항 '+i+'로 이동 (예시)');ng.appendChild(b);}
+// 타이머(데모)
+let secs=1*3600+47*60+22;setInterval(()=>{secs--;const h=String(Math.floor(secs/3600)).padStart(2,'0'),m=String(Math.floor(secs%3600/60)).padStart(2,'0'),s=String(secs%60).padStart(2,'0');const t=document.getElementById('timer');t.textContent=h+':'+m+':'+s;if(secs<600)t.classList.add('warn');},1000);
+</script>
+</body>
+</html>
