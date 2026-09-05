@@ -269,10 +269,38 @@ test("gradeShort: blanks 2개 — 전부 맞아야 정답, 빈칸별 ○×", () 
 test("gradeShort: grade='set'은 순서 무관 집합 비교", () => {
   const q = short({ grade: "set", answer_text: ["납", "니켈", "비소"] });
   assert.equal(C.gradeShort(q, "비소, 납/니켈").correct, true);
-  assert.equal(C.gradeShort(q, "납 니켈 비소").correct, true);
+  // 공백은 분리자가 아니다 — 항목 안에 공백이 들어가는 답("화장품의 명칭")을 살리기 위한 맞바꿈
+  assert.equal(C.gradeShort(q, "납 니켈 비소").correct, false);
   assert.equal(C.gradeShort(q, "납, 니켈").correct, false);
   assert.equal(C.gradeShort(q, "납, 니켈, 비소, 수은").correct, false);
   assert.deepEqual(C.gradeShort(q, "비소, 납/니켈").normalized, ["비소", "납", "니켈"]);
+});
+
+test("gradeShort set: 항목에 공백이 들어가도 채점된다(공백은 분리자가 아니다)", () => {
+  const q = short({ grade: "set", answer_text: ["화장품의 명칭", "영업자의 상호", "제조번호", "사용기한"] });
+  // (a) 쉼표로 구분한 그대로
+  assert.equal(C.gradeShort(q, "화장품의 명칭, 영업자의 상호, 제조번호, 사용기한").correct, true);
+  // (b) 순서 무관
+  assert.equal(C.gradeShort(q, "사용기한, 제조번호, 영업자의 상호, 화장품의 명칭").correct, true);
+  // (c) 하나 빠지면 오답
+  assert.equal(C.gradeShort(q, "화장품의 명칭, 영업자의 상호, 제조번호").correct, false);
+  // (d) 빗금·모점·쌍반점·줄바꿈도 분리자
+  assert.equal(C.gradeShort(q, "화장품의 명칭/영업자의 상호、제조번호;사용기한").correct, true);
+  assert.equal(C.gradeShort(q, "화장품의 명칭\n영업자의 상호\n제조번호\n사용기한").correct, true);
+  // 항목 안 공백은 normalizeShort가 지우므로 붙여 써도 같다
+  assert.equal(C.gradeShort(q, "화장품의명칭,영업자의상호,제조번호,사용기한").correct, true);
+  // 없는 항목을 더 쓰면 오답
+  assert.equal(C.gradeShort(q, "화장품의 명칭, 영업자의 상호, 제조번호, 사용기한, 가격").correct, false);
+  assert.deepEqual(
+    C.gradeShort(q, "화장품의 명칭, 영업자의 상호, 제조번호, 사용기한").normalized,
+    ["화장품의명칭", "영업자의상호", "제조번호", "사용기한"]
+  );
+});
+
+test("gradeShort set: answer_text 한 칸에 열거를 몰아 써도 같은 방식으로 쪼갠다", () => {
+  const q = short({ grade: "set", answer_text: ["화장품의 명칭, 영업자의 상호, 제조번호"] });
+  assert.equal(C.gradeShort(q, "제조번호/영업자의 상호/화장품의 명칭").correct, true);
+  assert.equal(C.gradeShort(q, "제조번호, 화장품의 명칭").correct, false);
 });
 
 test("gradeMcq: given === q.answer", () => {

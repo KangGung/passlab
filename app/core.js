@@ -199,10 +199,15 @@
     return { stage: 4, correct: false, needSelfMark: true };
   }
 
+  // 열거형(grade:"set") 답의 분리자: 쉼표·모점·빗금·쌍반점·줄바꿈.
+  // **공백은 분리자가 아니다** — "화장품의 명칭"처럼 항목 안에 공백이 들어가는 답이 있기 때문이다.
+  // 항목 안 공백은 normalizeShort가 지우므로 "화장품의 명칭"과 "화장품의명칭"은 같게 채점된다.
+  const SET_SPLIT_RE = /[,、\/;\r\n]+/;
+
   function splitSet(raw) {
     return String(raw == null ? "" : raw)
-      .split(/[,/·\s]+/)
-      .map(normalizeShort)
+      .split(SET_SPLIT_RE)
+      .map(function (x) { return normalizeShort(x.trim()); })
       .filter(function (x) { return x.length > 0; });
   }
 
@@ -245,7 +250,11 @@
     /* 열거형: 순서 무관 집합 비교 */
     if (q.grade === "set") {
       const inTokens = splitSet(input);
-      const ansTokens = answersRaw.map(normalizeShort).filter(function (x) { return x.length > 0; });
+      // answer_text도 같은 방식으로 쪼갠다(한 칸에 "가, 나, 다"를 몰아 써도 되게)
+      const ansTokens = [];
+      answersRaw.forEach(function (a) {
+        splitSet(a).forEach(function (tok) { ansTokens.push(tok); });
+      });
       const eq = function (a, b) {
         if (a.length !== b.length) return false;
         const bb = b.slice();
