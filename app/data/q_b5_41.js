@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-01"],
     tags: ["맞춤형화장품", "정의", "혼합", "소분", "화장비누"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -36,10 +36,10 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     type: "short", qtype: "term", points: 8, difficulty: 2, importance: "M", vg: "VG-B5-정의2형",
     stem: "「화장품법」 제2조제3호의2나목 단서는 '고형(固形) 비누 등 총리령으로 정하는 화장품의 내용물을 단순 소분한 화장품'을 맞춤형화장품에서 제외한다. 같은 법 시행규칙 제2조의2가 이때 '총리령으로 정하는 화장품'으로 정하고 있는 것을 쓰시오. (조문에 적힌 약칭으로 답해도 된다)",
     choices: [], answer: null, shuffle: false,
-    answer_text: ["화장비누", "고체 형태의 세안용 비누", "고체형태의 세안용 비누", "고형 비누", "고형비누", "세안용 비누"],
+    answer_text: ["화장비누", "고체 형태의 세안용 비누", "고체형태의 세안용 비누", "세안용 비누"],
     blanks: null,
     grade: "exact", strict_term: true, unit: null, number_tolerance: 0,
-    near_miss: ["화장품비누", "물비누", "액체비누", "고체비누", "손세정제"],
+    near_miss: ["화장품비누", "물비누", "액체비누", "고체비누", "고형 비누", "손세정제"],
     explanation: "시행규칙 제2조의2(맞춤형화장품의 제외 대상)는 '법 제2조제3호의2나목 단서에서 「고형(固形) 비누 등 총리령으로 정하는 화장품」이란 고체 형태의 세안용 비누(이하 「화장비누」라 한다)를 말한다'라고 정한다. 즉 화장비누를 단순히 잘라 나누어 파는 것은 맞춤형화장품 판매가 아니다. 다만 화장비누에 다른 내용물이나 고시 원료를 추가해 혼합하는 행위는 가목에 해당할 수 있다는 점과 구분해야 한다.",
     wrong_option_explanations: null,
     key_concept: "맞춤형화장품 제외 대상 = 화장비누(고체 형태의 세안용 비누)의 단순 소분",
@@ -49,8 +49,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-01"],
     tags: ["맞춤형화장품", "정의", "소분", "화장비누", "단답"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B5" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [
+      { date: "2026-09-05", note: "신규 B5" },
+      { date: "2026-09-05", note: "검증 수정: 허용표기에서 '고형 비누'ㆍ'고형비누' 삭제 — 지문이 이미 인용한 법 제2조제3호의2나목 단서의 표현이어서 문제를 되풀이한 답까지 정답 처리됨. 시행규칙 제2조의2가 정한 용어(화장비누=고체 형태의 세안용 비누)만 정답으로 두고 '고형 비누'는 near_miss로 옮김." }
+    ]
   },
   {
     id: "Q-B5-03", subject: 4, topic: "4.1.2", level: "D",
@@ -81,7 +84,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-05"],
     tags: ["맞춤형화장품", "준수사항", "혼합소분", "소비자설명"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -113,7 +116,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-02"],
     tags: ["맞춤형화장품", "판매업 신고", "지방식약청장", "첨부서류"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -137,7 +140,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-02"],
     tags: ["맞춤형화장품", "변경신고", "단답", "지방식약청장"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -169,8 +172,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-03"],
     tags: ["조제관리사", "결격사유", "자격증 대여", "유사명칭"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B5" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [
+      { date: "2026-09-05", note: "신규 B5" },
+      { date: "2026-09-05", note: "검증 확인: 보기 ④는 시험일(2026-09-19) 현행 제3조의3제2호가 '피성년후견인 또는 파산선고를 받고 복권되지 아니한 자'인 것을 전제로 성립한다(화장품법.txt 60~68행). 2026-10-08 시행 개정으로 제3조의3제2호가 '피성년후견인'만 남으면 ④의 해설(파산선고는 영업 결격에만 있다)을 갱신해야 한다 — 그 날 이후 재검토 필요." }
+    ]
   },
   {
     id: "Q-B5-07", subject: 4, topic: "4.1.2", level: "D",
@@ -179,8 +185,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     choices: [], answer: null, shuffle: false,
     answer_text: null,
     blanks: [
-      { label: "㉠", accepted: ["6개월", "6 개월", "6", "육개월", "6개월 이내", "6월"] },
-      { label: "㉡", accepted: ["1년", "1 년", "1", "일년", "12개월", "1년 이내"] }
+      { label: "㉠", accepted: ["6개월", "6 개월", "육개월", "6개월 이내", "6월"] },
+      { label: "㉡", accepted: ["1년", "1 년", "일년", "12개월", "1년 이내"] }
     ],
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0,
     near_miss: ["3개월", "1개월", "2년", "6년"],
@@ -193,8 +199,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-03"],
     tags: ["조제관리사", "교육", "기한", "단답"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B5" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [
+      { date: "2026-09-05", note: "신규 B5" },
+      { date: "2026-09-05", note: "검증 수정: 허용표기에서 단위 없는 \"6\"ㆍ\"1\" 삭제 — 빈칸이 요구하는 것은 '기간'인데 숫자만으로는 6일과 6개월을 구분할 수 없다. 단위를 붙인 표기와 '12개월'만 정답으로 둔다(숫자만 쓰면 채점 4단계 자기판정으로 넘어간다)." }
+    ]
   },
   {
     id: "Q-B5-08", subject: 4, topic: "4.1.2", level: "D",
@@ -225,29 +234,32 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-02", "C-B5-03", "C-B5-04", "C-B5-05"],
     tags: ["맞춤형화장품", "사례", "변경신고", "교육", "판매내역서", "미리혼합"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
     id: "Q-B5-09", subject: 4, topic: "4.1.2", level: "D",
     type: "short", qtype: "term", points: 8, difficulty: 2, importance: "H", vg: "VG-B5-준수사항",
-    stem: "「화장품법 시행규칙」 제12조의2제3호는 맞춤형화장품 판매내역서에 ( ㉠ ), 사용기한 또는 개봉 후 사용기간, 판매일자 및 판매량을 적어 작성ㆍ보관하도록 한다. ㉠에 들어갈 법령상의 용어를 쓰시오.",
+    stem: "「화장품법 시행규칙」 제12조의2제3호는 맞춤형화장품 판매내역서에 ( ㉠ ), 사용기한 또는 개봉 후 사용기간, 판매일자 및 판매량을 적어 작성ㆍ보관하도록 한다. ㉠에 들어갈, 이 조문에 그대로 적혀 있는 용어를 쓰시오. (맞춤형화장품판매업자가 따로 부여하는 번호의 이름이 아니라 조문의 표현을 답할 것)",
     choices: [], answer: null, shuffle: false,
     answer_text: ["제조번호"],
     blanks: null,
     grade: "exact", strict_term: true, unit: null, number_tolerance: 0,
     near_miss: ["식별번호", "관리번호", "제조일자", "제조연월일", "로트번호", "일련번호"],
-    explanation: "시행규칙 제12조의2제3호는 '가. 제조번호 / 나. 사용기한 또는 개봉 후 사용기간 / 다. 판매일자 및 판매량'이 포함된 맞춤형화장품 판매내역서(전자문서 포함)를 작성ㆍ보관하도록 정하며, 교수ㆍ학습 가이드 4판도 같은 문언을 그대로 옮겨 놓았다(p.259). 판매내역서는 세 가지 항목을 모두 갖추어야 하므로 판매일자ㆍ판매량만 적어 두면 준수사항 위반이다.",
+    explanation: "시행규칙 제12조의2제3호는 '가. 제조번호 / 나. 사용기한 또는 개봉 후 사용기간 / 다. 판매일자 및 판매량'이 포함된 맞춤형화장품 판매내역서(전자문서 포함)를 작성ㆍ보관하도록 정한다. 교수ㆍ학습 가이드 4판도 4.1.2에서 같은 문언을 그대로 옮겨 '가. 제조번호'로 적었다(p.259). 다만 가이드는 다른 장에서 '제조번호(맞춤형화장품의 경우 식별번호를 제조번호로 함)'라고 덧붙이고, 식별번호를 '혼합ㆍ소분에 사용되는 내용물 또는 원료의 제조번호와 혼합ㆍ소분기록을 추적할 수 있도록 맞춤형화장품판매업자가 숫자ㆍ문자ㆍ기호 또는 이들의 특징적인 조합으로 부여한 번호'로 정의한다(p.193). 즉 조문의 칸 이름은 '제조번호'이고, 맞춤형화장품에서는 그 칸에 판매업자가 부여한 '식별번호'를 적는다. 판매내역서는 세 항목을 모두 갖추어야 하므로 판매일자ㆍ판매량만 적어 두면 준수사항 위반이다.",
     wrong_option_explanations: null,
-    key_concept: "판매내역서 기재 3항목: 제조번호 / 사용기한 또는 개봉 후 사용기간 / 판매일자 및 판매량",
-    memory_sentence: "판매내역서 세 줄 — 제조번호, 사용기한(개봉 후 사용기간), 판매일자ㆍ판매량.",
-    trap: "일부 안내서ㆍ교재는 맞춤형화장품에 부여하는 번호를 '식별번호'라고 부르지만, 시행규칙 제12조의2제3호가목의 문언은 '제조번호'다. 단답형에서는 조문 용어를 쓴다.",
-    source: { law: "화장품법 시행규칙 제12조의2제3호 가목ㆍ나목ㆍ다목", guide: "4판 p.259", asof: "2026-09", confidence: "high" },
+    key_concept: "판매내역서 기재 3항목: 제조번호(맞춤형은 식별번호로 갈음) / 사용기한 또는 개봉 후 사용기간 / 판매일자 및 판매량",
+    memory_sentence: "판매내역서 세 줄 — 제조번호(맞춤형은 식별번호), 사용기한(개봉 후 사용기간), 판매일자ㆍ판매량.",
+    trap: "조문에 적힌 칸 이름은 '제조번호'이고, 그 칸을 실제로 채우는 번호의 이름이 '식별번호'다. 이 문항은 조문 용어를 묻고 있으므로 답은 제조번호이며, 번호의 이름을 묻는 문항(Q-B7-09)에서는 식별번호가 답이다. 둘을 반대로 쓰면 어느 쪽이든 오답이 된다.",
+    source: { law: "화장품법 시행규칙 제12조의2제3호 가목ㆍ나목ㆍ다목", guide: "4판 p.259(조문 인용), p.193(식별번호 정의)", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-04-02",
     cards: ["C-B5-04"],
-    tags: ["맞춤형화장품", "판매내역서", "제조번호", "단답"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B5" }]
+    tags: ["맞춤형화장품", "판매내역서", "제조번호", "식별번호", "단답"],
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [
+      { date: "2026-09-05", note: "신규 B5" },
+      { date: "2026-09-05", note: "검증 수정: 출제자 보고서의 '가이드에 식별번호 0건'은 사실과 다름 — guide4/s3.txt 인쇄 p.193, s2.txt에 \"제조번호(맞춤형화장품의 경우 식별번호를 제조번호로 함)\"와 식별번호 정의가 있다. 정답 '제조번호'(시행규칙 제12조의2제3호가목 문언)는 유지하되, 지문에 '조문에 그대로 적혀 있는 용어'임을 명시해 식별번호와의 중의성을 없애고, 해설ㆍ함정ㆍ암기문장을 두 사실이 모두 맞게 다시 씀(Q-B7-09와 상호 참조)." }
+    ]
   },
   {
     id: "Q-B5-10", subject: 4, topic: "4.1.3", level: "D",
@@ -267,7 +279,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B5-04"],
     tags: ["맞춤형화장품", "부작용 보고", "유해사례", "기한", "단답"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -299,7 +311,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B5-06"],
     tags: ["맞춤형화장품", "유효성", "기능성화장품", "원료"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   },
   {
@@ -331,7 +343,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B5-06"],
     tags: ["안전성", "안정성", "유효성", "품질요소", "비교"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B5" }]
   }
 ]);
