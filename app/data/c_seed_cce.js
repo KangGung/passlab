@@ -8,16 +8,18 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": false,
     "front": "맞춤형화장품의 정의는?",
-    "back": "제조 또는 수입된 화장품의 내용물에 다른 내용물이나 식약처장이 정하는 원료를 추가하여 혼합한 화장품, 또는 내용물을 소분한 화장품",
+    "back": "제조 또는 수입된 화장품의 내용물에 (가) 다른 화장품의 내용물이나 식약처장이 정하는 원료를 추가하여 혼합한 화장품, 또는 (나) 그 내용물을 소분(小分)한 화장품. 다만 고형 비누 등 총리령으로 정하는 화장품의 내용물을 단순 소분한 것은 제외",
     "mnemonic": "혼합 + 소분 = 맞춤형",
     "source": {
-      "law": "화장품법(L001)",
+      "law": "화장품법 제2조 제3호의2",
       "guide": null,
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-02"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -26,6 +28,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic1-1가 topics.js 다수 세부항목(1.1.1,1.1.2)에 걸쳐 있어 내용 기준으로 1.1.1 선택"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 화장품법 제2조 제3호의2 원문 대조 — \"다른 화장품의 내용물\", 나목 단서(고형 비누 등 단순 소분 제외)를 반영하고 근거 조문을 특정."
       }
     ]
   },
@@ -38,20 +44,27 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": false,
     "front": "화장품법상 등록이 필요한 영업은?",
-    "back": "화장품 제조업, 화장품 수입업, 화장품 책임판매업, 화장품 수입대행업 (맞춤형화장품 판매업은 신고)",
+    "back": "화장품제조업, 화장품책임판매업 (수입된 화장품 유통·판매, 수입대행형 거래 알선·수여는 화장품책임판매업의 세부 종류 — 시행령 제2조 제2호 다목·라목). 맞춤형화장품판매업만 신고",
     "mnemonic": "신고는 맞춤형만! 나머지는 모두 등록",
     "source": {
-      "law": "화장품법(L001)",
+      "law": "화장품법 제3조 제1항·제3조의2 제1항, 화장품법 시행령 제2조",
       "guide": null,
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-01",
+      "Q-A5-01"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
         "note": "합격코치 note002 카드 변환"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 법 제3조·제3조의2와 시행령 제2조 대조 — '화장품 수입업·수입대행업'은 독립 영업이 아니라 화장품책임판매업의 세부 종류임을 뒷면에 명시."
       }
     ]
   },
@@ -64,16 +77,18 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": false,
     "front": "개인정보 처리 시 정보주체의 동의가 반드시 필요한 경우는?",
-    "back": "상업적 마케팅 목적으로 활용하는 경우 (법률 규정, 계약 이행, 생명·신체 보호 등은 예외 가능)",
+    "back": "상업적 마케팅 목적으로 활용하는 경우. 개인정보 보호법 제15조 제1항 각 호(법령상 의무·공공기관 소관 업무·계약 체결/이행·명백히 급박한 생명·신체·재산의 이익·정당한 이익·공중위생 긴급)에 없으므로 제1호의 동의가 필요",
     "mnemonic": "마케팅 = 반드시 동의 필요",
     "source": {
-      "law": "개인정보 보호법(L004)",
+      "law": "개인정보 보호법 제15조 제1항",
       "guide": null,
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-04"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -82,6 +97,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic1-5가 topics.js 다수 세부항목(1.2.2,1.2.3)에 걸쳐 있어 내용 기준으로 1.2.2 선택"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 개인정보 보호법 제15조 제1항 각 호를 원문으로 대조해 뒷면에 법정 사유 6가지를 정확히 나열."
       }
     ]
   },
@@ -93,17 +112,19 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "kind": "list",
     "importance": "M",
     "short_prone": false,
-    "front": "대표적인 보습제 성분은?",
-    "back": "글리세린 (glycerin) - 물을 끌어당기는 흡습성이 있어 피부에 수분 공급",
-    "mnemonic": "보습 = 글리세린",
+    "front": "대표적인 습윤제(humectant) 성분은?",
+    "back": "글리세린 — \"피부에 발랐을 때 주변의 수분을 흡수하여 보습을 유지하는 물질\"(가이드 4판 인쇄 p.66). 보습제는 습윤제·밀폐제(바셀린)·연화제·장벽대체제로 나뉜다",
+    "mnemonic": "습윤제 = 글리세린, 밀폐제 = 바셀린",
     "source": {
       "law": null,
-      "guide": "4판(페이지 미상)",
+      "guide": "4판 인쇄 p.66",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-06"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -112,6 +133,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic2-1가 topics.js 다수 세부항목(2.1.1,2.1.2)에 걸쳐 있어 내용 기준으로 2.1.2 선택"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 가이드 인쇄 p.66 대조 — '보습제'는 총칭이고 humectant는 그 하위인 습윤제이므로 앞면 용어를 습윤제로 정정, 4분류를 뒷면에 추가."
       }
     ]
   },
@@ -124,16 +149,18 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": false,
     "front": "유화형 화장품(크림, 로션) 제조 시 물과 기름을 섞는 성분은?",
-    "back": "계면활성제 (surfactant, emulsifier) - 유화(emulsion)를 만드는 필수 성분",
+    "back": "계면활성제 중 유화제 — \"물과 기름을 혼합하기 위한 목적으로 사용되는 계면활성제\"(가이드 4판 인쇄 p.66). 같은 계면활성제라도 가용화제(난용성 물질 용해)·분산제(안료 분산)·세정제로 용도가 갈린다",
     "mnemonic": "물 + 기름 = 계면활성제",
     "source": {
       "law": null,
-      "guide": "4판(페이지 미상)",
+      "guide": "4판 인쇄 p.66",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-07"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -142,6 +169,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic2-3가 topics.js 다수 세부항목(2.1.4,2.1.5)에 걸쳐 있어 내용 기준으로 2.1.4 선택"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 가이드 인쇄 p.66 계면활성제 세부 용어 표 대조 — 유화제 정의를 원문 문구로 옮기고 용도별 분류를 추가."
       }
     ]
   },
@@ -154,46 +185,58 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": true,
     "front": "화장품에 절대 사용할 수 없는 금지 원료는?",
-    "back": "수은 및 그 화합물 (사용금지 원료로 지정)",
+    "back": "수은 및 그 화합물 — 「화장품 안전기준 등에 관한 규정」 [별표 1](화장품에 사용할 수 없는 원료). 사용한도가 붙는 원료는 [별표 2](사용상의 제한이 필요한 원료)로 성격이 다르다",
     "mnemonic": "수은 = 절대 금지",
     "source": {
-      "law": "화장품법(L001)",
-      "guide": null,
+      "law": "화장품 안전기준 등에 관한 규정 [별표 1]",
+      "guide": "4판 인쇄 p.64",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-08"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
         "note": "합격코치 note006 카드 변환"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 안전기준규정 [별표 1] 원문에서 \"수은 및 그 화합물\" 확인, 근거를 화장품법(L001)에서 고시 별표 1로 정정하고 별표 2와의 구분을 뒷면에 추가."
       }
     ]
   },
   {
     "id": "C-CCE-07",
-    "subject": 2,
-    "topic": "2.2.1",
-    "category": "품질",
-    "kind": "procedure",
+    "subject": 3,
+    "topic": "3.4.2",
+    "category": "안전관리 기준 숫자",
+    "kind": "number",
     "importance": "M",
     "short_prone": false,
     "front": "영유아용 및 눈 화장용 제품의 총 호기성 생균수 기준은?",
-    "back": "500 CFU/g (또는 mL) 이하 (일반 화장품은 1,000 CFU/g 이하)",
-    "mnemonic": "영유아·눈 화장품 = 500 CFU/g",
+    "back": "500개/g(mL) 이하 (물휴지는 세균 및 진균수 각각 100개/g(mL) 이하, 기타 화장품 1,000개/g(mL) 이하, 대장균·녹농균·황색포도상구균 불검출)",
+    "mnemonic": "영유아·눈 500 / 물휴지 100 / 기타 1,000 / 3균 불검출",
     "source": {
-      "law": "화장품법(L001)",
-      "guide": null,
+      "law": "화장품 안전기준 등에 관한 규정 제6조 제4항",
+      "guide": "4판 인쇄 p.231, p.264",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-09"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
         "note": "합격코치 note007 카드 변환"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 안전기준규정 제6조 제4항 대조 — 규정 표기 \"개/g(mL)\"로 정정하고 물휴지·기타·특정 3균 기준을 보강. 미생물한도는 유통화장품 안전관리 기준이므로 subject 2/topic 2.2.1 → subject 3/topic 3.4.2로 재배정, kind를 procedure → number로 정정."
       }
     ]
   },
@@ -204,22 +247,29 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "category": "규정",
     "kind": "list",
     "importance": "M",
-    "short_prone": false,
-    "front": "향료 중 알레르기 유발성분 표시 기준은?",
-    "back": "지정된 26종의 향료 성분이 0.001% 이상 함유 시 모두 표시",
-    "mnemonic": "향료 알레르기 26종 = 0.001% 이상 표시",
+    "short_prone": true,
+    "front": "착향제 알레르기 유발성분의 표시 기준은?",
+    "back": "고시 [별표 2]의 25종이 사용 후 씻어내는 제품에 0.01% 초과, 사용 후 씻어내지 않는 제품에 0.001% 초과 함유되면 '향료'로 표시할 수 없고 해당 성분의 명칭을 기재·표시",
+    "mnemonic": "25종 — 씻어내면 0.01% 초과, 안 씻어내면 0.001% 초과",
     "source": {
-      "law": "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정(R004)",
-      "guide": null,
+      "law": "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 [별표 2], 화장품법 시행규칙 [별표 4] 제3호 마목",
+      "guide": "4판 인쇄 p.124~125",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-10",
+      "Q-A5-03"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
         "note": "합격코치 note008 카드 변환"
+      },
+      {
+        "date": "2026-09-05",
+        "note": "검증 수정: 고시 제2026-56호 [별표 2] 원문 대조 — 26종 → 25종, '0.001% 이상' → '0.001% 초과'로 정정하고 씻어내는 제품 0.01% 초과 기준을 추가."
       }
     ]
   },
@@ -230,18 +280,20 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "category": "안전",
     "kind": "number",
     "importance": "M",
-    "short_prone": false,
+    "short_prone": true,
     "front": "작업장 소독 시 차아염소산나트륨의 적정 농도는?",
-    "back": "0.1~0.5% (너무 낮으면 효과 없고, 너무 높으면 위험)",
-    "mnemonic": "작업장 소독 = 0.1~0.5%",
+    "back": "200ppm, 30분 (= 0.02%). 4급 암모늄화합물도 200ppm(제조사 추천 농도), 알코올은 아이소프로필알코올 60~70%·15분·에탄올 60~95%",
+    "mnemonic": "차아염소산나트륨 200ppm·30분 = 0.02%",
     "source": {
       "law": null,
-      "guide": "4판(페이지 미상)",
+      "guide": "4판 인쇄 p.186, p.211",
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-CCE-12"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -250,36 +302,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic3-1가 topics.js 다수 세부항목(3.1.1,3.1.2,3.1.3,3.1.4,3.1.5)에 걸쳐 있어 내용 기준으로 3.1.5 선택"
-      }
-    ]
-  },
-  {
-    "id": "C-CCE-10",
-    "subject": 3,
-    "topic": "3.4.3",
-    "category": "안전",
-    "kind": "number",
-    "importance": "M",
-    "short_prone": false,
-    "front": "원료 및 내용물의 일반적인 보관 온도는?",
-    "back": "15~25℃ (실온) - 특별한 규정이 없는 한 실온 보관",
-    "mnemonic": "실온 보관 = 15~25℃",
-    "source": {
-      "law": null,
-      "guide": "4판(페이지 미상)",
-      "asof": "2026-09",
-      "confidence": "mid"
-    },
-    "related": [],
-    "verified": false,
-    "history": [
-      {
-        "date": "2026-09-05",
-        "note": "합격코치 note010 카드 변환"
       },
       {
         "date": "2026-09-05",
-        "note": "topic 매핑: 합격코치 topic3-4가 topics.js 다수 세부항목(3.4.1,3.4.2,3.4.3,3.4.4,3.4.5,3.4.8)에 걸쳐 있어 내용 기준으로 3.4.3 선택"
+        "note": "검증 수정: 가이드 인쇄 p.186·p.211 화학적 소독제 표 대조 — 근거 없는 \"0.1~0.5%\"를 가이드 제시값 200ppm(0.02%)·30분으로 정정하고 비교 소독제 농도를 추가."
       }
     ]
   },
@@ -292,16 +318,18 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     "importance": "M",
     "short_prone": true,
     "front": "맞춤형화장품조제관리사의 교육 이수 시간은?",
-    "back": "최소 30시간 (화장품법 시행규칙 별표 7)",
-    "mnemonic": "조제관리사 교육 = 30시간",
+    "back": "매년 4시간 이상 8시간 이하 (화장품법 제5조 제7항, 시행규칙 제14조 제9항). 최초 교육은 종사한 날부터 6개월 이내, 자격시험 합격일이 종사일 이전 1년 이내이면 최초 교육 면제, 이후 보수 교육은 매년 1회",
+    "mnemonic": "매년 4~8시간, 처음은 6개월 안에, 합격 1년 안이면 면제",
     "source": {
-      "law": "화장품법 시행규칙(L003)",
+      "law": "화장품법 제5조 제7항, 화장품법 시행규칙 제14조 제1항·제9항",
       "guide": null,
       "asof": "2026-09",
-      "confidence": "mid"
+      "confidence": "high"
     },
-    "related": [],
-    "verified": false,
+    "related": [
+      "Q-A5-11"
+    ],
+    "verified": true,
     "history": [
       {
         "date": "2026-09-05",
@@ -310,32 +338,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       {
         "date": "2026-09-05",
         "note": "topic 매핑: 합격코치 topic4-1가 topics.js 다수 세부항목(4.1.1,4.1.2,4.1.3,4.1.4,4.1.5)에 걸쳐 있어 내용 기준으로 4.1.2 선택"
-      }
-    ]
-  },
-  {
-    "id": "C-CCE-12",
-    "subject": 4,
-    "topic": "4.7.1",
-    "category": "규정",
-    "kind": "list",
-    "importance": "M",
-    "short_prone": true,
-    "front": "혼합·소분 내역서의 보관 기간은?",
-    "back": "작성일로부터 최소 3년간 보관",
-    "mnemonic": "내역서 보관 = 3년",
-    "source": {
-      "law": "화장품법 시행규칙(L003)",
-      "guide": null,
-      "asof": "2026-09",
-      "confidence": "mid"
-    },
-    "related": [],
-    "verified": false,
-    "history": [
+      },
       {
         "date": "2026-09-05",
-        "note": "합격코치 note012 카드 변환"
+        "note": "검증 수정: 시행규칙 제14조 제9항 '교육시간은 4시간 이상, 8시간 이하' 원문 확인 — 뒷면의 '최소 30시간 (시행규칙 별표 7)'은 근거 없는 오류(별표 7은 행정처분 기준)이므로 4~8시간·최초 교육 6개월·면제 1년·보수 교육 매년 1회로 전면 정정."
       }
     ]
   }
