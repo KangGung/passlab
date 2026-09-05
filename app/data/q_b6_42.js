@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-01"],
     tags: ["피부", "표피", "각화", "층구조"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -49,7 +49,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-02"],
     tags: ["피부", "각질층", "pH", "숫자"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-01", "C-B6-02"],
     tags: ["피부", "각질층", "세포간지질", "TEWL"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -100,7 +100,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
     explanation: "가이드는 \"진피층은 경계가 확실하지 않으나 두 층으로 구분할 수 있는데, 표피의 윗부분에 위치한 유두진피(papillary dermis)와 망상진피(reticular dermis)로 나눌 수 있음\", \"진피에 존재하는 세포는 … 섬유아세포(fibroblast)가 주종을 이루는데 이들 섬유아세포는 세포외기질(ECM)인 교원섬유(콜라겐), 탄력섬유(엘라스틴), 히알루론산 및 다양한 기질을 만드는 역할을 함\"이라고 서술한다. 따라서 ③이 옳다.",
     wrong_option_explanations: [
-      "① 틀리다 — 가이드는 진피가 피부의 90 % 이상을 차지하며 표피 두께의 10~40배 정도라고 서술한다.",
+      "① 틀리다 — 가이드는 진피가 피부의 90 % 이상을 차지한다고 서술한다. (표피와의 두께 비는 가이드 안에서 p.273 '10~40배', p.270 '15~40배'로 엇갈리므로 배수 자체는 채점 근거로 쓰지 않는다.)",
       "② 틀리다 — 진피의 주된 세포는 섬유아세포이고 대식세포·비만세포가 함께 존재한다. 멜라닌형성세포는 표피(대부분 기저층)에 있으며 각질은 표피의 각질형성세포가 만든다.",
       "③ 정답 — 진피는 유두진피와 망상진피로 나뉘고, 섬유아세포가 교원섬유(콜라겐)·탄력섬유(엘라스틴)·히알루론산 등 세포외기질을 만든다.",
       "④ 틀리다 — 진피는 혈관계·림프계가 복잡하게 얽혀 있는 형태로, 표피에 영양분을 공급하여 표피를 지지한다. 방향이 반대다.",
@@ -113,8 +113,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-03"],
     tags: ["피부", "진피", "섬유아세포", "노화"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정: 오답 해설 ①의 '표피 두께의 10~40배' 단정을 가이드 내부 불일치(p.270 15~40배 / p.273 10~40배) 병기로 바꿈 — 배수는 채점 근거에서 제외" }]
   },
   {
     id: "Q-B6-05", subject: 4, topic: "4.2.1", level: "D",
@@ -134,7 +134,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-02"],
     tags: ["피부", "NMF", "필라그린", "보습"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -158,7 +158,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-04"],
     tags: ["모발", "모주기", "성장기", "휴지기", "숫자"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -190,7 +190,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-05"],
     tags: ["모발", "모간부", "모표피", "모피질", "모수질"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
@@ -222,19 +222,19 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-05"],
     tags: ["모발", "모근부", "모유두", "모모세포"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   },
   {
     id: "Q-B6-09", subject: 4, topic: "4.2.3", level: "D",
     type: "short", qtype: "term", points: 8, difficulty: 2, importance: "M", vg: "VG-B6-측정기기",
-    stem: "피부 보습도 분석에서 시험물질이 피부수분함유도에 미치는 영향을 평가하기 위해 피부수분함유도의 변화를 측정하는 기기의 이름을 쓰시오. (영문 또는 우리말 표기 모두 인정)",
+    stem: "피부 보습도 분석에서 시험물질이 피부수분함유도에 미치는 영향을 평가하기 위해 피부수분함유도의 변화를 측정하는 기기의 이름을 쓰시오. (가이드에 적힌 영문 명칭으로 쓰시오. 같은 이름의 우리말 음역도 인정)",
     choices: [], answer: null, shuffle: false,
-    answer_text: ["corneometer", "Corneometer", "코니오미터", "코르네오미터", "코르니오미터", "커니오미터", "corneometer(코니오미터)"],
+    answer_text: ["corneometer", "Corneometer", "CORNEOMETER", "코르네오미터", "코니오미터"],
     blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0,
     near_miss: ["sebumeter", "세범미터", "cutometer", "큐토미터", "mexameter"],
-    explanation: "가이드는 피부 보습도 분석의 첫 항목으로 \"피부수분함유도 변화를 corneometer로 측정하여 시험물질이 피부수분함유도에 미치는 영향을 평가\"라고 서술한다. 같은 절에서 피지량은 sebumeter, 탄력은 cutometer·dermaflex·reviscometer 등으로 구분해 제시한다.",
+    explanation: "가이드는 피부 보습도 분석의 첫 항목으로 \"피부수분함유도 변화를 corneometer로 측정하여 시험물질이 피부수분함유도에 미치는 영향을 평가\"라고 서술한다. 같은 절에서 피지량은 sebumeter, 탄력은 cutometer·dermaflex·reviscometer 등으로 구분해 제시한다. 가이드는 이 기기를 영문 'corneometer'로만 표기하고 우리말 표준 표기를 제시하지 않으므로, 영문 표기와 그 음역(코르네오미터·코니오미터)만 정답으로 인정한다.",
     wrong_option_explanations: null,
     key_concept: "피부 상태별 측정 기기 — 수분은 corneometer",
     memory_sentence: "수분은 corneometer, 피지는 sebumeter, 탄력은 cutometer.",
@@ -243,8 +243,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-06"],
     tags: ["피부분석", "측정기기", "보습도"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정: 가이드에 우리말 표기가 없어 허용표기를 영문 표기 + 음역 2개(코르네오미터·코니오미터)로 정리하고, 지문·해설에 영문 명칭 기준임을 명시" }]
   },
   {
     id: "Q-B6-10", subject: 4, topic: "4.2.3", level: "D",
@@ -275,7 +275,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B6-06"],
     tags: ["피부분석", "모발분석", "측정기기", "사례판단"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B6" }]
   }
 ]);
