@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PASS LAB">
+<meta name="description" content="맞춤형화장품조제관리사 합격 연습장 — 문제 풀이·오답노트·암기카드">
+<title>PASS LAB · 조제관리사 합격 연습장</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand">PASS LAB<span>맞춤형화장품조제관리사 합격 연습장</span></div>
+    <div class="row" id="topmeta"></div>
+  </header>
+
+  <main id="main">
+    <p class="muted" style="padding:28px 0">문항을 불러오는 중입니다…</p>
+    <noscript><p>이 앱은 자바스크립트가 필요합니다. 브라우저 설정에서 자바스크립트를 켜 주세요.</p></noscript>
+  </main>
+
+  <footer class="foot small muted" id="foot"></footer>
+</div>
+
+<nav class="tabbar" id="tabbar" aria-label="화면 이동">
+  <button type="button" data-act="tab" data-tab="home"><i>&#x2302;</i>홈</button>
+  <button type="button" data-act="tab" data-tab="study"><i>&#x270E;</i>학습</button>
+  <button type="button" data-act="tab" data-tab="mock" class="off"><i>&#x25F7;</i>모의<span class="badge">9/7</span></button>
+  <button type="button" data-act="tab" data-tab="mistakes"><i>&#x2715;</i>오답</button>
+  <button type="button" data-act="tab" data-tab="cards" class="off"><i>&#x25A4;</i>카드<span class="badge">9/8</span></button>
+  <button type="button" data-act="tab" data-tab="settings"><i>&#x2699;&#xFE0E;</i>설정</button>
+</nav>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 계산 엔진과 시험 구조는 먼저, 문항 배치는 app.js가 manifest 순서대로 넣는다. -->
+<script src="data/blueprint.js"></script>
+<script src="data/topics.js"></script>
+<script src="core.js"></script>
+<script src="data/manifest.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
