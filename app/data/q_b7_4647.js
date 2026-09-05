@@ -11,7 +11,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0,
     near_miss: ["백금전극", "비교전극", "은-염화은전극", "페놀프탈레인", "pH 시험지", "만능지시약"],
-    explanation: "가이드는 유통화장품 안전관리 시험방법(통칙)을 인용해 \"pH 측정에는 유리전극을 단 pH 미터를 씀\", \"액성을 산성, 알칼리성 또는 중성으로 나타낸 것은 따로 규정이 없는 한 리트머스지를 써서 검사함\"이라고 적고 있다. 즉 정확한 수치를 얻을 때는 유리전극 pH 미터, 산성·중성·알칼리성이라는 성질만 가릴 때는 리트머스지다. 같은 문단은 액성의 정도도 정해 두어 미산성 약 5~약 6.5, 약산성 약 3~약 5, 강산성 약 3 이하, 미알칼리성 약 7.5~약 9, 약알칼리성 약 9~약 11, 강알칼리성 약 11 이상이다.",
+    explanation: "가이드 §4.6.4의 ‘유통화장품 안전관리 시험방법’ 항목은 「기능성화장품 기준 및 시험방법」 [별표 1] 통칙을 인용해 \"pH 측정에는 유리전극을 단 pH 미터를 씀\", \"액성을 산성, 알칼리성 또는 중성으로 나타낸 것은 따로 규정이 없는 한 리트머스지를 써서 검사함\"이라고 적고 있다. 즉 정확한 수치를 얻을 때는 유리전극 pH 미터, 산성·중성·알칼리성이라는 성질만 가릴 때는 리트머스지다. 같은 문단은 액성의 정도도 정해 두어 미산성 약 5~약 6.5, 약산성 약 3~약 5, 강산성 약 3 이하, 미알칼리성 약 7.5~약 9, 약알칼리성 약 9~약 11, 강알칼리성 약 11 이상이다.",
     wrong_option_explanations: null,
     key_concept: "pH는 유리전극 pH 미터로 측정하고, 액성 구분은 리트머스지로 한다",
     memory_sentence: "수치는 유리전극 pH 미터, 액성은 리트머스지.",
@@ -20,8 +20,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B7-01"],
     tags: ["혼합소분", "pH", "시험방법", "기기"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B7" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B7" }, { date: "2026-09-05", note: "검증 수정: 해설의 출처 귀속을 가이드 §4.6.4 유통화장품 안전관리 시험방법(「기능성화장품 기준 및 시험방법」 [별표 1] 통칙 인용)으로 정밀화" }]
   },
   {
     id: "Q-B7-02", subject: 4, topic: "4.6.4", level: "D",
@@ -52,7 +52,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B7-02"],
     tags: ["혼합소분", "점도", "물리적특성", "단위"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -84,7 +84,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B7-06"],
     tags: ["충전", "포장재", "용기재질", "연결"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -116,7 +116,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-B7-03", "C-B7-04"],
     tags: ["혼합소분", "제형", "유화", "안정성"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -148,7 +148,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B7-04"],
     tags: ["혼합소분", "준수사항", "위생", "법령"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -180,7 +180,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B7-05"],
     tags: ["포장", "안전용기", "법령", "어린이"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
@@ -201,13 +201,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B7-05"],
     tags: ["포장", "안전용기", "숫자", "법령"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
     history: [{ date: "2026-09-05", note: "신규 B7" }]
   },
   {
     id: "Q-B7-08", subject: 4, topic: "4.7.1", level: "D",
     type: "short", qtype: "term", points: 8, difficulty: 2, importance: "H", vg: "VG-B7-1차포장",
-    stem: "「화장품법」 제10조제2항에 따라 1차 포장에 2차 포장을 추가한 화장품의 '1차 포장'에 반드시 기재·표시해야 하는 사항은 네 가지다. <보기>의 낱말 중에서 그 네 가지를 골라 쉼표(,)로 구분해 쓰시오.\n\n<보기>\n가격 · 내용량 · 명칭 · 바코드 · 사용기한 · 상호 · 전성분 · 제조번호 · 주소",
+    stem: "「화장품법」 제10조제2항에 따라 1차 포장에 2차 포장을 추가한 화장품의 '1차 포장'에 반드시 기재·표시해야 하는 사항은 네 가지다. <보기>의 낱말 중에서 그 네 가지를 골라 쉼표(,)로 구분해 쓰시오. (답 형식: 낱말, 낱말, 낱말, 낱말 — 가운뎃점(·)이나 띄어쓰기만으로 구분하면 채점되지 않는다.)\n\n<보기>\n가격 · 내용량 · 명칭 · 바코드 · 사용기한 · 상호 · 전성분 · 제조번호 · 주소",
     choices: [], answer: null, shuffle: false,
     answer_text: ["명칭", "상호", "제조번호", "사용기한"],
     blanks: null,
@@ -222,8 +222,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-B7-06"],
     tags: ["포장", "기재사항", "1차포장", "법령"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B7" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B7" }, { date: "2026-09-05", note: "검증 수정: grade:set 채점 구분자(, / ; 、 줄바꿈)에 맞춰 stem에 답 형식 안내 추가" }]
   },
   {
     id: "Q-B7-09", subject: 4, topic: "4.6.5", level: "D",
@@ -234,17 +234,17 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     blanks: null,
     grade: "exact", strict_term: true, unit: null, number_tolerance: 0,
     near_miss: ["제조번호", "관리번호", "로트번호", "배치번호", "제조번호(식별번호)", "혼합번호"],
-    explanation: "가이드는 맞춤형화장품 판매내역서 항목을 설명하면서 \"제조번호(맞춤형화장품의 경우 식별번호를 제조번호로 함)\"이라고 적고, \"식별번호는 맞춤형화장품의 혼합·소분에 사용되는 내용물 또는 원료의 제조번호와 혼합·소분기록을 추적할 수 있도록 맞춤형화장품판매업자가 숫자·문자·기호 또는 이들의 특징적인 조합으로 부여한 번호\"라고 정의한다. 판매내역서(시행규칙 제12조의2제3호)의 '제조번호'와 포장 기재사항의 '제조번호' 모두 맞춤형화장품에서는 식별번호로 갈음한다.",
+    explanation: "가이드는 맞춤형화장품 판매내역서 항목을 설명하면서 \"제조번호(맞춤형화장품의 경우 식별번호를 제조번호로 함)\"이라고 적고, \"식별번호는 맞춤형화장품의 혼합·소분에 사용되는 내용물 또는 원료의 제조번호와 혼합·소분기록을 추적할 수 있도록 맞춤형화장품판매업자가 숫자·문자·기호 또는 이들의 특징적인 조합으로 부여한 번호\"라고 정의한다. 판매내역서(시행규칙 제12조의2제3호)의 '제조번호'와 포장 기재사항의 '제조번호' 모두 맞춤형화장품에서는 식별번호로 갈음한다. 다만 '식별번호'라는 낱말 자체는 시행규칙 조문(제12조의2·제19조)에는 나오지 않는다. 조문 표기는 '제조번호'이고, '맞춤형화장품의 경우 식별번호를 제조번호로 함'은 가이드와 「맞춤형화장품판매업자의 준수사항에 관한 규정」이 쓰는 표현이다.",
     wrong_option_explanations: null,
     key_concept: "맞춤형화장품의 제조번호 = 판매업자가 부여하는 식별번호(추적 가능해야 함)",
     memory_sentence: "맞춤형화장품의 제조번호 자리에는 판매업자가 붙인 '식별번호'가 들어간다.",
-    trap: "'제조번호'라고 답하면 오답이다. 묻는 것은 제조번호를 대신하는 번호의 이름이다. 원료 입고 관리의 '관리번호'와도 다르다.",
-    source: { law: "화장품법 시행규칙 제12조의2제3호가목", guide: "4판 p.193", asof: "2026-09", confidence: "high" },
-    law_effective_date: "2026-04-02",
+    trap: "'제조번호'라고 답하면 오답이다. 묻는 것은 제조번호를 대신하는 번호의 이름이다. 원료 입고 관리의 '관리번호'와도 다르다. 시행규칙 조문에는 '식별번호'라는 말이 없다는 점(조문 표기는 '제조번호')도 함께 기억한다.",
+    source: { law: null, guide: "4판 p.193", asof: "2026-09", confidence: "high" },
+    law_effective_date: null,
     cards: ["C-B7-06"],
     tags: ["맞춤형화장품", "식별번호", "기재사항", "판매내역서"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B7" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B7" }, { date: "2026-09-05", note: "검증 수정: source.law 삭제 — 식별번호는 시행규칙 조문(제12조의2·제19조)에 없는 가이드·고시 용어(조문 표기는 제조번호). 해설·trap에 구분 명시" }]
   },
   {
     id: "Q-B7-10", subject: 4, topic: "4.6.5", level: "D",
@@ -260,7 +260,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     answer: 2, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "ㄱ 가이드는 \"소분(리필)하는 내용물이 액상 제형인 경우 분주기(디스펜서) 또는 펌프를 사용함\"과 \"내용물 토출부는 소분 전·후 잔여물이 없도록 청소하고 필요 시 소독\"이라고 적으므로 옳다. ㄴ 「맞춤형화장품판매업자의 준수사항에 관한 규정」은 \"맞춤형화장품 조제에 사용하고 남은 내용물 또는 원료는 밀폐가 되는 용기에 담는 등 비의도적인 오염을 방지할 것\"이라고 정하므로 옳다. ㄷ 같은 규정은 \"혼합소분에 사용되는 내용물 또는 원료의 사용기한 또는 개봉 후 사용기간을 초과하여 맞춤형화장품의 사용기한 또는 개봉 후 사용기간을 정하지 말 것. 다만 과학적 근거를 통하여 안정성이 확보되는 경우는 예외\"라고 하므로, 과학적 근거 없이 내용물의 사용기한을 넘겨 정한 것은 옳지 않다. ㄹ 화장품법 제10조제2항의 1차 포장 필수 4가지(명칭·영업자의 상호·제조번호·사용기한 또는 개봉 후 사용기간)를 갖추었고 맞춤형화장품은 식별번호를 제조번호로 하므로 옳다. ㅁ 가이드는 \"소비자 제공 용기를 사용하여 리필 시, 사전에 세척하여 물기가 없도록 완전히 건조시킨 뒤 사용하여야 함\"이라고 하므로 옳지 않다. 따라서 옳은 것은 ㄱ, ㄴ, ㄹ이다.",
+    explanation: "ㄱ 가이드는 \"소분(리필)하는 내용물이 액상 제형인 경우 분주기(디스펜서) 또는 펌프를 사용함\"과 \"내용물 토출부는 소분 전·후 잔여물이 없도록 청소하고 필요 시 소독\"이라고 적으므로 옳다. ㄴ 시행규칙 제12조의2제2호마목이 위임한 「맞춤형화장품판매업자의 준수사항에 관한 규정」 제5호는 \"맞춤형화장품 조제에 사용하고 남은 내용물 또는 원료는 밀폐가 되는 용기에 담는 등 비의도적인 오염을 방지 할 것\"이라고 정하므로 옳다. ㄷ 같은 규정 제4호는 \"혼합·소분에 사용되는 내용물 또는 원료의 사용기한 또는 개봉 후 사용기간을 초과하여 맞춤형화장품의 사용기한 또는 개봉 후 사용기간을 정하지 말 것. 다만 과학적 근거를 통하여 맞춤형화장품의 안정성이 확보되는 사용기한 또는 개봉 후 사용기간을 설정한 경우에는 예외로 한다\"라고 하므로, 과학적 근거 없이 내용물의 사용기한을 넘겨 정한 것은 옳지 않다. ㄹ 화장품법 제10조제2항의 1차 포장 필수 4가지(명칭·영업자의 상호·제조번호·사용기한 또는 개봉 후 사용기간)를 갖추었고 맞춤형화장품은 식별번호를 제조번호로 하므로 옳다. ㅁ 가이드는 \"소비자 제공 용기를 사용하여 리필 시, 사전에 세척하여 물기가 없도록 완전히 건조시킨 뒤 사용하여야 함\"이라고 하므로 옳지 않다. 따라서 옳은 것은 ㄱ, ㄴ, ㄹ이다.",
     wrong_option_explanations: [
       "① ㄱ·ㄴ은 옳지만 ㄷ이 틀렸다. 과학적 근거 없이 내용물의 사용기한(2027-03-31)을 넘겨 맞춤형화장품의 사용기한(2027-06-30)을 정할 수 없다.",
       "② ㄱ은 옳지만 ㄷ과 ㅁ이 모두 틀렸다. ㅁ은 물기가 남은 용기에 그대로 리필한 것으로, 완전히 건조시킨 뒤 사용해야 한다는 지침에 어긋난다.",
@@ -271,11 +271,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     key_concept: "혼합·소분(도구·남은 내용물·사용기한) → 충전·리필 용기 위생 → 1차 포장 기재(식별번호)까지 한 번에 판단하기",
     memory_sentence: "맞춤형화장품의 사용기한은 재료의 사용기한을 넘길 수 없고(과학적 근거 있을 때만 예외), 용기는 완전히 말린 뒤 채운다.",
     trap: "ㄷ의 '별도의 과학적 근거 없이'라는 조건을 놓치면 예외 규정 때문에 헷갈린다. ㄹ에서 '식별번호'를 제조번호가 아니라고 보아 틀렸다고 판단하는 것도 흔한 실수다.",
-    source: { law: "화장품법 제10조제2항, 화장품법 시행규칙 제12조의2", guide: "4판 p.137·298·306·308", asof: "2026-09", confidence: "high" },
+    source: { law: "화장품법 제10조제2항; 「맞춤형화장품판매업자의 준수사항에 관한 규정」(시행규칙 제12조의2제2호마목 위임 고시 — 4판 p.259·298 인용)", guide: "4판 p.137·259·298·306·308", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-04-02",
     cards: ["C-B7-04", "C-B7-06"],
     tags: ["사례", "혼합소분", "충전", "기재사항", "위생"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-05", note: "신규 B7" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-05",
+    history: [{ date: "2026-09-05", note: "신규 B7" }, { date: "2026-09-05", note: "검증 수정: source.law·해설 정정 — 사용기한 규칙(고시 제3·4호)·남은 내용물 밀폐(제5호)는 시행규칙 제12조의2 조문이 아니라 제2호마목이 위임한 「맞춤형화장품판매업자의 준수사항에 관한 규정」 문구(4판 인쇄 p.259·298)" }]
   }
 ]);
