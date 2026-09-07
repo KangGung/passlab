@@ -1079,3 +1079,809 @@ test("dailyPlan: 국면별 비중과 dueCount 상한", () => {
   assert.deepEqual(C.dailyPlan(60, 14, 100), { newQ: 21, review: 10, cards: 36, phase: "early" });
   assert.deepEqual(C.dailyPlan(0, 14, 100), { newQ: 0, review: 0, cards: 0, phase: "early" });
 });
+
+/* ================================================================== *
+ * 12. 모의고사 구성 — mockSlots · buildMock
+ * ================================================================== */
+const nodePath = require("node:path");
+const nodeFs = require("node:fs");
+
+/** 실제 데이터 파일(app/data)에서 검증 문항만 읽는다 */
+let REAL = null;
+function realBank() {
+  if (REAL) return REAL;
+  globalThis.window = globalThis;
+  const dir = nodePath.join(__dirname, "..", "app", "data");
+  const bp = require(nodePath.join(dir, "blueprint.js"));
+  require(nodePath.join(dir, "topics.js"));
+  nodeFs.readdirSync(dir).filter(f => /^q_.*\.js$/.test(f)).sort()
+    .forEach(f => require(nodePath.join(dir, f)));
+  REAL = {
+    bp: bp,
+    topics: globalThis.window.PL_TOPICS,
+    questions: (globalThis.window.PL_QUESTIONS || []).filter(q => q && q.verified === true)
+  };
+  return REAL;
+}
+
+/** 슬롯을 정확히 채울 수 있는 합성 은행. extra=슬롯마다 여분 문항 수 */
+function fullBank(extra) {
+  const out = [];
+  let k = 0;
+  BP.subjects.forEach(s => {
+    ["mcq", "short"].forEach(type => {
+      Object.keys(s.slots[type]).forEach(p => {
+        const need = Number(s.slots[type][p]);
+        if (!need) return;
+        for (let i = 0; i < need + (Number(extra) || 0); i++) {
+          k++;
+          const base = {
+            id: "Q-F-" + String(k).padStart(3, "0"), subject: s.id,
+            topic: s.id + ".t" + Math.ceil(k / 3), points: Number(p),
+            difficulty: 3, importance: "M", verified: true
+          };
+          out.push(type === "mcq" ? mcq(base) : short(base));
+        }
+      });
+    });
+  });
+  return out;
+}
+
+test("mockSlots: full = 블루프린트 슬롯 그대로 100문항·1000점", () => {
+  const s = C.mockSlots("full", BP);
+  assert.equal(s.preset, "full");
+  assert.equal(s.minutes, 120);
+  assert.equal(s.count, 100);
+  assert.equal(s.points, 1000);
+  assert.deepEqual(s.subjects, [1, 2, 3, 4]);
+});
+
+test("mockSlots: half = 50문항, 과목 10/20/20 · 선다 43·단답 7", () => {
+  const s = C.mockSlots("half", BP);
+  assert.equal(s.count, 50);
+  assert.equal(s.minutes, 60);
+  const bySub = {}, byType = {};
+  s.slots.forEach(x => {
+    bySub[x.subject] = (bySub[x.subject] || 0) + x.need;
+    byType[x.type] = (byType[x.type] || 0) + x.need;
+  });
+  assert.deepEqual(bySub, { 1: 10, 2: 20, 3: 20 });
+  assert.deepEqual(byType, { mcq: 43, short: 7 });
+  // 과목② 25→20(0.8배): 선다 11/8/1 → 9/6/1, 단답 3/2 → 2/2
+  assert.deepEqual(s.slots.filter(x => x.subject === 2), [
+    { subject: 2, type: "mcq", points: 8, need: 9 },
+    { subject: 2, type: "mcq", points: 12, need: 6 },
+    { subject: 2, type: "mcq", points: 18, need: 1 },
+    { subject: 2, type: "short", points: 8, need: 2 },
+    { subject: 2, type: "short", points: 12, need: 2 }
+  ]);
+});
+
+test("mockSlots: mini3 = 과목③ 25문항 그대로, need 0 슬롯은 없다", () => {
+  const s = C.mockSlots("mini3", BP);
+  assert.equal(s.count, 25);
+  assert.equal(s.minutes, 30);
+  assert.deepEqual(s.subjects, [3]);
+  assert.deepEqual(s.slots, [
+    { subject: 3, type: "mcq", points: 8, need: 14 },
+    { subject: 3, type: "mcq", points: 12, need: 10 },
+    { subject: 3, type: "mcq", points: 18, need: 1 }
+  ]);
+  assert.ok(s.slots.every(x => x.need > 0));
+});
+
+test("MOCK_PRESETS: 3종 프리셋 상수", () => {
+  assert.deepEqual(Object.keys(C.MOCK_PRESETS), ["full", "half", "mini3"]);
+  assert.equal(C.MOCK_PRESETS.full.minutes, 120);
+  assert.equal(C.MOCK_PRESETS.half.name, "하프 모의고사(①②③)");
+  assert.deepEqual(C.MOCK_PRESETS.mini3.counts, { 3: 25 });
+});
+
+test("buildMock: 완비된 은행이면 full 100문항·1000점·partial 아님", () => {
+  const m = C.buildMock("full", fullBank(2), BP, {}, C.seededRandom(7));
+  assert.equal(m.qids.length, 100);
+  assert.equal(new Set(m.qids).size, 100);
+  assert.equal(m.total_points, 1000);
+  assert.equal(m.partial, false);
+  assert.deepEqual(m.slots_missing, []);
+  assert.equal(m.minutes, 120);
+  assert.equal(m.preset, "full");
+});
+
+test("buildMock: order = 선다(과목1→4) 다음 단답(과목1→4), 번호 = 인덱스+1", () => {
+  const bank = fullBank(2);
+  const m = C.buildMock("full", bank, BP, {}, C.seededRandom(7));
+  assert.equal(m.order.length, 100);
+  m.order.forEach((o, i) => {
+    assert.equal(o.no, i + 1);
+    assert.equal(o.qid, m.qids[i]);
+  });
+  const types = m.order.map(o => o.type);
+  assert.equal(types.indexOf("short"), 80);                       // 1~80 선다, 81~100 단답
+  assert.ok(types.slice(0, 80).every(t => t === "mcq"));
+  assert.ok(types.slice(80).every(t => t === "short"));
+  const subsMcq = m.order.slice(0, 80).map(o => o.subject);
+  assert.deepEqual(subsMcq, subsMcq.slice().sort((a, b) => a - b));  // 과목 오름차순
+  const subsShort = m.order.slice(80).map(o => o.subject);
+  assert.deepEqual(subsShort, subsShort.slice().sort((a, b) => a - b));
+  // 과목 안에서는 무작위 → seed가 다르면 순서가 달라진다
+  const m2 = C.buildMock("full", bank, BP, {}, C.seededRandom(99));
+  assert.notDeepEqual(m.qids, m2.qids);
+});
+
+test("buildMock: half은 50문항(선다 43·단답 7)", () => {
+  const m = C.buildMock("half", fullBank(2), BP, {}, C.seededRandom(7));
+  assert.equal(m.qids.length, 50);
+  assert.equal(m.partial, false);
+  assert.equal(m.minutes, 60);
+  assert.equal(m.order.filter(o => o.type === "mcq").length, 43);
+  assert.equal(m.order.filter(o => o.type === "short").length, 7);
+  assert.ok(m.order.every(o => o.subject !== 4));
+});
+
+test("buildMock: 미출제 우선 → 이미 푼 문항은 뒤로, 같은 seed면 같은 결과", () => {
+  const BP1 = {
+    exam: { total_points: 1000, pass_total: 600 },
+    subjects: [{ id: 1, name: "법", count: 3, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 3, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  const bank = [1, 2, 3, 4, 5].map(i => mcq({ id: "Q-U-" + i, subject: 1, topic: "1.1." + i, points: 8 }));
+  const attemptsByQid = {
+    "Q-U-1": [att({ qid: "Q-U-1", at: "2026-09-01T10:00:00" })],
+    "Q-U-2": [att({ qid: "Q-U-2", at: "2026-09-04T10:00:00" })]
+  };
+  const m = C.buildMock("full", bank, BP1, { attemptsByQid: attemptsByQid }, C.seededRandom(3));
+  assert.deepEqual(m.qids.slice().sort(), ["Q-U-3", "Q-U-4", "Q-U-5"]);   // 미출제 3개
+  const m2 = C.buildMock("full", bank, BP1, { attemptsByQid: attemptsByQid }, C.seededRandom(3));
+  assert.deepEqual(m2.qids, m.qids);                                     // 결정적
+  // 미출제가 2개뿐이면 가장 오래전 출제(Q-U-1)가 먼저 들어온다
+  const att3 = Object.assign({}, attemptsByQid, {
+    "Q-U-3": [att({ qid: "Q-U-3", at: "2026-09-06T10:00:00" })],
+    "Q-U-5": [att({ qid: "Q-U-5", at: "2026-09-05T10:00:00" })]
+  });
+  const m3 = C.buildMock("full", bank, BP1, { attemptsByQid: att3 }, C.seededRandom(3));
+  assert.deepEqual(m3.qids.slice().sort(), ["Q-U-1", "Q-U-2", "Q-U-4"]);   // 미출제 1 + 오래된 순 2
+});
+
+test("buildMock: exclude(직전 모의)는 가능하면 피한다", () => {
+  const BP1 = {
+    exam: { total_points: 1000 },
+    subjects: [{ id: 1, name: "법", count: 2, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 2, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  const bank = [1, 2, 3].map(i => mcq({ id: "Q-X-" + i, subject: 1, topic: "1.1." + i, points: 8 }));
+  const m = C.buildMock("full", bank, BP1, { exclude: ["Q-X-1"] }, C.seededRandom(5));
+  assert.deepEqual(m.qids.slice().sort(), ["Q-X-2", "Q-X-3"]);
+  // 후보가 모자라면 exclude도 쓴다(빈 슬롯보다 낫다)
+  const m2 = C.buildMock("full", bank, BP1, { exclude: ["Q-X-1", "Q-X-2"] }, C.seededRandom(5));
+  assert.equal(m2.qids.length, 2);
+  assert.equal(m2.partial, false);
+});
+
+test("buildMock: 같은 세부항목 3문항 상한, 대체 없으면 완화하고 경고", () => {
+  const BP1 = {
+    exam: { total_points: 1000 },
+    subjects: [{ id: 1, name: "법", count: 5, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 5, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  // 한 토픽에 6문항뿐 → 5문항을 채우려면 상한을 완화해야 한다
+  const bank = [1, 2, 3, 4, 5, 6].map(i => mcq({ id: "Q-C-" + i, subject: 1, topic: "1.1.1", points: 8 }));
+  const m = C.buildMock("full", bank, BP1, {}, C.seededRandom(11));
+  assert.equal(m.qids.length, 5);
+  assert.equal(m.partial, false);
+  assert.ok(m.warnings.some(w => w.indexOf("세부항목") !== -1));
+  // 토픽이 넉넉하면 상한을 지킨다
+  const bank2 = [1, 2, 3, 4, 5, 6].map(i => mcq({ id: "Q-D-" + i, subject: 1, topic: "1.1." + (i <= 3 ? 1 : 2), points: 8 }));
+  const m2 = C.buildMock("full", bank2, BP1, {}, C.seededRandom(11));
+  const byTopic = {};
+  m2.qids.forEach(id => {
+    const t = bank2.find(q => q.id === id).topic;
+    byTopic[t] = (byTopic[t] || 0) + 1;
+  });
+  assert.ok(Object.keys(byTopic).every(t => byTopic[t] <= 3), JSON.stringify(byTopic));
+  assert.ok(!m2.warnings.some(w => w.indexOf("세부항목") !== -1));
+});
+
+test("buildMock: 슬롯이 비면 같은 과목·유형의 다른 배점으로 대체(8↔12 먼저, 18 마지막)", () => {
+  const BP1 = {
+    exam: { total_points: 1000 },
+    subjects: [{ id: 1, name: "법", count: 2, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 2, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  const bank = [
+    mcq({ id: "Q-P8", subject: 1, topic: "1.1.1", points: 8 }),
+    mcq({ id: "Q-P12", subject: 1, topic: "1.1.2", points: 12 }),
+    mcq({ id: "Q-P18", subject: 1, topic: "1.1.3", points: 18 })
+  ];
+  const m = C.buildMock("full", bank, BP1, {}, C.seededRandom(2));
+  assert.deepEqual(m.qids.slice().sort(), ["Q-P12", "Q-P8"]);    // 12점 대체가 18점보다 먼저
+  assert.equal(m.total_points, 20);                              // 문항 points 합산(8+12)
+  assert.deepEqual(m.slots_filled, [{ subject: 1, type: "mcq", points: 8, need: 2, got: 2 }]);
+  assert.equal(m.partial, false);
+});
+
+test("buildMock: 채울 수 없는 슬롯은 slots_missing에 남고 partial=true", () => {
+  const BP1 = {
+    exam: { total_points: 1000 },
+    subjects: [{ id: 1, name: "법", count: 4, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 2, "12": 0, "18": 0 }, short: { "8": 2, "12": 0, "18": 0 } } }]
+  };
+  const bank = [mcq({ id: "Q-M1", subject: 1, topic: "1.1.1", points: 8 })];
+  const m = C.buildMock("full", bank, BP1, {}, C.seededRandom(2));
+  assert.equal(m.partial, true);
+  assert.deepEqual(m.qids, ["Q-M1"]);
+  assert.deepEqual(m.slots_missing, [
+    { subject: 1, type: "mcq", points: 8, need: 2, got: 1 },
+    { subject: 1, type: "short", points: 8, need: 2, got: 0 }
+  ]);
+  assert.ok(m.warnings.length > 0);
+});
+
+test("buildMock: 미검증 문항은 모의고사에 넣지 않는다", () => {
+  const BP1 = {
+    exam: { total_points: 1000 },
+    subjects: [{ id: 1, name: "법", count: 2, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 2, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  const bank = [
+    mcq({ id: "Q-V1", subject: 1, topic: "1.1.1", points: 8, verified: true }),
+    mcq({ id: "Q-V2", subject: 1, topic: "1.1.2", points: 8, verified: false })
+  ];
+  const m = C.buildMock("full", bank, BP1, {}, C.seededRandom(2));
+  assert.deepEqual(m.qids, ["Q-V1"]);
+  assert.equal(m.partial, true);
+});
+
+test("buildMock: 실제 은행(검증 96문항) full → partial, 부족 슬롯 정확", () => {
+  const B = realBank();
+  assert.equal(B.questions.length, 96);
+  const m = C.buildMock("full", B.questions, B.bp, {}, C.seededRandom(20260919));
+  assert.equal(m.partial, true);
+  assert.equal(m.qids.length, 88);                 // 같은 과목·유형 안에서만 대체 가능 → 12문항 부족
+  assert.equal(new Set(m.qids).size, 88);
+  assert.equal(m.total_points, 908);               // 문항 points 합산(대체로 배점이 바뀐다)
+  assert.deepEqual(m.slots_missing, [
+    { subject: 1, type: "short", points: 12, need: 1, got: 0 },
+    { subject: 2, type: "mcq", points: 8, need: 11, got: 8 },
+    { subject: 2, type: "mcq", points: 12, need: 8, got: 6 },
+    { subject: 3, type: "mcq", points: 8, need: 14, got: 13 },
+    { subject: 4, type: "mcq", points: 8, need: 15, got: 11 },
+    { subject: 4, type: "mcq", points: 12, need: 12, got: 11 }
+  ]);
+  const missing = m.slots_missing.reduce((s, x) => s + (x.need - x.got), 0);
+  assert.equal(missing, 12);
+  assert.equal(m.order.filter(o => o.type === "short").length, 19);
+});
+
+/* ================================================================== *
+ * 13. 모의고사 채점 — gradeMock · mockRecord
+ * ================================================================== */
+function ansMap(bank, qids, fn) {
+  const byId = new Map();
+  bank.forEach(q => byId.set(q.id, q));
+  const out = {};
+  qids.forEach((id, i) => {
+    const r = fn(byId.get(id), i);
+    if (r) out[id] = r;
+  });
+  return out;
+}
+const rightAns = q => ({ given: q.type === "short" ? "페녹시에탄올" : q.answer, conf: 2, sec: 40 });
+const wrongAns = q => ({ given: q.type === "short" ? "엉뚱한답" : (q.answer + 1) % 5, conf: 1, sec: 50 });
+
+test("gradeMock: 만점 = 1000점, partial 아님, 과락 없음", () => {
+  const bank = fullBank(0);
+  const m = C.buildMock("full", bank, BP, {}, C.seededRandom(4));
+  assert.equal(m.partial, false);
+  const g = C.gradeMock(m, ansMap(bank, m.qids, rightAns), bank, BP);
+  assert.equal(g.raw, 1000);
+  assert.equal(g.max_included, 1000);
+  assert.equal(g.scaled, 1000);
+  assert.equal(g.adj, 1000);
+  assert.equal(g.partial, false);
+  assert.equal(g.pass, true);
+  assert.deepEqual(g.fail_subjects, []);
+  assert.deepEqual(g.mcq, { n: 80, correct: 80, points: 806 });
+  assert.deepEqual(g.short, { n: 20, correct: 20, points: 194, self_marked: 0 });
+  assert.deepEqual(g.unanswered, []);
+  assert.equal(g.avg_sec, 40);
+  assert.deepEqual(g.by_subject.map(x => x.scaled), [100, 250, 250, 400]);
+  assert.ok(g.by_subject.every(x => x.pass === true && x.ratio === 1));
+});
+
+test("gradeMock: 0점 = 전 과목 과락, 무응답과 오답을 구분한다", () => {
+  const bank = fullBank(0);
+  const m = C.buildMock("full", bank, BP, {}, C.seededRandom(4));
+  const g = C.gradeMock(m, ansMap(bank, m.qids, wrongAns), bank, BP);
+  assert.equal(g.raw, 0);
+  assert.equal(g.scaled, 0);
+  assert.equal(g.pass, false);
+  assert.deepEqual(g.fail_subjects, [1, 2, 3, 4]);
+  assert.deepEqual(g.unanswered, []);
+  assert.equal(g.mcq.correct, 0);
+  assert.equal(g.short.correct, 0);
+  // 답을 아예 비우면 unanswered
+  const g2 = C.gradeMock(m, ansMap(bank, m.qids, (q, i) => (i < 3 ? { given: null, conf: 0, sec: 5 } : rightAns(q))), bank, BP);
+  assert.deepEqual(g2.unanswered, m.qids.slice(0, 3));
+  assert.equal(g2.raw, 1000 - m.order.slice(0, 3).reduce((s, o) => s + o.points, 0));
+});
+
+const G_QS = [
+  mcq({ id: "G1", subject: 1, topic: "1.1.1", points: 8 }),
+  mcq({ id: "G2", subject: 1, topic: "1.1.2", points: 8 }),
+  mcq({ id: "G3", subject: 2, topic: "2.1.1", points: 12 }),
+  mcq({ id: "G4", subject: 3, topic: "3.1.1", points: 8 }),
+  mcq({ id: "G5", subject: 4, topic: "4.1.1", points: 18 })
+];
+const G_MOCK = { preset: "full", qids: ["G1", "G2", "G3", "G4", "G5"], partial: true, minutes: 120 };
+const G_ANS = {
+  G1: { given: 0, conf: 2, sec: 30 },
+  G2: { given: 3, conf: 1, sec: 200 },
+  G3: { given: 0, conf: 2, sec: 60 },
+  G4: { given: 4, conf: 0, sec: 20 },
+  G5: { given: 0, conf: 0, sec: 100 }
+};
+
+test("gradeMock: partial이면 환산 점수(획득/포함 × 1000), 과목도 같은 방식", () => {
+  const g = C.gradeMock(G_MOCK, G_ANS, G_QS, BP);
+  assert.equal(g.raw, 38);
+  assert.equal(g.max_included, 54);
+  assert.equal(g.partial, true);
+  assert.equal(g.scaled, 704);                       // round(38/54×1000)
+  assert.deepEqual(g.by_subject.map(x => [x.id, x.raw, x.scaled, x.ratio, x.pass]), [
+    [1, 8, 50, 0.5, true],
+    [2, 12, 250, 1, true],
+    [3, 0, 0, 0, false],
+    [4, 18, 400, 1, true]
+  ]);
+  assert.deepEqual(g.fail_subjects, [3]);
+  assert.equal(g.pass, false);
+});
+
+test("gradeMock: 찍어서 맞힌 문항은 adj에서 0.8배 차감(환산 배율 적용)", () => {
+  const g = C.gradeMock(G_MOCK, G_ANS, G_QS, BP);
+  assert.deepEqual(g.guessed_correct, ["G5"]);       // 오답·찍음(G4)은 세지 않는다
+  assert.equal(g.guessed_points, 18);
+  assert.equal(g.adj, 704 - 267);                    // round(0.8×18×1000/54) = 267
+  // partial이 아니면 배율 없이 차감
+  const g2 = C.gradeMock({ preset: "full", qids: ["G5"], partial: false },
+    { G5: { given: 0, conf: 0, sec: 10 } }, [G_QS[4]], { subjects: BP.subjects, exam: { total_points: 18, pass_total: 600 } });
+  assert.equal(g2.partial, false);
+  assert.equal(g2.scaled, 18);
+  assert.equal(g2.adj, 18 - 14);                     // round(0.8×18)=14
+});
+
+test("gradeMock: by_topic은 정답률 낮은 순, slowest는 상위 5, avg_sec은 응답 평균", () => {
+  const g = C.gradeMock(G_MOCK, G_ANS, G_QS, BP);
+  assert.deepEqual(g.by_topic.map(x => [x.id, x.n, x.correct, x.pct]), [
+    ["1.1.2", 1, 0, 0], ["3.1.1", 1, 0, 0],
+    ["1.1.1", 1, 1, 100], ["2.1.1", 1, 1, 100], ["4.1.1", 1, 1, 100]
+  ]);
+  assert.deepEqual(g.slowest, [
+    { qid: "G2", sec: 200 }, { qid: "G5", sec: 100 }, { qid: "G3", sec: 60 },
+    { qid: "G1", sec: 30 }, { qid: "G4", sec: 20 }
+  ]);
+  assert.equal(g.avg_sec, 82);
+  // topics를 넘기면 by_topic에 이름이 붙는다
+  const g2 = C.gradeMock(G_MOCK, G_ANS, G_QS, BP, [{ id: "1.1.2", kind: "sub", name: "유형과 종류" }]);
+  assert.equal(g2.by_topic[0].name, "유형과 종류");
+});
+
+test("gradeMock: 과락 경계 — 환산 후 40%면 통과, 그 아래면 과락", () => {
+  // 과목② 포함 만점 246점(8×27 + 12 + 18), pass_points 100/250
+  const qs = [];
+  for (let i = 0; i < 27; i++) qs.push(mcq({ id: "B8-" + i, subject: 2, topic: "2.1." + i, points: 8 }));
+  qs.push(mcq({ id: "B12", subject: 2, topic: "2.2.1", points: 12 }));
+  qs.push(mcq({ id: "B18", subject: 2, topic: "2.2.2", points: 18 }));
+  const qids = qs.map(q => q.id);
+  const mk = { preset: "full", qids: qids, partial: true };
+  // 98점 = 8×10 + 18 → 39.84% → round(98/246×250) = 100 → 딱 통과
+  const a1 = {};
+  qids.forEach(id => { a1[id] = { given: 1, conf: 2, sec: 10 }; });
+  ["B8-0", "B8-1", "B8-2", "B8-3", "B8-4", "B8-5", "B8-6", "B8-7", "B8-8", "B8-9", "B18"]
+    .forEach(id => { a1[id] = { given: 0, conf: 2, sec: 10 }; });
+  const g1 = C.gradeMock(mk, a1, qs, BP);
+  assert.equal(g1.max_included, 246);
+  assert.equal(g1.by_subject.find(x => x.id === 2).raw, 98);
+  assert.equal(g1.by_subject.find(x => x.id === 2).scaled, 100);
+  assert.equal(g1.by_subject.find(x => x.id === 2).pass, true);
+  assert.equal(g1.fail_subjects.indexOf(2), -1);
+  // 8점 하나를 더 틀리면 90점 → 36.6% → 91 → 과락
+  const a2 = Object.assign({}, a1, { "B8-9": { given: 1, conf: 2, sec: 10 } });
+  const g2 = C.gradeMock(mk, a2, qs, BP);
+  assert.equal(g2.by_subject.find(x => x.id === 2).raw, 90);
+  assert.equal(g2.by_subject.find(x => x.id === 2).scaled, 91);
+  assert.equal(g2.by_subject.find(x => x.id === 2).pass, false);
+  assert.ok(g2.fail_subjects.indexOf(2) !== -1);
+});
+
+test("gradeMock: 단답 self_marked는 정답으로 인정하고 따로 센다", () => {
+  const qs = [short({ id: "S1", subject: 4, topic: "4.1.1", points: 8, answer_text: ["페녹시에탄올"] })];
+  const mk = { preset: "full", qids: ["S1"], partial: true };
+  const g = C.gradeMock(mk, { S1: { given: "방부제로쓰는그것", conf: 1, sec: 30, self_marked: true } }, qs, BP);
+  assert.equal(g.raw, 8);
+  assert.deepEqual(g.short, { n: 1, correct: 1, points: 8, self_marked: 1 });
+  const g2 = C.gradeMock(mk, { S1: { given: "방부제로쓰는그것", conf: 1, sec: 30 } }, qs, BP);
+  assert.equal(g2.raw, 0);
+  assert.equal(g2.short.self_marked, 0);
+});
+
+test("gradeMock: half 모의는 빠진 과목이 fail_subjects에 들어간다", () => {
+  const bank = fullBank(0);
+  const m = C.buildMock("half", bank, BP, {}, C.seededRandom(4));
+  const g = C.gradeMock(m, ansMap(bank, m.qids, rightAns), bank, BP);
+  assert.equal(g.partial, true);                     // 504점만 포함 → 환산
+  assert.equal(g.max_included, 504);
+  assert.equal(g.scaled, 1000);
+  assert.deepEqual(g.fail_subjects, [4]);
+  assert.equal(g.by_subject.find(x => x.id === 4).max_included, 0);
+  assert.equal(g.pass, false);
+});
+
+test("mockRecord: pl.v1.mocks 한 줄로 접는다(qids 포함 — 다음 모의 exclude용)", () => {
+  const g = C.gradeMock(G_MOCK, G_ANS, G_QS, BP);
+  const rec = C.mockRecord(G_MOCK, g, "sid-9", "2026-09-11");
+  assert.equal(rec.sid, "sid-9");
+  assert.equal(rec.date, "2026-09-11");
+  assert.equal(rec.preset, "full");
+  assert.equal(rec.raw, 38);
+  assert.equal(rec.max_included, 54);
+  assert.equal(rec.scaled, 704);
+  assert.equal(rec.adj, 437);
+  assert.equal(rec.pass, false);
+  assert.deepEqual(rec.fail_subjects, [3]);
+  assert.equal(rec.partial, true);
+  assert.deepEqual(rec.subject, [50, 250, 0, 400]);
+  assert.deepEqual(rec.mcq, { n: 5, correct: 3, points: 38 });
+  assert.deepEqual(rec.short, { n: 0, correct: 0, points: 0, self_marked: 0 });
+  assert.equal(rec.guessedCorrect, 1);
+  assert.equal(rec.avgSec, 82);
+  assert.equal(rec.slowest.length, 5);
+  assert.equal(rec.n, 5);
+  assert.deepEqual(rec.qids, G_MOCK.qids);
+  // 문항 본문은 저장하지 않는다
+  assert.ok(JSON.stringify(rec).indexOf("다음 중 옳은 것은") === -1);
+});
+
+/* ================================================================== *
+ * 14. 예상 점수 · READINESS
+ * ================================================================== */
+const EX_TOPICS = [1, 2, 3, 4].map(s => ({
+  id: s + ".1.1", subject: s, parent: s + ".1", kind: "sub",
+  name: "과목" + s + " 세부", exp_q: 4, exp_short: 1, importance: "H"
+}));
+const EX_QS = [0, 1, 2, 3].map(i => mcq({ id: "E-1-" + i, subject: 1, topic: "1.1.1", points: 8 }));
+// 시도 없음 → 전 과목 숙달 20 → 선다 p=0.36, 단답 p=0.17
+// ①72×0.36+28×0.17=30.68 ②202×0.36+48×0.17=80.88 ③250×0.36=90 ④282×0.36+118×0.17=121.58
+const BASE_E = [31, 81, 90, 122];
+
+test("expectedScore: 모의 0회 = 숙달 기반, band 120, 신뢰 낮음", () => {
+  const e = C.expectedScore([], EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.equal(e.n_mocks, 0);
+  assert.equal(e.basis, "mastery");
+  assert.deepEqual(e.by_subject.map(x => x.E), BASE_E);
+  assert.equal(e.E, 324);
+  assert.equal(e.mastery_based, 324);
+  assert.equal(e.mock_based, 324);          // 모의가 없으면 숙달로 채운다
+  assert.equal(e.band, 120);
+  assert.equal(e.low, 204);
+  assert.equal(e.high, 444);
+  assert.ok(e.note.indexOf("초기 추정") !== -1, e.note);
+  assert.deepEqual(e.by_subject.map(x => x.max), [100, 250, 250, 400]);
+  close(e.by_subject[0].ratio, 0.31);
+});
+
+test("expectedScore: 모의 1회 = 0.5 모의 + 0.5 숙달, band 90(찍음 보정 adj 사용)", () => {
+  const mocks = [{ sid: "m1", date: "2026-09-06", preset: "full", scaled: 700, adj: 660, subject: [50, 180, 170, 300] }];
+  const e = C.expectedScore(mocks, EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.equal(e.n_mocks, 1);
+  assert.equal(e.basis, "mixed");
+  assert.equal(e.band, 90);
+  assert.equal(e.mock_based, 660);          // adj/scaled 배율을 과목 점수에 적용
+  assert.deepEqual(e.by_subject.map(x => x.E), [39, 125, 125, 202]);
+  assert.equal(e.E, 491);
+  assert.equal(e.low, 401);
+  assert.equal(e.high, 581);
+});
+
+test("expectedScore: 모의 2회 = 0.7 모의 + 0.3 숙달, 최근 가중 0.7·0.3, band 60", () => {
+  const mocks = [
+    { sid: "m1", date: "2026-09-03", preset: "full", scaled: 600, adj: 600, subject: [40, 150, 150, 260] },
+    { sid: "m2", date: "2026-09-06", preset: "full", scaled: 800, adj: 800, subject: [60, 200, 200, 340] }
+  ];
+  const e = C.expectedScore(mocks, EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.equal(e.n_mocks, 2);
+  assert.equal(e.basis, "mock");
+  assert.equal(e.band, 60);
+  assert.equal(e.mock_based, 740);          // 0.7×최근 + 0.3×직전
+  assert.deepEqual(e.by_subject.map(x => x.E), [47, 154, 157, 258]);
+  assert.equal(e.E, 616);
+  assert.equal(e.low, 556);
+});
+
+test("expectedScore: 3회 이상은 최근 3회만 0.6·0.3·0.1로 쓴다", () => {
+  const full = (date, v) => ({ sid: date, date: date, preset: "full", scaled: 1000, adj: 1000, subject: v });
+  const mocks = [
+    full("2026-08-20", [0, 0, 0, 0]),                       // 오래된 것은 무시
+    full("2026-09-01", [100, 250, 250, 400]),
+    full("2026-09-04", [100, 250, 250, 400]),
+    full("2026-09-06", [100, 250, 250, 400])
+  ];
+  const e = C.expectedScore(mocks, EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.equal(e.n_mocks, 4);
+  assert.equal(e.mock_based, 1000);
+  assert.deepEqual(e.by_subject.map(x => x.E), [79, 199, 202, 316]);
+  assert.equal(e.E, 796);
+  assert.equal(e.band, 60);
+});
+
+test("expectedScore: half·mini3은 포함 과목만 반영하고 나머지는 숙달로 채운다", () => {
+  const mocks = [{ sid: "h1", date: "2026-09-06", preset: "half", scaled: 1000, adj: 1000, subject: [100, 250, 250, 0] }];
+  const e = C.expectedScore(mocks, EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.deepEqual(e.by_subject.map(x => x.E), [65, 165, 170, 122]);   // ④는 숙달 그대로(121.58 → 122)
+  const m3 = [{ sid: "n1", date: "2026-09-06", preset: "mini3", scaled: 1000, adj: 1000, subject: [0, 0, 250, 0] }];
+  const e3 = C.expectedScore(m3, EX_TOPICS, EX_QS, {}, BP, "2026-09-07");
+  assert.deepEqual(e3.by_subject.map(x => x.E), [31, 81, 170, 122]);   // ③만 모의 반영
+});
+
+test("expectedScore: 시도가 쌓이면 숙달 기반 점수가 오르고, 미검증 문항은 제외된다", () => {
+  const atts = {};
+  EX_QS.forEach(q => { atts[q.id] = [att({ qid: q.id, at: "2026-09-07T10:00:00", correct: true, conf: 2, sec: 30 })]; });
+  const e = C.expectedScore([], EX_TOPICS, EX_QS, atts, BP, "2026-09-07");
+  assert.equal(e.by_subject[0].E, 71);                 // 숙달 70 → 72×0.76 + 28×0.595
+  close(e.by_subject[0].mastery, 70);
+  assert.equal(e.by_subject[0].n, 4);
+  assert.deepEqual(e.by_subject.slice(1).map(x => x.E), BASE_E.slice(1));
+  // 미검증 문항은 예상 점수 계산에서 빼고, 시도 수도 세지 않는다
+  const unver = EX_QS.map(q => Object.assign({}, q, { verified: false }));
+  const e2 = C.expectedScore([], EX_TOPICS, unver, atts, BP, "2026-09-07");
+  assert.equal(e2.by_subject[0].E, 31);
+  assert.equal(e2.by_subject[0].n, 0);
+});
+
+test("readiness: SAFE / BORDERLINE / AT RISK 세 분기", () => {
+  const bs = ratios => ratios.map((r, i) => ({ id: i + 1, E: 0, max: 100, ratio: r, n: 20 }));
+  const safe = C.readiness({ E: 796, low: 736, high: 856, n_mocks: 3, by_subject: bs([0.79, 0.8, 0.81, 0.79]) }, BP);
+  assert.equal(safe.label, "SAFE");
+  assert.ok(safe.reasons.length > 0);
+  const border = C.readiness({ E: 616, low: 556, high: 676, n_mocks: 2, by_subject: bs([0.47, 0.62, 0.63, 0.65]) }, BP);
+  assert.equal(border.label, "BORDERLINE");
+  const risk = C.readiness({ E: 580, low: 490, high: 670, n_mocks: 1, by_subject: bs([0.31, 0.62, 0.63, 0.65]) }, BP);
+  assert.equal(risk.label, "AT RISK");
+  assert.ok(risk.reasons.some(x => x.indexOf("600") !== -1), JSON.stringify(risk.reasons));
+  // 어느 한 과목만 40% 미달이어도 AT RISK
+  const risk2 = C.readiness({ E: 800, low: 740, high: 860, n_mocks: 3, by_subject: bs([0.9, 0.9, 0.39, 0.9]) }, BP);
+  assert.equal(risk2.label, "AT RISK");
+  assert.ok(risk2.reasons.some(x => x.indexOf("과락") !== -1));
+  // 하한만 540 미달이어도 AT RISK
+  assert.equal(C.readiness({ E: 700, low: 539, high: 861, n_mocks: 2, by_subject: bs([0.7, 0.7, 0.7, 0.7]) }, BP).label, "AT RISK");
+});
+
+test("readiness: 모의 0회면 아무리 좋아도 BORDERLINE이 최대", () => {
+  const bs = [0.9, 0.9, 0.9, 0.9].map((r, i) => ({ id: i + 1, E: 0, max: 100, ratio: r, n: 20 }));
+  const r = C.readiness({ E: 900, low: 780, high: 1000, n_mocks: 0, by_subject: bs }, BP);
+  assert.equal(r.label, "BORDERLINE");
+  assert.ok(r.reasons.some(x => x.indexOf("모의") !== -1), JSON.stringify(r.reasons));
+});
+
+test("readiness: 경계값 — E 700·하한 620·과목 50%면 SAFE, 하나라도 미달이면 BORDERLINE", () => {
+  const bs = ratios => ratios.map((r, i) => ({ id: i + 1, E: 0, max: 100, ratio: r, n: 20 }));
+  assert.equal(C.readiness({ E: 700, low: 620, n_mocks: 1, by_subject: bs([0.5, 0.5, 0.5, 0.5]) }, BP).label, "SAFE");
+  assert.equal(C.readiness({ E: 699, low: 620, n_mocks: 1, by_subject: bs([0.5, 0.5, 0.5, 0.5]) }, BP).label, "BORDERLINE");
+  assert.equal(C.readiness({ E: 700, low: 619, n_mocks: 1, by_subject: bs([0.5, 0.5, 0.5, 0.5]) }, BP).label, "BORDERLINE");
+  assert.equal(C.readiness({ E: 700, low: 620, n_mocks: 1, by_subject: bs([0.49, 0.5, 0.5, 0.5]) }, BP).label, "BORDERLINE");
+});
+
+test("subjectBadge: 시도 8회 미만은 미측정, 0.55/0.45 경계", () => {
+  assert.equal(C.subjectBadge(0.9, 7), "미측정");
+  assert.equal(C.subjectBadge(0.1, 0), "미측정");
+  assert.equal(C.subjectBadge(0.55, 8), "안전");
+  assert.equal(C.subjectBadge(0.6, 20), "안전");
+  assert.equal(C.subjectBadge(0.549, 8), "주의");
+  assert.equal(C.subjectBadge(0.45, 8), "주의");
+  assert.equal(C.subjectBadge(0.449, 8), "위험");
+  assert.equal(C.subjectBadge(0, 8), "위험");
+});
+
+/* ================================================================== *
+ * 15. 적응형 출제
+ * ================================================================== */
+const A_TODAY = "2026-09-07";
+function adaptBank() {
+  const topics = [], questions = [];
+  [1, 2, 3, 4].forEach(s => {
+    for (let k = 1; k <= 3; k++) {
+      topics.push({
+        id: `${s}.1.${k}`, subject: s, parent: `${s}.1`, kind: "sub",
+        name: `과목${s} 세부${k}`, exp_q: 5 - k, exp_short: 0, importance: "M"
+      });
+      for (let i = 0; i < 5; i++) {
+        questions.push(mcq({ id: `A-${s}-${k}-${i}`, subject: s, topic: `${s}.1.${k}`, points: 8 }));
+      }
+    }
+  });
+  return { topics: topics, questions: questions };
+}
+function dueEntry(day) {
+  return {
+    count: 1, last: "2026-09-04", stage: "reviewing", streak: 0,
+    next: day || "2026-09-06", interval: 1, lastWrong: "2026-09-04",
+    guessed: 0, relapse: false, memo: ""
+  };
+}
+/** 오답 1회 기록(약점 후보) */
+function weakAtts(ids, at) {
+  const out = {};
+  ids.forEach(id => { out[id] = [att({ qid: id, at: at || "2026-09-06T10:00:00", correct: false, conf: 1, why: "unknown" })]; });
+  return out;
+}
+
+test("buildAdaptiveSet: 비중 W50/R30/N20 → n=10은 5/3/2, 만기 문항이 먼저 들어간다", () => {
+  const B = adaptBank();
+  const due = ["A-1-1-0", "A-2-1-0", "A-3-1-0", "A-4-1-0"];
+  const weak = ["A-1-2-0", "A-1-2-1", "A-2-2-0", "A-2-2-1", "A-3-2-0", "A-3-2-1", "A-4-2-0", "A-4-2-1"];
+  const mistakes = {};
+  due.forEach(id => { mistakes[id] = dueEntry(); });
+  const atts = Object.assign(weakAtts(weak), weakAtts(due, "2026-09-04T10:00:00"));
+  const r = C.buildAdaptiveSet(10, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(21));
+  assert.deepEqual(r.mix, { W: 5, R: 3, N: 2 });
+  assert.equal(r.qids.length, 10);
+  assert.equal(new Set(r.qids).size, 10);
+  // 만기 오답 3개(만기일 같으면 qid 순)가 맨 앞
+  assert.deepEqual(r.qids.slice(0, 3), ["A-1-1-0", "A-2-1-0", "A-3-1-0"]);
+  // 나머지는 약점(시도 있음) + 새 문항(미출제)
+  const untried = r.qids.filter(id => !atts[id]);
+  assert.equal(untried.length, 2);
+  // n=20이면 10/6/4
+  const r2 = C.buildAdaptiveSet(20, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(21));
+  assert.equal(r2.qids.length, 20);
+  assert.equal(new Set(r2.qids).size, 20);
+  assert.equal(r2.mix.R, 4);                      // 만기 4개뿐 → 부족분은 W→N으로
+  assert.equal(r2.mix.W, 8);                      // 약점 후보 8개뿐
+  assert.equal(r2.mix.W + r2.mix.R + r2.mix.N, 20);
+});
+
+test("buildAdaptiveSet: 같은 seed면 같은 결과, 다른 seed면 달라진다", () => {
+  const B = adaptBank();
+  const mistakes = { "A-1-1-0": dueEntry() };
+  const atts = weakAtts(["A-1-2-0", "A-2-2-0", "A-3-2-0", "A-4-2-0", "A-1-2-1", "A-2-2-1"]);
+  const a = C.buildAdaptiveSet(10, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(5));
+  const b = C.buildAdaptiveSet(10, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(5));
+  assert.deepEqual(a.qids, b.qids);
+  const c = C.buildAdaptiveSet(10, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(777));
+  assert.notDeepEqual(a.qids, c.qids);
+});
+
+test("buildAdaptiveSet: 만기·약점이 없어도 n개를 채운다(새 문항으로)", () => {
+  const B = adaptBank();
+  const r = C.buildAdaptiveSet(10, B.questions, B.topics, {}, {}, A_TODAY, C.seededRandom(9));
+  assert.equal(r.qids.length, 10);
+  assert.equal(r.mix.R, 0);
+  assert.equal(r.mix.W, 0);
+  assert.equal(r.mix.N, 10);
+  assert.equal(new Set(r.qids).size, 10);
+});
+
+test("buildAdaptiveSet: 한 과목 60% 상한(가능할 때), 문항이 그 과목뿐이면 완화", () => {
+  const B = adaptBank();
+  const due = ["A-1-1-0", "A-1-1-1", "A-1-1-2", "A-1-1-3"];
+  const weak = ["A-1-2-0", "A-1-2-1", "A-1-2-2", "A-1-2-3", "A-1-2-4", "A-1-3-0", "A-1-3-1", "A-1-3-2"];
+  const mistakes = {};
+  due.forEach(id => { mistakes[id] = dueEntry(); });
+  const atts = Object.assign(weakAtts(weak), weakAtts(due, "2026-09-04T10:00:00"));
+  const r = C.buildAdaptiveSet(10, B.questions, B.topics, atts, mistakes, A_TODAY, C.seededRandom(31));
+  assert.equal(r.qids.length, 10);
+  const s1 = r.qids.filter(id => id.indexOf("A-1-") === 0).length;
+  assert.ok(s1 <= 6, "과목① " + s1 + "문항");
+  // 은행이 과목①뿐이면 상한을 완화해서라도 n개를 채운다
+  const only1 = B.questions.filter(q => q.subject === 1);
+  const r2 = C.buildAdaptiveSet(10, only1, B.topics, atts, mistakes, A_TODAY, C.seededRandom(31));
+  assert.equal(r2.qids.length, 10);
+});
+
+test("buildAdaptiveSet: P 점수 상위 2배수에서 뽑는다 — 최하위 후보는 빠진다", () => {
+  const B = adaptBank();
+  // 만기 3개(과목②③④) + 미출제 2개는 다른 과목에서, 약점 후보 12개는 모두 과목①
+  const mistakes = { "A-2-1-0": dueEntry(), "A-3-1-0": dueEntry(), "A-4-1-0": dueEntry() };
+  const hi = [], lo = [];
+  for (let k = 1; k <= 3; k++) for (let i = 0; i < 5; i++) {
+    const id = `A-1-${k}-${i}`;
+    if (hi.length < 10) hi.push(id); else if (lo.length < 2) lo.push(id);
+  }
+  const qs = B.questions.map(q => (hi.indexOf(q.id) !== -1 ? Object.assign({}, q, { importance: "H" })
+    : (lo.indexOf(q.id) !== -1 ? Object.assign({}, q, { importance: "L" }) : q)));
+  const atts = {};
+  hi.forEach(id => { atts[id] = [att({ qid: id, at: "2026-09-06T10:00:00", correct: false, conf: 1, why: "unknown" })]; });
+  lo.forEach(id => { atts[id] = [att({ qid: id, at: "2026-08-28T10:00:00", correct: false, conf: 2, why: "slip" })]; });
+  ["A-2-1-0", "A-3-1-0", "A-4-1-0"].forEach(id => { atts[id] = [att({ qid: id, at: "2026-09-04T10:00:00", correct: false, conf: 1 })]; });
+  for (let seed = 1; seed <= 6; seed++) {
+    const r = C.buildAdaptiveSet(10, qs, B.topics, atts, mistakes, A_TODAY, C.seededRandom(seed));
+    assert.equal(r.mix.W, 5);
+    lo.forEach(id => assert.equal(r.qids.indexOf(id), -1, "seed " + seed + ": " + id + " 는 P 하위라 빠져야 한다"));
+  }
+});
+
+test("buildAdaptiveSet: 만기 오답이 모자라면 같은 vg 형제로 채운다", () => {
+  const B = adaptBank();
+  const qs = [
+    mcq({ id: "V-1", subject: 1, topic: "1.1.1", vg: "VG-A" }),
+    mcq({ id: "V-2", subject: 1, topic: "1.1.1", vg: "VG-A" }),
+    mcq({ id: "V-3", subject: 1, topic: "1.1.1", vg: "VG-A" })
+  ].concat(B.questions.filter(q => q.subject !== 1));
+  const topics = [{ id: "1.1.1", subject: 1, kind: "sub", name: "정의", exp_q: 3 }].concat(B.topics);
+  const mistakes = { "V-1": dueEntry() };
+  const atts = { "V-1": [att({ qid: "V-1", at: "2026-09-04T10:00:00", correct: false, conf: 1 })] };
+  // n=10 → R 몫 3개인데 만기는 1개 → 같은 vg 형제 2개로 채운다
+  const r = C.buildAdaptiveSet(10, qs, topics, atts, mistakes, A_TODAY, C.seededRandom(6));
+  assert.equal(r.qids[0], "V-1");
+  assert.equal(r.mix.R, 3);
+  assert.ok(r.qids.indexOf("V-2") !== -1 && r.qids.indexOf("V-3") !== -1, JSON.stringify(r.qids));
+  assert.equal(r.qids.length, 10);
+  assert.equal(new Set(r.qids).size, 10);
+});
+
+/* ================================================================== *
+ * 16. 주간 리포트
+ * ================================================================== */
+const W_QS = [
+  mcq({ id: "W1", subject: 1, topic: "1.1.1" }),
+  mcq({ id: "W2", subject: 1, topic: "1.1.2" }),
+  mcq({ id: "W3", subject: 2, topic: "2.1.1" }),
+  mcq({ id: "W4", subject: 3, topic: "3.1.1" }),
+  mcq({ id: "W5", subject: 4, topic: "4.1.1" }),
+  mcq({ id: "W6", subject: 4, topic: "4.1.2" })
+];
+const W_TOPICS = W_QS.map(q => ({ id: q.topic, subject: q.subject, kind: "sub", name: "세부 " + q.topic, exp_q: 3 }));
+const W_ATTS = [
+  att({ qid: "W1", at: "2026-09-07T09:00:00", correct: true, conf: 2, why: null }),
+  att({ qid: "W2", at: "2026-09-07T09:10:00", correct: false, conf: 1, why: "confused" }),
+  att({ qid: "W3", at: "2026-09-05T09:00:00", correct: false, conf: 0, why: "guess" }),
+  att({ qid: "W4", at: "2026-09-05T09:10:00", correct: true, conf: 0, why: null }),
+  att({ qid: "W5", at: "2026-09-01T09:00:00", correct: true, conf: 2, why: null }),
+  att({ qid: "W6", at: "2026-08-30T09:00:00", correct: true, conf: 2, why: null })   // 7일 창 밖
+];
+const W_MOCKS = [
+  { sid: "old", date: "2026-08-20", preset: "full", scaled: 400, adj: 380, pass: false },
+  { sid: "new", date: "2026-09-06", preset: "half", scaled: 700, adj: 660, pass: false }
+];
+
+test("weeklyReport: 최근 7일만 집계(오늘 포함), 과목·토픽·why·conf 분포", () => {
+  const r = C.weeklyReport(W_ATTS, W_MOCKS, W_TOPICS, W_QS, "2026-09-07");
+  assert.equal(r.days, 7);
+  assert.equal(r.n_attempts, 5);
+  assert.equal(r.correct_pct, 60);
+  assert.deepEqual(r.by_subject, [
+    { id: 1, pct: 50, n: 2 }, { id: 2, pct: 0, n: 1 },
+    { id: 3, pct: 100, n: 1 }, { id: 4, pct: 100, n: 1 }
+  ]);
+  assert.deepEqual(r.weak_topics.map(x => [x.id, x.n, x.pct]), [
+    ["1.1.2", 1, 0], ["2.1.1", 1, 0], ["1.1.1", 1, 100], ["3.1.1", 1, 100], ["4.1.1", 1, 100]
+  ]);
+  assert.equal(r.weak_topics[0].name, "세부 1.1.2");
+  assert.deepEqual(r.why_dist, { unknown: 0, confused: 1, slip: 0, misread: 0, guess: 1 });
+  assert.deepEqual(r.conf_dist, { 2: 2, 1: 1, 0: 2 });
+  assert.deepEqual(r.mocks, [{ date: "2026-09-06", preset: "half", scaled: 700, adj: 660, pass: false }]);
+});
+
+test("weeklyReport: 약점 토픽은 하위 8개까지, 기록이 없으면 0으로 응답", () => {
+  const qs = [], topics = [], atts = [];
+  for (let i = 1; i <= 12; i++) {
+    qs.push(mcq({ id: "X" + i, subject: 2, topic: "2.9." + i }));
+    topics.push({ id: "2.9." + i, subject: 2, kind: "sub", name: "T" + i, exp_q: 2 });
+    atts.push(att({ qid: "X" + i, at: "2026-09-06T10:00:00", correct: i > 8, conf: 1, why: "unknown" }));
+  }
+  const r = C.weeklyReport(atts, [], topics, qs, "2026-09-07");
+  assert.equal(r.weak_topics.length, 8);
+  assert.ok(r.weak_topics.every(x => x.pct === 0));
+  const empty = C.weeklyReport([], [], W_TOPICS, W_QS, "2026-09-07");
+  assert.equal(empty.n_attempts, 0);
+  assert.equal(empty.correct_pct, 0);
+  assert.deepEqual(empty.weak_topics, []);
+  assert.deepEqual(empty.why_dist, { unknown: 0, confused: 0, slip: 0, misread: 0, guess: 0 });
+  assert.deepEqual(empty.conf_dist, { 2: 0, 1: 0, 0: 0 });
+  assert.deepEqual(empty.by_subject, [
+    { id: 1, pct: null, n: 0 }, { id: 2, pct: null, n: 0 },
+    { id: 3, pct: null, n: 0 }, { id: 4, pct: null, n: 0 }
+  ]);
+});

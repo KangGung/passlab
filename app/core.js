@@ -966,6 +966,894 @@
   PLCore.dataCheck = dataCheck;
   PLCore.dailyPlan = dailyPlan;
 
+  /* ================================================================
+   * 10. 모의고사 — 프리셋 · 슬롯 축소 · 편성
+   * ================================================================ */
+  const MOCK_PRESETS = {
+    full:  { name: "실전 모의고사", minutes: 120, subjects: [1, 2, 3, 4], scale: 1 },
+    half:  { name: "하프 모의고사(①②③)", minutes: 60, subjects: [1, 2, 3], counts: { 1: 10, 2: 20, 3: 20 } },
+    mini3: { name: "3과목 미니", minutes: 30, subjects: [3], counts: { 3: 25 } }
+  };
+  const POINT_KEYS = ["8", "12", "18"];
+  const TOPIC_CAP = 3;              // 한 모의고사에 같은 세부항목 최대 3문항
+
+  /** 최대잉여법 정수 배분 — 비율을 최대한 지키면서 합을 target에 정확히 맞춘다 */
+  function apportion(cells, target) {
+    const t = Math.max(0, Math.round(Number(target) || 0));
+    let total = 0;
+    cells.forEach(function (c) { total += c.weight; });
+    const out = cells.map(function (c) { return { points: c.points, need: 0, frac: 0, weight: c.weight }; });
+    if (!t || total <= 0) return out;
+    let used = 0;
+    out.forEach(function (c, i) {
+      const raw = cells[i].weight * t / total;
+      c.need = Math.floor(raw);
+      c.frac = raw - c.need;
+      used += c.need;
+    });
+    let rest = t - used;
+    const order = out.slice().sort(function (a, b) {
+      if (b.frac !== a.frac) return b.frac - a.frac;
+      if (b.weight !== a.weight) return b.weight - a.weight;
+      return a.points - b.points;
+    });
+    for (let i = 0; rest > 0 && order.length; i++, rest--) order[i % order.length].need += 1;
+    return out;
+  }
+
+  /**
+   * 프리셋의 배점 슬롯표.
+   * full = 블루프린트 슬롯 그대로. half·mini3 = 과목별 목표 문항수에 비례 축소
+   * (과목 안 mcq/short 비율 유지 → 유형 안에서 8·12·18 슬롯 비율 유지, 합은 정확히 맞춤).
+   * @returns {{preset,name,minutes,subjects:number[],slots:Array<{subject,type,points,need}>,count,points}}
+   */
+  function mockSlots(presetKey, blueprint) {
+    const key = MOCK_PRESETS[presetKey] ? presetKey : "full";
+    const p = MOCK_PRESETS[key];
+    const bp = blueprint || {};
+    const slots = [];
+    (bp.subjects || []).forEach(function (s) {
+      if (p.subjects.indexOf(Number(s.id)) === -1) return;
+      const sl = s.slots || {};
+      const cells = {};
+      const n = { mcq: 0, short: 0 };
+      ["mcq", "short"].forEach(function (type) {
+        cells[type] = POINT_KEYS.map(function (k) {
+          const w = Number((sl[type] || {})[k] || 0);
+          n[type] += w;
+          return { points: Number(k), weight: w };
+        });
+      });
+      const nAll = n.mcq + n.short;
+      const want = (p.counts && p.counts[String(s.id)] != null) ? Number(p.counts[String(s.id)]) : nAll;
+      let target = { mcq: n.mcq, short: n.short };
+      if (nAll && want !== nAll) {
+        if (!n.short) target = { mcq: want, short: 0 };
+        else if (!n.mcq) target = { mcq: 0, short: want };
+        else {
+          const m = Math.round(want * n.mcq / nAll);
+          target = { mcq: m, short: want - m };
+        }
+      }
+      ["mcq", "short"].forEach(function (type) {
+        apportion(cells[type], target[type]).forEach(function (c) {
+          if (c.need > 0) slots.push({ subject: Number(s.id), type: type, points: c.points, need: c.need });
+        });
+      });
+    });
+    let count = 0, points = 0;
+    slots.forEach(function (s) { count += s.need; points += s.need * s.points; });
+    return {
+      preset: key, name: p.name, minutes: p.minutes, subjects: p.subjects.slice(),
+      slots: slots, count: count, points: points
+    };
+  }
+
+  /** 대체 배점 순서: 8↔12를 먼저, 18은 마지막 */
+  function substitutePoints(target) {
+    const t = Number(target);
+    return POINT_KEYS.map(Number).filter(function (v) { return v !== t; })
+      .sort(function (a, b) {
+        const la = a === 18 ? 1 : 0, lb = b === 18 ? 1 : 0;
+        if (la !== lb) return la - lb;
+        const da = Math.abs(a - t), db = Math.abs(b - t);
+        if (da !== db) return da - db;
+        return a - b;
+      });
+  }
+
+  /**
+   * 모의고사 편성.
+   * @param {string} presetKey "full|half|mini3"
+   * @param {Array} questions 전체 문항(verified:true만 쓴다)
+   * @param {object} blueprint
+   * @param {{attemptsByQid?:object, exclude?:string[]}} opts exclude = 직전 모의 qids(가능하면 회피)
+   * @param {function} rng
+   */
+  function buildMock(presetKey, questions, blueprint, opts, rng) {
+    const o = opts || {};
+    const r = typeof rng === "function" ? rng : seededRandom(20260919);
+    const plan = mockSlots(presetKey, blueprint);
+    const byQid = o.attemptsByQid || o.attempts_by_qid || {};
+    const exclude = new Set(Array.isArray(o.exclude) ? o.exclude : []);
+    const pool = (Array.isArray(questions) ? questions : []).filter(function (q) {
+      return q && q.id && q.verified === true;
+    });
+
+    // 동순위 tie-break를 seed로 결정적으로 만든다
+    const shuffledIdx = new Map();
+    shuffle(pool, r).forEach(function (q, i) { shuffledIdx.set(q.id, i); });
+
+    const rankOf = new Map();
+    pool.forEach(function (q) {
+      const atts = byQid[q.id] || [];
+      let last = 0;
+      for (let i = 0; i < atts.length; i++) { const t = timeOf(atts[i]); if (t > last) last = t; }
+      rankOf.set(q.id, { ex: exclude.has(q.id) ? 1 : 0, tried: atts.length ? 1 : 0, last: last });
+    });
+
+    // 과목·유형·배점별 후보(미출제 우선 → 가장 오래전 출제 순, exclude는 뒤로)
+    const groups = new Map();
+    const gkey = function (sid, type, pts) { return sid + "|" + type + "|" + pts; };
+    pool.forEach(function (q) {
+      const k = gkey(Number(q.subject), q.type === "short" ? "short" : "mcq", Number(q.points));
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(q);
+    });
+    groups.forEach(function (list) {
+      list.sort(function (a, b) {
+        const ra = rankOf.get(a.id), rb = rankOf.get(b.id);
+        if (ra.ex !== rb.ex) return ra.ex - rb.ex;
+        if (ra.tried !== rb.tried) return ra.tried - rb.tried;
+        if (ra.last !== rb.last) return ra.last - rb.last;
+        return shuffledIdx.get(a.id) - shuffledIdx.get(b.id);
+      });
+    });
+
+    const slots = plan.slots.map(function (s) {
+      return { subject: s.subject, type: s.type, points: s.points, need: s.need, picks: [] };
+    });
+    const used = new Set();
+    const topicCount = new Map();
+    let relaxed = 0;
+
+    function take(slot, pointsList, cap) {
+      for (let pi = 0; pi < pointsList.length; pi++) {
+        const list = groups.get(gkey(slot.subject, slot.type, pointsList[pi])) || [];
+        for (let i = 0; i < list.length && slot.picks.length < slot.need; i++) {
+          const q = list[i];
+          if (used.has(q.id)) continue;
+          const tc = topicCount.get(q.topic) || 0;
+          if (cap !== Infinity && tc >= cap) continue;
+          if (tc >= TOPIC_CAP) relaxed += 1;
+          used.add(q.id);
+          topicCount.set(q.topic, tc + 1);
+          slot.picks.push(q);
+        }
+        if (slot.picks.length >= slot.need) return;
+      }
+    }
+
+    // ① 배점 일치 + 세부항목 상한 → ② 배점 일치 + 상한 완화
+    // → ③ 다른 배점 + 상한 → ④ 다른 배점 + 상한 완화 → 그래도 비면 slots_missing
+    slots.forEach(function (s) { take(s, [s.points], TOPIC_CAP); });
+    slots.forEach(function (s) { take(s, [s.points], Infinity); });
+    slots.forEach(function (s) { take(s, substitutePoints(s.points), TOPIC_CAP); });
+    slots.forEach(function (s) { take(s, substitutePoints(s.points), Infinity); });
+
+    const slots_filled = slots.map(function (s) {
+      return { subject: s.subject, type: s.type, points: s.points, need: s.need, got: s.picks.length };
+    });
+    const slots_missing = slots_filled.filter(function (s) { return s.got < s.need; })
+      .map(function (s) { return { subject: s.subject, type: s.type, points: s.points, need: s.need, got: s.got }; });
+    const partial = slots_missing.length > 0;
+
+    // 배열 순서 = 시험지 순서: 선다형(과목 1→4, 과목 안은 무작위) → 단답형(과목 1→4)
+    const picked = [];
+    slots.forEach(function (s) { s.picks.forEach(function (q) { picked.push(q); }); });
+    const subjectsAsc = plan.subjects.slice().sort(function (a, b) { return a - b; });
+    const ordered = [];
+    ["mcq", "short"].forEach(function (type) {
+      subjectsAsc.forEach(function (sid) {
+        const inSub = picked.filter(function (q) {
+          return (q.type === "short" ? "short" : "mcq") === type && Number(q.subject) === sid;
+        });
+        shuffle(inSub, r).forEach(function (q) { ordered.push(q); });
+      });
+    });
+
+    let total_points = 0;
+    ordered.forEach(function (q) { total_points += Number(q.points) || 0; });
+
+    const warnings = [];
+    slots_missing.forEach(function (s) {
+      warnings.push("과목 " + s.subject + " " + (s.type === "short" ? "단답" : "선다") + " " +
+        s.points + "점 슬롯 부족: 필요 " + s.need + ", 확보 " + s.got);
+    });
+    if (relaxed > 0) {
+      warnings.push("문항이 부족해 같은 세부항목 " + TOPIC_CAP + "문항 상한을 완화했습니다(" + relaxed + "문항)");
+    }
+    if (partial) {
+      warnings.push("축소 편성(" + ordered.length + "/" + plan.count + "문항) — 점수는 환산 점수로 계산합니다");
+    }
+
+    return {
+      preset: plan.preset, name: plan.name,
+      qids: ordered.map(function (q) { return q.id; }),
+      order: ordered.map(function (q, i) {
+        return {
+          no: i + 1, qid: q.id, subject: Number(q.subject),
+          type: q.type === "short" ? "short" : "mcq", points: Number(q.points) || 0, topic: q.topic || null
+        };
+      }),
+      slots_filled: slots_filled,
+      slots_missing: slots_missing,
+      partial: partial,
+      total_points: total_points,
+      planned_count: plan.count,
+      planned_points: plan.points,
+      minutes: plan.minutes,
+      warnings: warnings
+    };
+  }
+
+  PLCore.MOCK_PRESETS = MOCK_PRESETS;
+  PLCore.mockSlots = mockSlots;
+  PLCore.buildMock = buildMock;
+
+  /* ================================================================
+   * 11. 모의고사 채점 · 기록
+   * ================================================================ */
+  const GUESS_PENALTY = 0.8;        // 찍어서 맞힌 문항 배점의 80%를 보정 점수에서 뺀다
+
+  /**
+   * 모의고사 채점.
+   * @param {{qids:string[],partial?:boolean,preset?:string}|string[]} mock
+   * @param {Object} answers { qid: { given, conf, sec, flag, self_marked } }
+   * @param {Array} questions
+   * @param {Object} blueprint
+   * @param {Array} [topics] by_topic에 이름을 붙일 때만 필요
+   */
+  function gradeMock(mock, answers, questions, blueprint, topics) {
+    const bp = blueprint || {};
+    const subs = bp.subjects || [];
+    const bpTotal = (bp.exam && bp.exam.total_points != null) ? Number(bp.exam.total_points) : 1000;
+    const qids = Array.isArray(mock) ? mock.slice()
+      : ((mock && Array.isArray(mock.qids)) ? mock.qids.slice() : []);
+    const ans = answers || {};
+    const byId = new Map();
+    (Array.isArray(questions) ? questions : []).forEach(function (q) { if (q && q.id) byId.set(q.id, q); });
+    const tName = new Map();
+    (Array.isArray(topics) ? topics : []).forEach(function (t) { if (t && t.id) tName.set(t.id, t.name); });
+
+    const subjAgg = {};
+    const topicAgg = {};
+    const mcqAgg = { n: 0, correct: 0, points: 0 };
+    const shortAgg = { n: 0, correct: 0, points: 0, self_marked: 0 };
+    const guessed_correct = [];
+    const unanswered = [];
+    const secList = [];
+    let raw = 0, max_included = 0, guessed_points = 0, secSum = 0, secN = 0;
+
+    function isBlank(given) {
+      if (given == null) return true;
+      if (typeof given === "string") return given.trim() === "";
+      if (Array.isArray(given)) {
+        return given.every(function (x) { return x == null || String(x).trim() === ""; });
+      }
+      return false;
+    }
+
+    qids.forEach(function (id) {
+      const q = byId.get(id);
+      if (!q) return;
+      const pts = Number(q.points) || 0;
+      const sid = Number(q.subject);
+      const isShort = q.type === "short";
+      const a = ans[id] || null;
+      const blank = !a || isBlank(a.given);
+
+      if (!subjAgg[sid]) subjAgg[sid] = { raw: 0, max: 0 };
+      subjAgg[sid].max += pts;
+      max_included += pts;
+      if (blank) unanswered.push(id);
+
+      let ok = false;
+      if (!blank) {
+        if (isShort) {
+          const r = gradeShort(q, a.given);
+          ok = r.correct === true || a.self_marked === true;
+        } else {
+          ok = gradeMcq(q, a.given) === true;
+        }
+      }
+      if (ok) { raw += pts; subjAgg[sid].raw += pts; }
+
+      const bucket = isShort ? shortAgg : mcqAgg;
+      bucket.n += 1;
+      if (ok) { bucket.correct += 1; bucket.points += pts; }
+      if (isShort && a && a.self_marked === true) shortAgg.self_marked += 1;
+      if (ok && a && a.conf === 0) { guessed_correct.push(id); guessed_points += pts; }
+
+      const tid = q.topic || "(미지정)";
+      if (!topicAgg[tid]) topicAgg[tid] = { n: 0, correct: 0 };
+      topicAgg[tid].n += 1;
+      if (ok) topicAgg[tid].correct += 1;
+
+      if (a && typeof a.sec === "number" && isFinite(a.sec)) {
+        secSum += a.sec; secN += 1;
+        secList.push({ qid: id, sec: a.sec });
+      }
+    });
+
+    // 포함 배점이 시험 만점과 다르면(문항 부족·축소 편성) 환산 점수를 쓴다
+    const partial = (mock && !Array.isArray(mock) && mock.partial === true) || max_included !== bpTotal;
+    const factor = (partial && max_included > 0) ? (bpTotal / max_included) : 1;
+    const scaled = max_included > 0 ? (partial ? Math.round(raw * factor) : raw) : 0;
+    const adj = scaled - Math.round(GUESS_PENALTY * guessed_points * factor);
+
+    const subjectScaled = {};
+    const by_subject = subs.map(function (s) {
+      const S = subjAgg[s.id] || { raw: 0, max: 0 };
+      const sMax = Number(s.points) || 0;
+      const sScaled = S.max > 0 ? (partial ? Math.round(S.raw * sMax / S.max) : S.raw) : 0;
+      subjectScaled[s.id] = sScaled;
+      return {
+        id: s.id, name: s.name, raw: S.raw, max: sMax, max_included: S.max,
+        scaled: sScaled, pass_points: s.pass_points,
+        pass: sScaled >= Number(s.pass_points || 0), ratio: sMax > 0 ? sScaled / sMax : 0
+      };
+    });
+    const jp = judgePass(subjectScaled, bp);
+
+    const by_topic = Object.keys(topicAgg).map(function (id) {
+      const T = topicAgg[id];
+      return { id: id, name: tName.get(id) || id, n: T.n, correct: T.correct, pct: (T.correct * 100) / T.n };
+    }).sort(function (a, b) {
+      if (a.pct !== b.pct) return a.pct - b.pct;
+      return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+    });
+
+    const slowest = secList.slice().sort(function (a, b) {
+      if (b.sec !== a.sec) return b.sec - a.sec;
+      return a.qid < b.qid ? -1 : (a.qid > b.qid ? 1 : 0);
+    }).slice(0, 5);
+
+    return {
+      raw: raw, max_included: max_included, scaled: scaled, adj: adj,
+      pass: jp.pass, fail_subjects: jp.failSubjects, partial: partial,
+      by_subject: by_subject,
+      mcq: mcqAgg, short: shortAgg,
+      guessed_correct: guessed_correct, guessed_points: guessed_points,
+      by_topic: by_topic,
+      avg_sec: secN ? Math.round(secSum / secN) : 0,
+      slowest: slowest,
+      unanswered: unanswered
+    };
+  }
+
+  /** 채점 결과를 pl.v1.mocks 한 줄로 접는다(문항 본문은 담지 않는다) */
+  function mockRecord(mock, grade, sid, dateStr) {
+    const g = grade || {};
+    const m = (mock && !Array.isArray(mock)) ? mock : {};
+    const mcq = g.mcq || { n: 0, correct: 0, points: 0 };
+    const short = g.short || { n: 0, correct: 0, points: 0, self_marked: 0 };
+    return {
+      sid: sid != null ? sid : (m.sid || null),
+      date: dateStr || today(),
+      preset: m.preset || "full",
+      raw: Number(g.raw) || 0,
+      max_included: Number(g.max_included) || 0,
+      scaled: Number(g.scaled) || 0,
+      adj: Number(g.adj) || 0,
+      pass: g.pass === true,
+      fail_subjects: (g.fail_subjects || []).slice(),
+      partial: g.partial === true,
+      subject: (g.by_subject || []).map(function (x) { return x.scaled; }),
+      mcq: { n: mcq.n, correct: mcq.correct, points: mcq.points },
+      short: { n: short.n, correct: short.correct, points: short.points, self_marked: short.self_marked },
+      guessedCorrect: (g.guessed_correct || []).length,
+      avgSec: Number(g.avg_sec) || 0,
+      slowest: (g.slowest || []).slice(),
+      n: (mcq.n || 0) + (short.n || 0),
+      qids: Array.isArray(m.qids) ? m.qids.slice() : []
+    };
+  }
+
+  PLCore.gradeMock = gradeMock;
+  PLCore.mockRecord = mockRecord;
+
+  /* ================================================================
+   * 12. 예상 점수 · READINESS
+   * ================================================================ */
+  // 최근 모의 가중(1회 / 2회 / 3회 이상)과 신뢰 구간 폭
+  const MOCK_RECENCY = { 1: [1.0], 2: [0.7, 0.3], 3: [0.6, 0.3, 0.1] };
+  const SUBJ_MARK = ["①", "②", "③", "④"];
+
+  /** 과목 슬롯의 선다·단답 배점 합(슬롯이 없으면 전부 선다로 본다) */
+  function subjectSlotPoints(s) {
+    const sl = (s && s.slots) || {};
+    const m = slotPoints(sl.mcq);
+    const sh = slotPoints(sl.short);
+    if (!m && !sh) return { mcq: Number(s && s.points) || 0, short: 0 };
+    return { mcq: m, short: sh };
+  }
+
+  /**
+   * 예상 점수(/1000).
+   * 숙달 기반 = Σ 슬롯(배점 × p), 선다 p = 0.20+0.80×m/100, 단답 p = 0.85×m/100 (미측정 m=20).
+   * 모의 기반 = 최근 모의 3회까지 가중 평균한 과목 점수 × (adj/scaled) 배율.
+   *            half·mini3에 빠진 과목은 숙달 기반으로 채운다.
+   * 혼합 = 0회 숙달 100%(band 120) / 1회 0.5·0.5(band 90) / 2회 이상 모의 0.7·숙달 0.3(band 60).
+   * 미검증(verified≠true) 문항은 계산에서 뺀다.
+   */
+  function expectedScore(mocks, topics, questions, attemptsByQid, blueprint, todayStr) {
+    const bp = blueprint || {};
+    const subs = bp.subjects || [];
+    const t = todayStr || today();
+    const byQid = attemptsByQid || {};
+    const pool = (Array.isArray(questions) ? questions : []).filter(function (q) {
+      return q && q.verified === true;
+    });
+
+    const mastery = {};
+    subs.forEach(function (s) {
+      const rawM = subjectMastery(s.id, topics, pool, byQid, t);
+      const m = (rawM == null || isNaN(rawM)) ? 20 : rawM;
+      const pts = subjectSlotPoints(s);
+      let n = 0;
+      pool.forEach(function (q) {
+        if (Number(q.subject) !== Number(s.id)) return;
+        const a = byQid[q.id];
+        if (a && a.length) n += 1;
+      });
+      mastery[s.id] = {
+        m: m, n: n,
+        E: pts.mcq * (0.20 + 0.80 * m / 100) + pts.short * (0.85 * m / 100)
+      };
+    });
+
+    // 최신순 정렬(날짜 같으면 나중에 저장된 것이 최신)
+    const list = (Array.isArray(mocks) ? mocks : []).filter(function (x) { return x && typeof x === "object"; });
+    const sorted = list.map(function (rec, i) { return { rec: rec, i: i }; })
+      .sort(function (a, b) {
+        const da = String(a.rec.date || ""), db = String(b.rec.date || "");
+        if (da !== db) return da < db ? 1 : -1;
+        return b.i - a.i;
+      })
+      .map(function (x) { return x.rec; });
+    const n_mocks = sorted.length;
+    const weights = MOCK_RECENCY[Math.min(3, n_mocks)] || [];
+
+    const mockAgg = {};
+    sorted.slice(0, weights.length).forEach(function (rec, i) {
+      const w = weights[i];
+      const preset = MOCK_PRESETS[rec.preset] || MOCK_PRESETS.full;
+      const scaled = Number(rec.scaled) || 0;
+      const adjv = Number(rec.adj);
+      const factor = (scaled > 0 && isFinite(adjv)) ? Math.max(0, adjv / scaled) : 1;
+      const arr = Array.isArray(rec.subject) ? rec.subject : [];
+      subs.forEach(function (s, idx) {
+        if (preset.subjects.indexOf(Number(s.id)) === -1) return;
+        const v = Number(arr[idx]);
+        if (!isFinite(v)) return;
+        if (!mockAgg[s.id]) mockAgg[s.id] = { num: 0, den: 0 };
+        mockAgg[s.id].num += w * v * factor;
+        mockAgg[s.id].den += w;
+      });
+    });
+
+    const mixW = n_mocks === 0 ? 0 : (n_mocks === 1 ? 0.5 : 0.7);
+    const band = n_mocks === 0 ? 120 : (n_mocks === 1 ? 90 : 60);
+    const basis = n_mocks === 0 ? "mastery" : (n_mocks === 1 ? "mixed" : "mock");
+
+    let E = 0, mastery_based = 0, mock_based = 0;
+    const by_subject = subs.map(function (s) {
+      const M = mastery[s.id];
+      const agg = mockAgg[s.id];
+      const mockV = (agg && agg.den > 0) ? (agg.num / agg.den) : M.E;
+      const eS = Math.round(mixW * mockV + (1 - mixW) * M.E);
+      const max = Number(s.points) || 0;
+      E += eS;
+      mastery_based += Math.round(M.E);
+      mock_based += Math.round(mockV);
+      return {
+        id: s.id, name: s.name, E: eS, max: max, ratio: max ? eS / max : 0,
+        n: M.n, mastery: M.m
+      };
+    });
+
+    const clamp = function (v) { return Math.max(0, Math.min(1000, Math.round(v))); };
+    const note = n_mocks === 0 ? "초기 추정 · 신뢰 낮음"
+      : (n_mocks === 1 ? "모의 1회 + 숙달 혼합 · 신뢰 보통"
+        : "최근 모의 " + Math.min(3, n_mocks) + "회 가중 + 숙달 보정");
+
+    return {
+      E: E, band: band, low: clamp(E - band), high: clamp(E + band),
+      basis: basis, n_mocks: n_mocks, by_subject: by_subject,
+      mastery_based: mastery_based, mock_based: mock_based, note: note
+    };
+  }
+
+  /**
+   * 합격 준비도 판정.
+   * SAFE = 모의 ≥1회 AND E ≥700 AND 하한 ≥620 AND 전 과목 50% 이상
+   * AT RISK = E <600 OR 하한 <540 OR 어느 과목 40% 미달 / 그 외 BORDERLINE(모의 0회면 최대 BORDERLINE)
+   */
+  function readiness(exp, blueprint) {
+    const e = exp || {};
+    const subs = (blueprint || {}).subjects || [];
+    const bsList = Array.isArray(e.by_subject) ? e.by_subject : [];
+    const E = Number(e.E) || 0;
+    const low = Number(e.low) || 0;
+    const n = Number(e.n_mocks) || 0;
+
+    const nameOf = function (id, i) {
+      const hit = subs.filter(function (x) { return Number(x.id) === Number(id); })[0];
+      const mark = SUBJ_MARK[(Number(id) || (i + 1)) - 1] || String(id);
+      return mark + " " + ((hit && (hit.short_name || hit.name)) || "과목 " + id);
+    };
+    const pct = function (r) { return Math.round((Number(r) || 0) * 100); };
+
+    const danger = [], weak = [];
+    bsList.forEach(function (b, i) {
+      const r = Number(b.ratio) || 0;
+      if (r < 0.4) danger.push(nameOf(b.id, i) + " " + pct(r) + "% — 과락 위험(40% 미달)");
+      else if (r < 0.5) weak.push(nameOf(b.id, i) + " " + pct(r) + "% — 과락선 근접");
+    });
+
+    let label;
+    if (E < 600 || low < 540 || danger.length) label = "AT RISK";
+    else if (n >= 1 && E >= 700 && low >= 620 && bsList.length &&
+             bsList.every(function (b) { return (Number(b.ratio) || 0) >= 0.5; })) label = "SAFE";
+    else label = "BORDERLINE";
+
+    const reasons = [];
+    if (n === 0) reasons.push("모의고사 0회 — 실전 점수가 없어 추정입니다(1회만 봐도 판정이 정확해집니다)");
+    if (E < 600) reasons.push("예상 총점 " + E + "점 — 합격선 600점 미달");
+    else if (E < 700) reasons.push("예상 총점 " + E + "점 — 합격선은 넘지만 여유가 100점 미만");
+    else reasons.push("예상 총점 " + E + "점 — 합격선보다 " + (E - 600) + "점 위");
+    if (low < 540) reasons.push("하한 " + low + "점 — 컨디션이 나쁜 날이면 불합격권");
+    else if (low < 620) reasons.push("하한 " + low + "점 — 나쁜 날에는 합격선에 붙습니다");
+    else reasons.push("하한 " + low + "점 — 나쁜 날에도 합격선 위");
+    danger.forEach(function (x) { reasons.push(x); });
+    weak.forEach(function (x) { reasons.push(x); });
+    if (label === "SAFE" && !weak.length && !danger.length) reasons.push("전 과목 50% 이상 — 과락 위험 없음");
+
+    return { label: label, reasons: reasons };
+  }
+
+  /** 과목 배지: 시도 8문항 미만이면 "미측정" */
+  function subjectBadge(ratio, n) {
+    if ((Number(n) || 0) < 8) return "미측정";
+    const r = Number(ratio) || 0;
+    if (r >= 0.55) return "안전";
+    if (r >= 0.45) return "주의";
+    return "위험";
+  }
+
+  PLCore.expectedScore = expectedScore;
+  PLCore.readiness = readiness;
+  PLCore.subjectBadge = subjectBadge;
+
+  /* ================================================================
+   * 13. 적응형 출제 · 주간 리포트
+   * ================================================================ */
+  const ADAPT_SHARE = { W: 0.5, R: 0.3 };      // 취약 50 / 복습 만기 30 / 새 문항 나머지 20
+  const SUBJECT_SHARE_CAP = 0.6;               // 한 세트에서 한 과목이 차지할 수 있는 최대 비중
+  const TIME_TARGET = { mcq: 72, short: 90 };  // 목표 풀이 시간(초). 1.5배 초과면 P 가점
+
+  /**
+   * 적응형 학습 세트.
+   * W(취약) = 토픽 숙달<60 또는 문항 숙달<50인 **시도한** 문항 중 P 상위 2배수에서 무작위
+   * R(복습) = 오늘 만기 오답(부족하면 같은 vg 형제로 채움)
+   * N(새것) = 미출제 문항을 토픽 예상 문항수 가중 추첨
+   * 부족분은 R → W → N → 가장 오래전 출제 순으로 채우고, 그래도 모자라면 과목 상한을 푼다.
+   * @returns {{qids:string[], mix:{W:number,R:number,N:number}}}
+   */
+  function buildAdaptiveSet(n, questions, topics, attemptsByQid, mistakes, todayStr, rng) {
+    const want = Math.max(0, Math.floor(Number(n) || 0));
+    const r = typeof rng === "function" ? rng : seededRandom(20260919);
+    const t = todayStr || today();
+    const byQid = attemptsByQid || {};
+    const mist = mistakes || {};
+    const pool = (Array.isArray(questions) ? questions : []).filter(function (q) { return q && q.id; });
+    if (!want || !pool.length) return { qids: [], mix: { W: 0, R: 0, N: 0 } };
+
+    const byId = new Map();
+    pool.forEach(function (q) { byId.set(q.id, q); });
+    const topicById = new Map();
+    let maxExp = 1;
+    (Array.isArray(topics) ? topics : []).forEach(function (tp) {
+      if (!tp || tp.kind !== "sub") return;
+      topicById.set(tp.id, tp);
+      const e = Number(tp.exp_q) || 0;
+      if (e > maxExp) maxExp = e;
+    });
+
+    const targetR = Math.round(want * ADAPT_SHARE.R);
+    const targetW = Math.round(want * ADAPT_SHARE.W);
+    const targetN = want - targetW - targetR;
+    const cap = Math.max(1, Math.ceil(want * SUBJECT_SHARE_CAP));
+
+    const shuffledIdx = new Map();
+    shuffle(pool, r).forEach(function (q, i) { shuffledIdx.set(q.id, i); });
+
+    const tmCache = new Map(), qmCache = new Map();
+    function topicM(tid) {
+      if (!tmCache.has(tid)) tmCache.set(tid, topicMastery(tid, pool, byQid, t));
+      return tmCache.get(tid);
+    }
+    function qM(q) {
+      if (!qmCache.has(q.id)) qmCache.set(q.id, questionMastery(byQid[q.id] || [], q, t));
+      return qmCache.get(q.id);
+    }
+    function lastAt(q) {
+      const atts = byQid[q.id] || [];
+      let last = 0;
+      for (let i = 0; i < atts.length; i++) { const x = timeOf(atts[i]); if (x > last) last = x; }
+      return last;
+    }
+    /** 미출제 우선 → 가장 오래전 출제 순 → seed 순 */
+    function orderCandidates(list) {
+      return list.slice().sort(function (a, b) {
+        const la = lastAt(a), lb = lastAt(b);
+        const ta = la ? 1 : 0, tb = lb ? 1 : 0;
+        if (ta !== tb) return ta - tb;
+        if (la !== lb) return la - lb;
+        return shuffledIdx.get(a.id) - shuffledIdx.get(b.id);
+      });
+    }
+
+    /** 취약 우선순위 P (CLAUDE.md 「적응형 출제」) */
+    function adaptiveP(q) {
+      const atts = sortedAtts(byQid[q.id] || []);
+      const m = qM(q);
+      let p = 3 * (1 - (m == null ? 0 : m) / 100);
+
+      let wrongRecent = false;
+      const rec = mist[q.id];
+      if (rec && rec.lastWrong) {
+        const d = daysBetween(rec.lastWrong, t);
+        if (d != null && d >= 0 && d <= 3) wrongRecent = true;
+      }
+      if (!wrongRecent) {
+        for (let i = atts.length - 1; i >= 0; i--) {
+          if (atts[i].correct === true) continue;
+          const d = daysBetween(dateOf(atts[i].at), t);
+          if (d != null && d >= 0 && d <= 3) wrongRecent = true;
+          break;
+        }
+      }
+      if (wrongRecent) p += 2;
+
+      let streak = 0;
+      for (let i = atts.length - 1; i >= 0; i--) {
+        if (atts[i].correct === true) break;
+        streak += 1;
+      }
+      p += 1.5 * Math.min(streak, 3) / 3;
+
+      const last = atts[atts.length - 1];
+      if (last && (last.conf === 0 || last.conf === 1)) p += 1;
+
+      let secSum = 0, secN = 0;
+      atts.forEach(function (a) {
+        if (typeof a.sec === "number" && isFinite(a.sec)) { secSum += a.sec; secN += 1; }
+      });
+      const limit = (q.type === "short" ? TIME_TARGET.short : TIME_TARGET.mcq) * 1.5;
+      if (secN && (secSum / secN) > limit) p += 1;
+
+      p += 1.5 * (q.importance === "H" ? 1 : (q.importance === "M" ? 0.5 : 0));
+      const tp = topicById.get(q.topic);
+      p += (Number(tp && tp.exp_q) || 0) / maxExp;
+      return p;
+    }
+
+    const chosen = { R: [], W: [], N: [] };
+    const used = new Set();
+    const subjectCount = {};
+    function count() { return chosen.R.length + chosen.W.length + chosen.N.length; }
+    function deficit() { return want - count(); }
+    function canTake(q, respectCap) {
+      if (used.has(q.id)) return false;
+      if (!respectCap) return true;
+      return (subjectCount[Number(q.subject)] || 0) < cap;
+    }
+    function take(bucket, q) {
+      used.add(q.id);
+      subjectCount[Number(q.subject)] = (subjectCount[Number(q.subject)] || 0) + 1;
+      chosen[bucket].push(q.id);
+    }
+    function pickWeightedFrom(list, respectCap, bucket, limitFn) {
+      while (limitFn() > 0 && list.length) {
+        let total = 0;
+        const w = list.map(function (q) {
+          const tp = topicById.get(q.topic);
+          const v = Math.max(0.1, Number(tp && tp.exp_q) || 1);
+          total += v;
+          return v;
+        });
+        let x = r() * total;
+        let idx = list.length - 1;
+        for (let i = 0; i < list.length; i++) { x -= w[i]; if (x <= 0) { idx = i; break; } }
+        const q = list.splice(idx, 1)[0];
+        if (canTake(q, respectCap)) take(bucket, q);
+      }
+    }
+
+    /* R — 오늘 만기 오답 */
+    const dueIds = dueMistakes(mist, t).filter(function (id) { return byId.has(id); });
+    dueIds.forEach(function (id) {
+      if (chosen.R.length >= targetR) return;
+      const q = byId.get(id);
+      if (canTake(q, true)) take("R", q);
+    });
+    /* R 부족분 — 같은 vg(변형 그룹) 형제 문항 우선 */
+    if (chosen.R.length < targetR) {
+      const vgs = [];
+      dueIds.concat(Object.keys(mist)).forEach(function (id) {
+        const q = byId.get(id);
+        if (q && q.vg && vgs.indexOf(q.vg) === -1) vgs.push(q.vg);
+      });
+      if (vgs.length) {
+        orderCandidates(pool.filter(function (q) {
+          return q.vg && vgs.indexOf(q.vg) !== -1 && !used.has(q.id);
+        })).forEach(function (q) {
+          if (chosen.R.length >= targetR) return;
+          if (canTake(q, true)) take("R", q);
+        });
+      }
+    }
+
+    /* W — 취약 문항(시도 있음, 숙달 아님) */
+    const wCands = pool.filter(function (q) {
+      if (used.has(q.id)) return false;
+      const atts = byQid[q.id] || [];
+      if (!atts.length) return false;                     // 미출제는 N 몫
+      if (isMastered(atts, q, t)) return false;
+      const tm = topicM(q.topic);
+      const qm = qM(q);
+      return (tm && tm.value != null && tm.value < 60) || (qm != null && qm < 50);
+    });
+    if (targetW > 0 && wCands.length) {
+      const ranked = wCands.map(function (q) { return { q: q, p: adaptiveP(q) }; })
+        .sort(function (a, b) {
+          if (b.p !== a.p) return b.p - a.p;
+          return shuffledIdx.get(a.q.id) - shuffledIdx.get(b.q.id);
+        })
+        .slice(0, targetW * 2)
+        .map(function (x) { return x.q; });
+      shuffle(ranked, r).forEach(function (q) {
+        if (chosen.W.length >= targetW) return;
+        if (canTake(q, true)) take("W", q);
+      });
+    }
+
+    /* N — 미출제 문항, 토픽 예상 문항수 가중 추첨 */
+    function untriedLeft() {
+      return pool.filter(function (q) {
+        return !used.has(q.id) && !((byQid[q.id] || []).length);
+      });
+    }
+    pickWeightedFrom(untriedLeft(), true, "N", function () { return targetN - chosen.N.length; });
+
+    /* 부족분: R → W → N → 가장 오래전 출제 */
+    function topUp(respectCap) {
+      if (deficit() > 0) {
+        orderCandidates(dueIds.map(function (id) { return byId.get(id); })
+          .filter(function (q) { return q && !used.has(q.id); })).forEach(function (q) {
+            if (deficit() <= 0) return;
+            if (canTake(q, respectCap)) take("R", q);
+          });
+      }
+      if (deficit() > 0) {
+        orderCandidates(wCands.filter(function (q) { return !used.has(q.id); })).forEach(function (q) {
+          if (deficit() <= 0) return;
+          if (canTake(q, respectCap)) take("W", q);
+        });
+      }
+      if (deficit() > 0) pickWeightedFrom(untriedLeft(), respectCap, "N", deficit);
+      if (deficit() > 0) {
+        orderCandidates(pool.filter(function (q) { return !used.has(q.id); })).forEach(function (q) {
+          if (deficit() <= 0) return;
+          if (!canTake(q, respectCap)) return;
+          const tried = ((byQid[q.id] || []).length) > 0;
+          take(tried ? (mist[q.id] ? "R" : "W") : "N", q);
+        });
+      }
+    }
+    topUp(true);
+    if (deficit() > 0) topUp(false);
+
+    return {
+      qids: chosen.R.concat(chosen.W, chosen.N),
+      mix: { W: chosen.W.length, R: chosen.R.length, N: chosen.N.length }
+    };
+  }
+
+  /* 주간 리포트 -------------------------------------------------- */
+  const WHY_KEYS = ["unknown", "confused", "slip", "misread", "guess"];
+  const REPORT_SUBJECTS = [1, 2, 3, 4];
+  const WEAK_TOPIC_LIMIT = 8;
+
+  /**
+   * 최근 7일(오늘 포함) 집계. ⑨-B 주간 리포트 템플릿 채움용.
+   * pct는 반올림하지 않은 백분율(표시할 때 UI가 반올림한다). 기록이 없는 과목은 pct null.
+   */
+  function weeklyReport(attempts, mocks, topics, questions, todayStr) {
+    const t = todayStr || today();
+    const days = 7;
+    const byId = new Map();
+    (Array.isArray(questions) ? questions : []).forEach(function (q) { if (q && q.id) byId.set(q.id, q); });
+    const tName = new Map();
+    (Array.isArray(topics) ? topics : []).forEach(function (tp) { if (tp && tp.id) tName.set(tp.id, tp.name); });
+
+    const why_dist = {};
+    WHY_KEYS.forEach(function (k) { why_dist[k] = 0; });
+    const conf_dist = { 2: 0, 1: 0, 0: 0 };
+    const subjAgg = {}, topicAgg = {};
+    let n_attempts = 0, correct = 0;
+
+    (Array.isArray(attempts) ? attempts : []).forEach(function (a) {
+      if (!a) return;
+      const d = daysBetween(dateOf(a.at), t);
+      if (d == null || d < 0 || d >= days) return;
+      n_attempts += 1;
+      const ok = a.correct === true;
+      if (ok) correct += 1;
+      if (a.why && why_dist[a.why] != null) why_dist[a.why] += 1;
+      if (a.conf === 2 || a.conf === 1 || a.conf === 0) conf_dist[a.conf] += 1;
+      const q = byId.get(a.qid);
+      if (!q) return;
+      const sid = Number(q.subject);
+      if (!subjAgg[sid]) subjAgg[sid] = { n: 0, c: 0 };
+      subjAgg[sid].n += 1;
+      if (ok) subjAgg[sid].c += 1;
+      const tid = q.topic || "(미지정)";
+      if (!topicAgg[tid]) topicAgg[tid] = { n: 0, c: 0 };
+      topicAgg[tid].n += 1;
+      if (ok) topicAgg[tid].c += 1;
+    });
+
+    const by_subject = REPORT_SUBJECTS.map(function (sid) {
+      const S = subjAgg[sid] || { n: 0, c: 0 };
+      return { id: sid, pct: S.n ? (S.c * 100) / S.n : null, n: S.n };
+    });
+
+    const weak_topics = Object.keys(topicAgg).map(function (id) {
+      const T = topicAgg[id];
+      return { id: id, name: tName.get(id) || id, pct: (T.c * 100) / T.n, n: T.n };
+    }).sort(function (a, b) {
+      if (a.pct !== b.pct) return a.pct - b.pct;
+      if (b.n !== a.n) return b.n - a.n;
+      return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+    }).slice(0, WEAK_TOPIC_LIMIT);
+
+    const mocksOut = (Array.isArray(mocks) ? mocks : []).filter(function (m) {
+      if (!m) return false;
+      const d = daysBetween(m.date, t);
+      return d != null && d >= 0 && d < days;
+    }).sort(function (a, b) {
+      return String(a.date) < String(b.date) ? -1 : (String(a.date) > String(b.date) ? 1 : 0);
+    }).map(function (m) {
+      return {
+        date: m.date, preset: m.preset || "full",
+        scaled: Number(m.scaled) || 0, adj: Number(m.adj) || 0, pass: m.pass === true
+      };
+    });
+
+    return {
+      days: days, n_attempts: n_attempts,
+      correct_pct: n_attempts ? (correct * 100) / n_attempts : 0,
+      by_subject: by_subject, weak_topics: weak_topics,
+      why_dist: why_dist, conf_dist: conf_dist, mocks: mocksOut
+    };
+  }
+
+  PLCore.buildAdaptiveSet = buildAdaptiveSet;
+  PLCore.weeklyReport = weeklyReport;
+
   root.PLCore = PLCore;
   if (typeof module !== "undefined") module.exports = PLCore;
 })(typeof window !== "undefined" ? window : globalThis);
