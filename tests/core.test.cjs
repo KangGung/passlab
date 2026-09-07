@@ -90,6 +90,31 @@ test("daysBetween(a,b) = b − a", () => {
   assert.equal(C.daysBetween("2026-02-28", "2026-03-01"), 1); // 2026 평년
 });
 
+test("dateOf: 시각 없는 순수 날짜는 그대로 통과시킨다", () => {
+  assert.equal(C.dateOf("2026-09-05"), "2026-09-05");
+  assert.equal(C.dateOf(null), null);
+  assert.equal(C.dateOf("그냥 글자"), null);
+});
+
+test("dateOf: 시각이 붙은 ISO(UTC Z)는 로컬 날짜로 환산한다", () => {
+  // 기계의 시간대가 무엇이든 today(로컬)와 같아야 한다
+  const iso = "2026-09-05T16:30:00.000Z";
+  assert.equal(C.dateOf(iso), C.today(new Date(iso)));
+  // Date·타임스탬프 입력도 같은 결과
+  assert.equal(C.dateOf(new Date(iso)), C.today(new Date(iso)));
+  assert.equal(C.dateOf(new Date(iso).getTime()), C.today(new Date(iso)));
+});
+
+test("dateOf: 로컬 자정 직후의 Z 타임스탬프는 '어제'가 아니라 그날로 센다", () => {
+  // 로컬 2026-09-06 00:30 → UTC 문자열로 만들어도 로컬 날짜는 09-06이어야 한다
+  const localJustAfterMidnight = new Date(2026, 8, 6, 0, 30, 0);
+  const z = localJustAfterMidnight.toISOString();          // …Z (UTC)
+  assert.equal(C.dateOf(z), "2026-09-06");
+  assert.equal(C.dateOf(z), C.today(localJustAfterMidnight));
+  // 시각 없는 로컬 표기(Z 없음)도 그대로
+  assert.equal(C.dateOf("2026-09-06T00:30:00"), "2026-09-06");
+});
+
 test("dday(examDate, today): 시험 당일 0", () => {
   assert.equal(C.dday("2026-09-19", "2026-09-05"), 14);
   assert.equal(C.dday("2026-09-19", "2026-09-19"), 0);

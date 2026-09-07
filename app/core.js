@@ -22,15 +22,18 @@
     return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   }
 
-  /** attempts의 at(ISO 문자열·타임스탬프·Date) → "YYYY-MM-DD" */
+  /** attempts의 at(ISO 문자열·타임스탬프·Date) → 로컬 "YYYY-MM-DD"
+   *  시각이 붙은 ISO 문자열(특히 …Z, UTC)은 반드시 로컬 날짜로 환산한다.
+   *  앞 10글자를 그냥 잘라 쓰면 KST 00:00~09:00에 푼 기록이 "어제"가 된다. */
   function dateOf(at) {
     if (at == null) return null;
     if (at instanceof Date) return today(at);
     if (typeof at === "number") return today(new Date(at));
-    const s = String(at);
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+    const s = String(at).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;      // 시각 없는 순수 날짜만 그대로
     const d = new Date(s);
-    return isNaN(d.getTime()) ? null : today(d);
+    if (!isNaN(d.getTime())) return today(d);          // 시각이 있으면 로컬 날짜로
+    return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : null;   // 파싱 불가 시 최후 보루
   }
 
   function addDays(dateStr, n) {
