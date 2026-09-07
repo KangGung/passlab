@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-01"],
     tags: ["CGMP", "3대요소", "개론", "3.1.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-02"],
     tags: ["4대기준서", "제15조", "제조관리기준서", "제조위생관리기준서", "3.1.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -92,7 +92,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-03"],
     tags: ["직원위생", "위생상태판정", "혼합소분", "오염경로", "3.2.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -124,7 +124,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-03"],
     tags: ["손세정", "인체용세제", "순서", "70%에탄올", "3.2.4"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -156,7 +156,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-04"],
     tags: ["작업복", "복장기준", "방진복", "위생모", "3.2.6"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -183,13 +183,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     key_concept: "포장재 출고의 선입선출 원칙과 그 예외(사용기한이 짧은 후입 물품·특별한 사유), 출고 책임자 지정·문서화·기준 충족 판정",
     memory_sentence: "선입선출이 원칙, 그러나 '사용기한이 짧은 것'은 먼저 나갈 수 있다 — 대신 사례별 사용기한 관리 시스템이 필요하다.",
-    trap: "'선입선출은 예외 없다'는 절대 표현이 함정이다. CGMP 제12조·제19조제3항도 출고는 선입선출로 하되 '타당한 사유가 있는 경우'에는 그렇지 않을 수 있다고 정한다.",
+    trap: "'선입선출은 예외 없다'는 절대 표현이 함정이다. CGMP 제12조는 원자재를 '적합판정된 것만 선입선출방식으로' 출고하도록 정할 뿐 예외 문구가 없고, 예외를 명시한 조문은 제19조제3항(\"출고는 선입선출방식으로 하되, 타당한 사유가 있는 경우에는 그러지 아니할 수 있다\")이다. 가이드 3.5.3은 이 둘을 근거로 사용기한이 짧은 후입 물품의 우선 출고를 인정한다.",
     source: { law: "우수화장품 제조 및 품질관리기준 제12조·제19조", guide: "4판 p.245", asof: "2026-09", confidence: "high" },
     law_effective_date: "2024-08-22",
     cards: ["C-C6-06"],
     tags: ["포장재", "출고", "선입선출", "FIFO예외", "3.5.3"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: trap이 선입선출 예외('타당한 사유')를 CGMP 제12조에도 있는 것처럼 적었으나 제12조에는 예외 문구가 없음 — 예외는 제19조제3항에만 있으므로 조문 귀속을 정정" }]
   },
   {
     id: "Q-C6-07", subject: 3, topic: "3.3.1", level: "D",
@@ -220,7 +220,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-05"],
     tags: ["설비위생기준", "CGMP제8조", "배수관", "3.3.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -252,7 +252,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-05"],
     tags: ["설비세척", "70%에탄올", "72시간", "숫자", "3.3.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -284,7 +284,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-05"],
     tags: ["세척판정", "육안확인", "린스액", "무진포", "자외선살균기", "3.3.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -316,7 +316,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-05"],
     tags: ["설비세척원칙", "물리적소독제", "스팀", "온수", "3.3.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -348,7 +348,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C6-05"],
     tags: ["설비재질", "스테인리스316", "상용성", "유리", "3.3.4"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -380,7 +380,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-05"],
     tags: ["전자저울", "교정", "편심오차", "유지관리", "3.3.5"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -412,7 +412,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-06"],
     tags: ["포장재", "1차포장", "2차포장", "유리", "플라스틱", "3.5.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -444,7 +444,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C6-06"],
     tags: ["포장재입고", "관리번호", "구획보관", "선입선출", "사례", "3.5.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   }
 ]);

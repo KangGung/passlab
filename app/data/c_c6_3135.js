@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "과오↓ 오염↓ 체계↑ = CGMP 3대 요소. '생산성 향상'은 3대 요소가 아니라 장점.",
     source: { law: "우수화장품 제조 및 품질관리기준 제1조", guide: "4판 p.164", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-01"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -18,7 +18,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "제품표준서=처방·공정, 제조관리=출입·시설·원자재·완제품, 품질관리=검체·시약·표준품, 제조위생=사람·복장·청소·방충.",
     source: { law: "우수화장품 제조 및 품질관리기준 제15조", guide: "4판 p.109·165", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-02"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -29,7 +29,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "물–비누–헹굼–건조–소독. 손바닥엔 피지샘이 없다. 비누 베이스=알칼리, 계면활성제 베이스=약산성·중성.",
     source: { law: null, guide: "4판 p.197~198", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-03", "Q-C6-04"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "제조·칭량은 안전화, 충전·포장은 작업화. 2벌·주 2회·매일 확인.",
     source: { law: null, guide: "4판 p.201~202", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-05"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   },
   {
@@ -49,10 +49,10 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     front: "설비 세척·소독의 표준 조건과 세척 후 판정 방법, 전자저울 점검 기준, 주요 설비 재질 번호는?",
     back: "세척·소독 표준서(4판 p.205): 세척 도구 = 스펀지·수세미·솔·스팀 세척기 / 세제 및 소독액 = 일반 주방 세제 0.5 %, 70 % 에탄올 / 주기 = 제품 변경 시 또는 작업 완료 후, 설비 미사용 72시간 경과 후 또는 밀폐되지 않은 상태로 방치 시, 오염·시스템 문제 발생 시 / 탱크 세척 = 상수를 탱크의 80 %까지 채우고 80 ℃로 가온, 페달 25 rpm·호모 2,000 rpm으로 10분간 교반 후 배출, 정제수 2차 세척 / 탱크 소독 = 70 % 에탄올 스프레이 후 뚜껑을 닫고 30분 정체 / 믹서·펌프·필터류 = 70 % 에탄올에 10분간 침적 / 점검 = 육안 확인 후 점검표 기록, 품질관리 담당자가 매 분기별로 마지막 헹굼수를 채취해 미생물 유무 시험. 세척 후 판정 3방법(4판 p.206) = 육안 확인 / 천으로 문지른 후 부착물로 확인(무진포 선호) / 린스액의 화학 분석. 물리적 소독(4판 p.211) = 스팀 100 ℃ 30분, 온수 80~100 ℃ 30분(70~80 ℃ 2시간), 직열은 다른 방법과 같이 사용. 전자저울(4판 p.219) = 영점·수평은 매일 가동 전, 표준 분동 점검은 1개월, 판정 기준 직선성 ±0.5 %·정밀성 ±0.5 %·편심오차 ±0.1 %. 재질 = 탱크·이송 파이프·충전기의 스테인리스 #304, 부식에 강한 #316, 충전기는 300시리즈 스테인리스가 가장 널리 사용(4판 p.214·216).",
     mnemonic: "0.5 % 세제 · 70 % 에탄올 · 72시간 · 80 %/80 ℃ · 30분 정체 · 10분 침적 · 분기별 헹굼수 / 저울 ±0.5·±0.1 / 스테인리스 304·316.",
-    source: { law: "우수화장품 제조 및 품질관리기준 제8조제2항·제10조", guide: "4판 p.205~206·211·214·216·219", asof: "2026-09", confidence: "high" },
+    source: { law: "우수화장품 제조 및 품질관리기준 제8조제2항·제10조", guide: "4판 p.205~207·210~211·214~216·219", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-07", "Q-C6-08", "Q-C6-09", "Q-C6-10", "Q-C6-11", "Q-C6-12"],
-    verified: false,
-    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
+    verified: true,
+    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: guide 페이지 범위를 실제 근거 위치에 맞춰 보정(무진포·육안판정 자격자 p.207, 설비 세척 원칙 p.210, 이송 파이프 재질 p.215 포함)" }]
   },
   {
     id: "C-C6-06", subject: 3, topic: "3.5.1", category: "포장재 관리 절차", kind: "procedure",
@@ -62,7 +62,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "검수 3종 = 성적서·관능·유통기한. 보관은 구획, 출고는 선입선출(+짧은 사용기한 예외), 폐기는 라벨→격리→카드→운반→기록→인계.",
     source: { law: "우수화장품 제조 및 품질관리기준 제11조·제12조·제13조·제19조·제22조", guide: "4판 p.242~250", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-06", "Q-C6-13", "Q-C6-14"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }]
   }
 ]);
