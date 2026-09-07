@@ -116,7 +116,16 @@ var S = {
   importPreview: null, importStage: 0,
   resetStage: 0,
   dataCheck: null,
-  claudeText: null
+  claudeText: null,
+  // 모의고사
+  mockPlans: null,        // 준비 화면 미리보기 {full,half,mini3} — buildMock 결과
+  mockAskStart: null,     // 시작 확인 중인 프리셋 키
+  mockAskSubmit: false,   // 제출 확인창 열림
+  mockPad: false,         // 번호판 펼침
+  mockResult: null,       // 채점 결과 {grade, rec, order, answers, name, date}
+  mockExplain: false,     // 결과 화면 해설 목록 열림
+  mockExplainQid: null,   // 해설을 펼친 문항
+  mockCheck: null         // 설정 · 모의고사 가능 여부
 };
 
 function loadState() {
@@ -165,7 +174,7 @@ function saveSession() {
   if (!Q) return;
   Store.set("session", {
     sid: Q.sid, mode: Q.mode, preset: Q.preset, qids: Q.qids, idx: Q.idx,
-    answers: Q.answers, startedAt: Q.startedAt, deadlineAt: null, savedAt: nowISO(),
+    answers: Q.answers, startedAt: Q.startedAt, deadlineAt: Q.deadlineAt || null, savedAt: nowISO(),
     stats: Q.stats,
     done: Q.done                 // 이미 채점·기록까지 끝난 qid — 이어하기에서 두 번 세지 않으려고 남긴다
   });
@@ -312,7 +321,9 @@ function render(opts) {
     case "quiz": html = viewQuiz(); break;
     case "summary": html = viewSummary(); break;
     case "mistakes": html = viewMistakes(); break;
-    case "mock": html = viewLocked("실전 모의고사", "9/7 저녁 하프 모의고사부터 열립니다."); break;
+    case "mock": html = viewMockSetup(); break;
+    case "mockexam": html = viewMockExam(); break;
+    case "mockresult": html = viewMockResult(); break;
     case "cards": html = viewLocked("암기카드", "암기카드는 9/8부터 열립니다."); break;
     case "settings": html = viewSettings(); break;
     default: html = viewHome();
@@ -327,6 +338,10 @@ function render(opts) {
 }
 
 function afterRender() {
+  // 모의고사 시험 화면에서만 초 단위 타이머를 돌린다(떠나면 반드시 멈춘다)
+  if (S.screen === "mockexam" && S.quiz && S.quiz.mode === "mock") startMockTimer();
+  else stopMockTimer();
+
   // 단답 입력칸이 있으면 첫 빈 칸에 커서를 둔다(데스크톱만 — 모바일 키보드 강제 팝업 방지)
   if (window.innerWidth >= 900 && (S.screen === "quiz" || S.screen === "diag")) {
     var ins = document.querySelectorAll("#main .shortin");
@@ -356,7 +371,7 @@ function renderFoot() {
 var TABS = [
   { id: "home", screens: ["home", "diag", "diagresult"] },
   { id: "study", screens: ["study", "quiz", "summary"] },
-  { id: "mock", screens: ["mock"] },
+  { id: "mock", screens: ["mock", "mockexam", "mockresult"] },
   { id: "mistakes", screens: ["mistakes"] },
   { id: "cards", screens: ["cards"] },
   { id: "settings", screens: ["settings"] }
@@ -412,13 +427,11 @@ function viewHome() {
          '<button class="btn sm" data-act="export">백업 내보내기</button></div>';
   }
 
-  // 이어하기
-  var sess = Store.get("session", null);
-  if (sess && sess.qids && sess.idx < sess.qids.length) {
-    h += '<div class="banner blue"><span>풀던 ' + (sess.mode === "diag" ? "진단" : "학습") +
-         '이 남아 있습니다 (' + (Number(sess.idx) + 1) + '/' + sess.qids.length + ').</span>' +
-         '<button class="btn sm primary" data-act="resume">이어하기</button></div>';
-  }
+  // 이어하기 (모의고사면 남은 시간을 같이 보여준다)
+  h += resumeBannerHTML(Store.get("session", null), "");
+
+  // 예상 점수 · READINESS
+  h += viewExpectedCard();
 
   // 오늘 할 일
   h += '<div class="card"><h2>오늘 할 일 · 하루 ' + esc(String(st.daily_minutes)) + '분</h2>' +
@@ -428,6 +441,9 @@ function viewHome() {
        '<div class="t"><em>9/8부터</em><span>암기카드</span></div>' +
        '</div>' +
        '<p class="small muted mt">만기 오답 ' + due.length + '개 · 학습 국면 ' + esc(plan.phase) + '</p>' +
+       '<hr class="rule"><p class="small muted">짧게 치고 빠지기 — 약한 곳·복습 만기·새 문항을 섞어 냅니다(해설 바로 나옴)</p>' +
+       '<div class="acts"><button class="btn" data-act="quick" data-n="10">QUICK 10</button>' +
+       '<button class="btn" data-act="quick" data-n="20">QUICK 20</button></div>' +
        '</div>';
 
   // 큰 버튼
@@ -442,6 +458,9 @@ function viewHome() {
       h += '<button class="btn big mt" data-act="start-due">만기 오답 다시 풀기 (' + due.length + ')</button>';
     }
   }
+
+  // 최근 모의고사
+  h += viewRecentMocks();
 
   // 과목 숙달도
   h += '<div class="card"><h2>과목별 숙달도 · 빨간 선 = 과락 40%</h2>';
@@ -677,24 +696,7 @@ function viewExplain(q, a, g) {
        '<div class="mine' + (g.correct ? " okmine" : "") + '"><small>내 답</small>' + esc(givenText(q, a.given)) + '</div>' +
        '<div class="real"><small>정답</small>' + esc(answerText(q)) + '</div></div>';
 
-  if (q.explanation) h += '<div class="ex"><h4>왜 이게 정답인가</h4><p>' + esc(q.explanation) + '</p></div>';
-  if (q.memory_sentence) h += '<div class="ex memory"><h4>한 줄 암기</h4><p>' + esc(q.memory_sentence) + '</p></div>';
-  if (q.trap) h += '<div class="ex"><h4>함정</h4><p>' + esc(q.trap) + '</p></div>';
-  if (q.key_concept) h += '<div class="ex"><h4>핵심 개념</h4><p>' + esc(q.key_concept) + '</p></div>';
-  h += '<div class="ex src"><h4>근거</h4><p>' + esc(sourceText(q)) + '</p>' +
-       (q.verified === true ? "" : '<p class="mt"><span class="chip gray">미검증 문항 — 근거를 다시 확인해 주세요</span></p>') +
-       '</div>';
-
-  // 연결 카드
-  var linked = (q.cards || []).map(function (cid) { return S.byCid[cid]; }).filter(Boolean);
-  if (linked.length) {
-    h += '<div class="ex flash"><h4>연결된 암기카드</h4>';
-    linked.forEach(function (c) {
-      h += '<p class="f">' + esc(c.front) + '</p><p class="b">→ ' + esc(c.back) + '</p>' +
-           (c.mnemonic ? '<p class="small muted">' + esc(c.mnemonic) + '</p>' : "");
-    });
-    h += '</div>';
-  }
+  h += explainBody(q);
 
   // 오답 이유 + 메모
   if (!g.correct && !Q.awaitSelf) {
@@ -775,13 +777,7 @@ function viewDiagResult() {
 function viewStudySetup() {
   var st = S.study;
   var h = "";
-  var sess = Store.get("session", null);
-  if (sess && sess.qids && sess.idx < sess.qids.length) {
-    h += '<div class="banner blue"><span>풀던 ' + (sess.mode === "diag" ? "진단" : "학습") +
-         '이 남아 있습니다 (' + (Number(sess.idx) + 1) + '/' + sess.qids.length +
-         '). 새로 시작하면 지워집니다.</span>' +
-         '<button class="btn sm primary" data-act="resume">이어하기</button></div>';
-  }
+  h += resumeBannerHTML(Store.get("session", null), " 새로 시작하면 지워집니다.");
 
   h += '<div class="card"><h2>무엇을 풀까요?</h2><div class="fields">';
   h += '<div class="field"><label for="f-sub">과목</label><select id="f-sub" data-f="subject">' +
@@ -834,7 +830,8 @@ function viewSummary() {
        '<div class="t"><b>' + m.correct + '</b><span>정답</span></div>' +
        '<div class="t"><b>' + m.added + '</b><span>오답노트 편입</span></div>' +
        '</div><p class="small muted mt">걸린 시간 ' + esc(fmtDur(m.sec)) +
-       ' · 정답률 ' + (m.n ? Math.round(m.correct * 100 / m.n) : 0) + '%</p></div>';
+       ' · 정답률 ' + (m.n ? Math.round(m.correct * 100 / m.n) : 0) + '%</p>' +
+       mixText(m.preset) + '</div>';
   h += '<div class="acts">' +
        '<button class="btn primary" data-act="study-more">계속 10문항</button>' +
        '<button class="btn" data-act="goto" data-screen="mistakes">오답노트</button>' +
@@ -908,6 +905,10 @@ function viewMistakes() {
            esc(last ? givenText(q, last.given) : "기록 없음") + '</div>' +
            '<div class="real"><small>정답</small>' + esc(answerText(q)) + '</div></div>';
       if (q.memory_sentence) h += '<div class="ex memory"><h4>한 줄 암기</h4><p>' + esc(q.memory_sentence) + '</p></div>';
+      // 연결 카드에 그림이 있으면 그림만 보여준다(그림 없는 카드는 지금까지와 동일하게 아무것도 안 나온다)
+      var figs = (q.cards || []).map(function (cid) { return S.byCid[cid]; })
+                  .filter(Boolean).map(function (c) { return figureBox(c); }).filter(Boolean);
+      if (figs.length) h += '<div class="ex flash"><h4>한눈에 보는 그림</h4>' + figs.join("") + '</div>';
       if (last && last.why) h += '<div class="ex"><h4>왜 틀렸나</h4><p>' + esc(whyLabel(last.why)) + '</p></div>';
       if (q.trap) h += '<div class="ex"><h4>함정</h4><p>' + esc(q.trap) + '</p></div>';
       h += '<div class="ex src"><h4>근거</h4><p>' + esc(sourceText(q)) + '</p></div>';
@@ -921,6 +922,815 @@ function viewMistakes() {
     h += '</div>';
   });
   return h;
+}
+
+/* ================================================================
+ * 5-M. 모의고사 — 준비 · 시험 · 결과
+ *   채점·편성·예상 점수는 전부 core.js가 한다. 여기서는 화면과 저장만 맡는다.
+ * ================================================================ */
+var MOCK_ORDER = ["full", "half", "mini3"];
+var MARK = ["①", "②", "③", "④"];
+var BADGE_CLS = { "안전": "green", "주의": "amber", "위험": "red", "미측정": "gray" };
+
+function deadlineMs(v) {
+  if (v == null) return null;
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  var t = new Date(v).getTime();
+  return isNaN(t) ? null : t;
+}
+/* 남은 시간을 mm:ss로 (음수는 00:00) */
+function mmss(ms) {
+  var sec = Math.max(0, Math.ceil((Number(ms) || 0) / 1000));
+  return pad2(Math.floor(sec / 60)) + ":" + pad2(sec % 60);
+}
+function isAnsweredAns(q, a) { return hasAnswerFor(q || { type: "mcq" }, a); }
+function countAnswered(qids, answers) {
+  var n = 0;
+  (qids || []).forEach(function (qid) {
+    if (isAnsweredAns(S.byQid[qid], (answers || {})[qid])) n += 1;
+  });
+  return n;
+}
+function countFlags(answers) {
+  var n = 0;
+  Object.keys(answers || {}).forEach(function (k) { if (answers[k] && answers[k].flag) n += 1; });
+  return n;
+}
+
+/* 진행 중 세션 배너 — 모의고사는 남은 시간을 함께 보여준다 */
+function resumeBannerHTML(sess, note) {
+  if (!sess || !Array.isArray(sess.qids) || !sess.qids.length) return "";
+  if (sess.mode === "mock") {
+    var d = deadlineMs(sess.deadlineAt);
+    var left = (d == null) ? "" : " (남은 " + mmss(d - Date.now()) + ")";
+    var nm = (sess.preset && sess.preset.name) || "모의고사";
+    return '<div class="banner blue"><span>보던 <b>' + esc(nm) + '</b>가 남아 있습니다 · ' +
+           countAnswered(sess.qids, sess.answers) + '/' + sess.qids.length + ' 답함' +
+           (d != null && d <= Date.now() ? ' · <b>시간이 끝났습니다</b>' : "") + '</span>' +
+           '<button class="btn sm primary" data-act="mock-resume">이어하기' + esc(left) + '</button></div>';
+  }
+  if (Number(sess.idx) >= sess.qids.length) return "";
+  return '<div class="banner blue"><span>풀던 ' + (sess.mode === "diag" ? "진단" : "학습") +
+         '이 남아 있습니다 (' + (Number(sess.idx) + 1) + '/' + sess.qids.length + ').' + esc(note || "") + '</span>' +
+         '<button class="btn sm primary" data-act="resume">이어하기</button></div>';
+}
+
+/* QUICK 세트 구성 비율 한 줄 */
+function mixText(preset) {
+  var mix = preset && preset.mix;
+  if (!mix) return "";
+  return '<p class="small muted">구성 — 약한 문항 ' + (mix.W || 0) + ' · 복습 만기 ' + (mix.R || 0) +
+         ' · 새 문항 ' + (mix.N || 0) + '</p>';
+}
+
+/* ---------------- 홈: 예상 점수 카드 ---------------- */
+function viewExpectedCard() {
+  var exp = C.expectedScore(S.mocks, TOPICS, S.questions, S.attByQid, BP, todayStr());
+  var rd = C.readiness(exp, BP);
+  var cls = rd.label === "SAFE" ? "safe" : (rd.label === "AT RISK" ? "risk" : "warn");
+  var h = '<div class="expcard ' + cls + '">' +
+          '<div class="e"><b>예상 ' + exp.E + '점</b><span>(±' + exp.band + ') / 1000점</span>' +
+          '<span class="lab ' + cls + '">' + esc(rd.label) + '</span></div>' +
+          '<p class="small">' + esc(exp.note) + ' · 범위 ' + exp.low + '~' + exp.high + '점 · 합격선 600점</p>' +
+          '<p class="tiny muted">검증 문항 기준(미검증 문항은 예상 점수에 넣지 않습니다)</p>' +
+          '<div class="row mt">';
+  exp.by_subject.forEach(function (b, i) {
+    var badge = C.subjectBadge(b.ratio, b.n);
+    h += '<span class="chip ' + (BADGE_CLS[badge] || "gray") + '">' + (MARK[i] || b.id) + ' ' +
+         Math.round((b.ratio || 0) * 100) + '% ' + esc(badge) + '</span>';
+  });
+  h += '</div><ul class="list small mt">';
+  rd.reasons.slice(0, 3).forEach(function (r) {
+    h += '<li><span class="l">' + esc(r) + '</span></li>';
+  });
+  h += '</ul>' +
+       '<div class="acts"><button class="btn sm" data-act="goto" data-screen="mock">모의고사 보기</button></div>' +
+       '</div>';
+  return h;
+}
+
+/* ---------------- 홈: 최근 모의고사 표 ---------------- */
+function viewRecentMocks() {
+  if (!S.mocks.length) {
+    return '<div class="card"><h2>최근 모의고사</h2>' +
+           '<p class="small muted">아직 본 모의고사가 없습니다. 한 번만 봐도 예상 점수가 훨씬 정확해집니다.</p>' +
+           '<div class="acts"><button class="btn" data-act="goto" data-screen="mock">모의고사 시작하기</button></div></div>';
+  }
+  var rows = S.mocks.slice(-5).reverse();
+  var h = '<div class="card"><h2>최근 모의고사 · ' + S.mocks.length + '회</h2>' +
+          '<div class="tablewrap"><table><thead><tr>' +
+          '<th>날짜</th><th class="l">종류</th><th>점수</th><th>보정</th><th>판정</th>' +
+          '</tr></thead><tbody>';
+  rows.forEach(function (m) {
+    var pk = m.preset || "full";
+    var nm = (C.MOCK_PRESETS[pk] && C.MOCK_PRESETS[pk].name) || pk;
+    var verdict = (pk === "full" && (m.pass === true || m.pass === false))
+      ? '<span class="chip ' + (m.pass ? "green" : "red") + '">' + (m.pass ? "PASS" : "FAIL") + '</span>'
+      : '<span class="chip gray">과목만</span>';
+    h += '<tr><td>' + esc(String(m.date || "-")) + '</td>' +
+         '<td class="l">' + esc(nm) + (m.partial ? ' <span class="chip gray">환산</span>' : "") + '</td>' +
+         '<td>' + (Number(m.scaled) || 0) + '</td><td>' + (Number(m.adj) || 0) + '</td>' +
+         '<td>' + verdict + '</td></tr>';
+  });
+  h += '</tbody></table></div></div>';
+  return h;
+}
+
+/* ---------------- 모의고사 편성 미리보기 ---------------- */
+/* 미리보기와 실제 시험지가 반드시 같아야 하므로, 같은 결과 객체를 그대로 시작에 쓴다. */
+function mockPlans() {
+  if (S.mockPlans) return S.mockPlans;
+  var last = S.mocks[S.mocks.length - 1];
+  var exclude = (last && Array.isArray(last.qids)) ? last.qids : [];
+  var out = {};
+  MOCK_ORDER.forEach(function (k) {
+    out[k] = C.buildMock(k, S.questions, BP,
+      { attemptsByQid: S.attByQid, exclude: exclude },
+      C.seededRandom(hashStr(todayStr() + "|" + k + "|" + S.mocks.length)));
+  });
+  S.mockPlans = out;
+  return out;
+}
+/* "문항 부족: ②2·③1·④1 → 96문항으로 진행, 점수는 환산" */
+function missingSummary(m) {
+  if (!m || !m.slots_missing.length) return "";
+  var bySub = {};
+  m.slots_missing.forEach(function (x) {
+    bySub[x.subject] = (bySub[x.subject] || 0) + (x.need - x.got);
+  });
+  var parts = Object.keys(bySub).sort().map(function (k) {
+    return (MARK[Number(k) - 1] || k) + bySub[k];
+  }).join("·");
+  return "문항 부족: " + parts + " → " + m.qids.length + "문항으로 진행, 점수는 환산";
+}
+
+function viewMockSetup() {
+  var h = "";
+  var sess = Store.get("session", null);
+  var hasMock = sess && sess.mode === "mock" && Array.isArray(sess.qids) && sess.qids.length;
+  if (hasMock) {
+    h += resumeBannerHTML(sess, "");
+    h += '<div class="row"><button class="btn sm ghost" data-act="mock-discard">이 모의고사 버리기</button></div>';
+  }
+
+  h += '<div class="card"><h2>모의고사</h2>' +
+       '<p class="small">실제 시험처럼 시간을 재고 풉니다. <b>시험 중에는 정답과 해설이 나오지 않습니다.</b> ' +
+       '제출한 뒤에 점수·과락·해설을 한 번에 봅니다.</p></div>';
+
+  var plans = mockPlans();
+  MOCK_ORDER.forEach(function (k) {
+    var m = plans[k];
+    var rec = (k === "half");
+    h += '<div class="card"><div class="row between">' +
+         '<b style="font-size:17px">' + esc(m.name) + '</b>' +
+         (rec ? '<span class="chip amber">오늘 저녁 권장</span>' : "") + '</div>' +
+         '<div class="row mt">' +
+         '<span class="chip ink">' + m.qids.length + '문항</span>' +
+         '<span class="chip">' + m.minutes + '분</span>' +
+         '<span class="chip">' + m.total_points + '점</span>' +
+         (m.partial ? '<span class="chip amber">환산 점수</span>' : '<span class="chip green">정규 편성</span>') +
+         '</div>';
+
+    if (k === "full") h += '<p class="small muted mt">시험과 같은 100문항 · 120분. 네 과목 전부.</p>';
+    if (k === "half") h += '<p class="small muted mt">①②③ 세 과목만 50문항 · 60분. ④가 빠져 <b>합격 판정은 하지 않고</b> 과목별 과락만 봅니다.</p>';
+    if (k === "mini3") h += '<p class="small muted mt">③ 유통 화장품 안전관리만 25문항 · 30분. 짧게 감을 잡을 때.</p>';
+
+    var miss = missingSummary(m);
+    if (miss) h += '<div class="banner"><span>' + esc(miss) + '</span></div>';
+    if (m.partial && !miss) {
+      h += '<div class="banner"><span>' +
+           esc(Number(m.substituted) > 0
+                 ? "일부 배점 대체 " + m.substituted + "문항 — 점수는 1000점 만점으로 환산합니다"
+                 : "축소 편성 " + m.qids.length + "문항 — 점수는 1000점 만점으로 환산합니다") + '</span></div>';
+    } else if (miss && Number(m.substituted) > 0) {
+      h += '<p class="tiny muted">배점을 대체한 문항 ' + m.substituted + '개 포함</p>';
+    }
+
+    if (S.mockAskStart === k) {
+      h += '<div class="banner blue"><span><b>시작하면 타이머가 돕니다.</b> 해설은 제출 후에만 나옵니다. ' +
+           '중간에 나가도 시간은 계속 흐릅니다.</span></div>' +
+           '<div class="acts"><button class="btn primary" data-act="mock-go" data-preset="' + k + '">네, 시작합니다</button>' +
+           '<button class="btn ghost" data-act="mock-cancel">취소</button></div>';
+    } else {
+      h += '<button class="btn primary big mt" data-act="mock-ask" data-preset="' + k + '"' +
+           (m.qids.length ? "" : " disabled") + '>시작</button>';
+    }
+    h += '</div>';
+  });
+
+  h += '<p class="small muted">검증된 문항 ' +
+       S.questions.filter(function (q) { return q.verified === true; }).length +
+       '개로 편성합니다. 미검증 문항은 모의고사에 넣지 않습니다.</p>';
+  return h;
+}
+
+/* ---------------- 시험 화면 ---------------- */
+/* 시험지 순서 정보 — 저장하지 않고 문항 데이터에서 매번 만든다(밑줄 = 세션에 안 들어감) */
+function mockOrder(Q) {
+  if (Q._order) return Q._order;
+  Q._order = Q.qids.map(function (qid, i) {
+    var q = S.byQid[qid] || {};
+    return {
+      no: i + 1, qid: qid, subject: Number(q.subject) || 0,
+      type: q.type === "short" ? "short" : "mcq", points: Number(q.points) || 0
+    };
+  });
+  return Q._order;
+}
+function shortRange(order) {
+  var a = null, b = null;
+  order.forEach(function (o) { if (o.type === "short") { if (a == null) a = o.no; b = o.no; } });
+  return (a == null) ? null : { from: a, to: b };
+}
+
+function padHTML(Q) {
+  var order = mockOrder(Q);
+  var sr = shortRange(order);
+  var h = '<div class="pad">';
+  var prevKey = null, shortShown = false;
+  order.forEach(function (o, i) {
+    var key = o.type + "|" + o.subject;
+    if (key !== prevKey) {
+      if (o.type === "short" && !shortShown && sr) {
+        h += '<p class="padlab short">' + sr.from + '~' + sr.to + ' 단답</p>';
+        shortShown = true;
+      }
+      var seg = order.filter(function (x) { return x.type === o.type && x.subject === o.subject; });
+      h += '<p class="padlab">' + (MARK[o.subject - 1] || o.subject) + ' ' +
+           esc(subjectOf(o.subject).short_name) + ' · ' + seg[0].no + '~' + seg[seg.length - 1].no + '</p>';
+      prevKey = key;
+    }
+    var a = Q.answers[o.qid] || {};
+    var cls = "pn";
+    if (isAnsweredAns(S.byQid[o.qid], a)) cls += " on";
+    if (a.flag) cls += " flag";
+    if (i === Q.idx) cls += " cur";
+    h += '<button type="button" class="' + cls + '" data-act="mock-goto" data-i="' + i + '"' +
+         ' aria-label="' + o.no + '번' + (a.flag ? " 검토 표시" : "") + '">' + o.no + '</button>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function viewMockExam() {
+  var Q = S.quiz;
+  if (!Q || Q.mode !== "mock" || !Q.qids.length) { S.screen = "mock"; return viewMockSetup(); }
+  var total = Q.qids.length;
+  var order = mockOrder(Q);
+  var cur = order[Q.idx] || order[0];
+  var qid = Q.qids[Q.idx];
+  var q = S.byQid[qid];
+  var a = Q.answers[qid] || {};
+  var d = deadlineMs(Q.deadlineAt);
+  var left = (d == null) ? null : d - Date.now();
+  var warn = (left != null && left <= 10 * 60 * 1000);
+  var h = "";
+
+  // 고정 상단 바
+  h += '<div class="mockbar">' +
+       '<span class="mtime' + (warn ? " warn" : "") + '" id="mockTimer" role="timer" aria-live="off">' +
+       (left == null ? "--:--" : mmss(left)) + '</span>' +
+       '<span class="mstat">답함 <b id="mockDone">' + countAnswered(Q.qids, Q.answers) + '</b>/' + total + '</span>' +
+       '<span class="mstat">⚑ <b id="mockFlag">' + countFlags(Q.answers) + '</b></span>' +
+       '<span class="mbtns">' +
+       '<button class="btn sm' + (S.mockPad ? " on" : "") + '" data-act="mock-pad">번호판</button>' +
+       '<button class="btn sm primary" data-act="mock-submit">제출</button>' +
+       '</span></div>';
+
+  if (S.mockAskSubmit) {
+    var un = total - countAnswered(Q.qids, Q.answers);
+    h += '<div class="banner red"><span>' +
+         (un ? '아직 <b>' + un + '문항</b>이 비어 있습니다. 미답 ' + un + '문항은 <b>0점</b>으로 처리됩니다. 제출할까요?'
+             : '모두 답했습니다. 제출할까요? 제출하면 <b>되돌릴 수 없습니다.</b>') +
+         '</span></div>' +
+         '<div class="acts"><button class="btn danger primary" data-act="mock-submit-ok">네, 제출합니다</button>' +
+         '<button class="btn ghost" data-act="mock-submit-cancel">더 풀기</button></div>';
+  }
+
+  if (S.mockPad) h += padHTML(Q);
+
+  if (!q) {
+    return h + '<div class="card"><p>문항 ' + esc(qid) + '을(를) 찾지 못했습니다.</p>' +
+           '<div class="acts"><button class="btn" data-act="mock-next">다음</button></div></div>';
+  }
+
+  // 문항 (정답·해설·검증 배지는 절대 넣지 않는다)
+  h += '<div class="qhead">' +
+       '<span class="chip ink">' + cur.no + '번</span>' +
+       '<span class="chip">' + esc(subjectOf(q.subject).short_name) + '</span>' +
+       '<span class="chip">' + esc(String(q.points)) + '점</span>' +
+       '<span class="chip">' + (q.type === "short" ? "단답형" : "선다형") + '</span>' +
+       '<span class="qcount">' + cur.no + '/' + total + '</span></div>' +
+       '<div class="prog"><i style="width:' + ((Q.idx + 1) * 100 / total).toFixed(1) + '%"></i></div>';
+
+  h += '<div class="card"><p class="stem">' + esc(q.stem) + '</p>';
+  if (q.type === "mcq") {
+    h += '<div class="choices">';
+    choiceOrder(q, Q.sid).forEach(function (oi, di) {
+      h += '<button type="button" class="choice' + (a.given === oi ? " sel" : "") +
+           '" data-act="mock-pick" data-i="' + oi + '">' +
+           '<span class="k">' + CIRC[di] + '</span>' +
+           '<span class="txt">' + esc(q.choices[oi]) + '</span></button>';
+    });
+    h += '</div>';
+  } else {
+    var attrs = ' type="text" class="shortin" autocomplete="off" autocorrect="off" autocapitalize="none"' +
+                ' spellcheck="false" enterkeyhint="done"';
+    var hasBlanks = Array.isArray(q.blanks) && q.blanks.length > 0;
+    var isSet = !hasBlanks && q.grade === "set";
+    if (hasBlanks) {
+      var gv = Array.isArray(a.given) ? a.given : [];
+      q.blanks.forEach(function (b, i) {
+        h += '<label class="blankrow"><span class="blab">' + esc(b.label || (i + 1)) + '</span>' +
+             '<input' + attrs + ' data-blank="' + i + '" value="' + esc(gv[i] || "") + '"></label>';
+      });
+    } else {
+      h += '<input' + attrs + (isSet ? ' placeholder="예) 가, 나, 다"' : '') + ' data-blank="0" value="' +
+           esc(typeof a.given === "string" ? a.given : "") + '">';
+    }
+    if (isSet) h += '<p class="small muted">쉼표(,)로 구분해 입력하세요</p>';
+    if (q.unit) h += '<p class="small muted">단위: ' + esc(q.unit) + ' (숫자만 써도 됩니다)</p>';
+    h += '<button type="button" class="btn mt" data-act="mock-short-done">답 입력 완료</button>';
+  }
+
+  h += '<div class="qflags">' +
+       '<button type="button" class="btn sm' + (a.flag ? " flagon" : "") + '" data-act="mock-flag">⚑ 검토' +
+       (a.flag ? " 표시됨" : "") + '</button>' +
+       '<button type="button" class="btn sm' + (a.conf === 0 ? " guesson" : "") + '" data-act="mock-guess">찍음' +
+       (a.conf === 0 ? " 표시됨" : "") + '</button>' +
+       '</div>' +
+       '<p class="tiny muted mt">⚑ 검토 = 나중에 다시 볼 문항 · 찍음 = 확신 없이 고른 답(채점 뒤 보정 점수에 씁니다)</p>' +
+       '</div>';
+
+  h += '<div class="acts">' +
+       '<button class="btn" data-act="mock-prev"' + (Q.idx === 0 ? " disabled" : "") + '>이전</button>' +
+       '<button class="btn primary" data-act="mock-next"' + (Q.idx + 1 >= total ? " disabled" : "") + '>다음</button>' +
+       '</div>' +
+       '<p class="small muted center mt">해설과 정답은 제출한 뒤에 나옵니다.</p>';
+  return h;
+}
+
+/* 타이핑 중에는 다시 그리지 않으므로 상단 숫자만 직접 맞춘다 */
+function syncMockBar() {
+  var Q = S.quiz;
+  if (!Q || Q.mode !== "mock") return;
+  var d = el("mockDone"), f = el("mockFlag");
+  if (d) d.textContent = String(countAnswered(Q.qids, Q.answers));
+  if (f) f.textContent = String(countFlags(Q.answers));
+}
+
+/* ---------------- 타이머 ---------------- */
+var mockTimer = null;
+function startMockTimer() {
+  if (mockTimer) return;
+  mockTimer = setInterval(tickMock, 1000);
+  tickMock();
+}
+function stopMockTimer() {
+  if (mockTimer) { clearInterval(mockTimer); mockTimer = null; }
+}
+function tickMock() {
+  var Q = S.quiz;
+  if (S.screen !== "mockexam" || !Q || Q.mode !== "mock") { stopMockTimer(); return; }
+  var d = deadlineMs(Q.deadlineAt);
+  if (d == null) return;
+  var left = d - Date.now();
+  var t = el("mockTimer");
+  if (t) {
+    t.textContent = mmss(left);
+    if (left <= 10 * 60 * 1000) t.classList.add("warn"); else t.classList.remove("warn");
+  }
+  if (left <= 0) {
+    stopMockTimer();
+    toast("시간이 끝나 자동으로 제출했습니다.");
+    finishMock(true);
+  }
+}
+
+/* ---------------- 암기카드 그림(figure) ---------------- */
+/* 카드에 figure 스펙이 있으면 인라인 SVG로 그린다.
+   스펙이 잘못됐거나 figure가 없으면 빈 문자열 → 지금까지와 완전히 같은 화면이 나온다. */
+function figureSvg(c) {
+  if (!c || !c.figure) return "";
+  try { return C.figureToSvg(c.figure); }
+  catch (e) { return ""; }
+}
+
+/* 접었다 펼 수 있는 그림 상자(기본은 펼침). <details>라 JS 없이도 동작한다. */
+function figureBox(c, label) {
+  var svg = figureSvg(c);
+  if (!svg) return "";
+  return '<details class="figbox" open><summary>' + esc(label || "그림으로 보기") + '</summary>' +
+         '<div class="fig">' + svg + '</div></details>';
+}
+
+/* 연결 카드 한 장: 앞면 → (그림) → 뒷면 → 암기법 */
+function cardBlock(c) {
+  return '<p class="f">' + esc(c.front) + '</p>' +
+         figureBox(c) +
+         '<p class="b">→ ' + esc(c.back) + '</p>' +
+         (c.mnemonic ? '<p class="small muted">' + esc(c.mnemonic) + '</p>' : "");
+}
+
+/* ---------------- 결과 화면 ---------------- */
+function explainBody(q) {
+  var h = "";
+  if (q.explanation) h += '<div class="ex"><h4>왜 이게 정답인가</h4><p>' + esc(q.explanation) + '</p></div>';
+  if (q.memory_sentence) h += '<div class="ex memory"><h4>한 줄 암기</h4><p>' + esc(q.memory_sentence) + '</p></div>';
+  if (q.trap) h += '<div class="ex"><h4>함정</h4><p>' + esc(q.trap) + '</p></div>';
+  if (q.key_concept) h += '<div class="ex"><h4>핵심 개념</h4><p>' + esc(q.key_concept) + '</p></div>';
+  h += '<div class="ex src"><h4>근거</h4><p>' + esc(sourceText(q)) + '</p>' +
+       (q.verified === true ? "" : '<p class="mt"><span class="chip gray">미검증 문항 — 근거를 다시 확인해 주세요</span></p>') +
+       '</div>';
+  var linked = (q.cards || []).map(function (cid) { return S.byCid[cid]; }).filter(Boolean);
+  if (linked.length) {
+    h += '<div class="ex flash"><h4>연결된 암기카드</h4>';
+    linked.forEach(function (c) { h += cardBlock(c); });
+    h += '</div>';
+  }
+  return h;
+}
+
+function viewMockResult() {
+  var R = S.mockResult;
+  if (!R) { S.screen = "mock"; return viewMockSetup(); }
+  var g = R.grade, order = R.order, total = order.length;
+  var noOf = {};
+  order.forEach(function (o) { noOf[o.qid] = o.no; });
+  var inMock = {};
+  order.forEach(function (o) { inMock[o.subject] = (inMock[o.subject] || 0) + 1; });
+  // core 계약: half·mini3는 pass가 null(판정 불가). 필드가 아직 없을 수도 있어 프리셋으로도 막는다.
+  var canJudge = (R.preset === "full") && (g.pass === true || g.pass === false);
+  var missSubs = Array.isArray(g.missing_subjects) ? g.missing_subjects.map(Number) : null;
+  var h = '<h2 style="font-size:22px;margin:14px 0 2px">' + esc(R.name) + ' 결과</h2>' +
+          '<p class="small muted">' + esc(R.date) + ' · ' + total + '문항 · 걸린 시간 ' + esc(fmtDur(R.sec)) + '</p>';
+
+  h += '<div class="bigscore"><b>' + g.scaled + '</b><span>/ 1000점 · 합격선 600점</span></div>';
+
+  if (canJudge) {
+    h += '<div class="verdict' + (g.pass ? " ok" : "") + '"><b>' + (g.pass ? "✓ PASS" : "✕ FAIL") + '</b>' +
+         '<p>' + (g.pass ? "총점 600점 이상, 과락 과목 없음."
+                        : (g.fail_subjects && g.fail_subjects.length
+                            ? "과락 과목: " + esc(g.fail_subjects.map(function (id) {
+                                return (MARK[Number(id) - 1] || id) + " " + subjectOf(id).short_name; }).join(", "))
+                            : "총점이 합격선 600점에 못 미칩니다.")) + '</p></div>';
+  } else {
+    var skipped = (missSubs && missSubs.length)
+      ? missSubs.map(function (id) { return (MARK[id - 1] || id) + " " + subjectOf(id).short_name; }).join(", ")
+      : "";
+    h += '<div class="verdict ask"><b>합격 판정 없음 · 포함 과목의 과락만 표시</b>' +
+         '<p>이 모의고사는 일부 과목만 봤습니다' + (skipped ? '(빠진 과목: ' + esc(skipped) + ')' : "") + '. ' +
+         '합격 여부는 네 과목을 모두 보는 실전 모의고사에서 확인하세요.</p></div>';
+  }
+
+  if (g.partial) {
+    var reason = g.partial_reason || "missing";
+    var why = reason === "substituted" ? "일부 배점 대체 · <b>환산 점수</b>"
+            : (reason === "both" ? total + "문항 축소 + 일부 배점 대체 · <b>환산 점수</b>"
+                                 : "문항 부족으로 " + total + "문항 축소 · <b>환산 점수</b>");
+    h += '<div class="banner"><span>' + why + '입니다. ' +
+         '푼 문항 만점 ' + g.max_included + '점에서 얻은 ' + g.raw + '점을 1000점 기준으로 환산했습니다.</span></div>';
+  }
+  // 계약 4: 세션을 저장한 뒤 데이터 파일이 바뀌어 사라진 문항
+  if (Array.isArray(g.missing_questions) && g.missing_questions.length) {
+    h += '<div class="banner red"><span>문항 ' + g.missing_questions.length +
+         '개가 데이터에서 사라져 채점에서 빠졌습니다(문항 파일이 바뀐 것 같습니다).</span></div>';
+  }
+  h += '<p class="small">찍어서 맞힌 ' + g.guessed_correct.length + '문항(' + g.guessed_points + '점)을 빼면 <b>' +
+       g.adj + '점</b>입니다. 실력에 더 가까운 값입니다.</p>';
+
+  // 과목별
+  h += '<div class="card"><h2>과목별 · 빨간 선 = 과락 40%</h2>';
+  g.by_subject.forEach(function (b, i) {
+    var skippedSub = missSubs ? (missSubs.indexOf(Number(b.id)) !== -1) : !b.max_included;
+    if (skippedSub || !b.max_included) {
+      h += '<div class="subj"><div class="top"><span class="nm">' + (MARK[i] || b.id) + ' ' + esc(b.name) +
+           '</span><span class="val">이번엔 안 봄</span></div></div>';
+      return;
+    }
+    var badge = C.subjectBadge(b.ratio, inMock[b.id] || 0);
+    h += '<div class="subj"><div class="top">' +
+         '<span class="nm">' + (MARK[i] || b.id) + ' ' + esc(b.name) + '</span>' +
+         '<span class="val"><span class="chip ' + (BADGE_CLS[badge] || "gray") + '">' + esc(badge) + '</span></span></div>' +
+         '<div class="bar"><i class="' + (b.pass ? "good" : "bad") + '" style="width:' +
+         clamp((b.scaled * 100) / (b.max || 1), 0, 100).toFixed(1) + '%"></i><span class="cut"></span></div>' +
+         '<div class="barnote"><span' + (b.pass ? "" : ' style="color:var(--red);font-weight:700"') + '>' +
+         b.scaled + ' / ' + b.max + '점 (과락선 ' + b.pass_points + '점)' + (b.pass ? "" : " · 과락") + '</span>' +
+         '<span>' + (inMock[b.id] || 0) + '문항 출제</span></div></div>';
+  });
+  h += '</div>';
+
+  // 유형·시간
+  h += '<div class="card"><h2>유형과 시간</h2><ul class="list">' +
+       '<li><span class="l">선다형</span><span class="r">' + g.mcq.correct + '/' + g.mcq.n + ' · ' +
+       (g.mcq.n ? Math.round(g.mcq.correct * 100 / g.mcq.n) : 0) + '% · ' + g.mcq.points + '점</span></li>' +
+       '<li><span class="l">단답형</span><span class="r">' + g.short.correct + '/' + g.short.n + ' · ' +
+       (g.short.n ? Math.round(g.short.correct * 100 / g.short.n) : 0) + '% · ' + g.short.points + '점</span></li>' +
+       '<li><span class="l">평균 풀이 시간</span><span class="r">' + g.avg_sec + '초</span></li>' +
+       '</ul>';
+  if (g.slowest.length) {
+    h += '<p class="small muted mt">가장 오래 걸린 문항</p><div class="row">';
+    g.slowest.forEach(function (x) {
+      h += '<span class="chip">' + (noOf[x.qid] || "?") + '번 ' + x.sec + '초</span>';
+    });
+    h += '</div>';
+  }
+  h += '</div>';
+
+  // 세부항목
+  h += '<div class="card"><h2>약한 세부항목 (정답률 낮은 순)</h2>';
+  var weak = g.by_topic.slice(0, 8);
+  if (!weak.length) h += '<p class="small muted">집계할 문항이 없습니다.</p>';
+  else {
+    h += '<ul class="list">';
+    weak.forEach(function (t) {
+      h += '<li><span class="l">' + esc(t.id + " " + t.name) + '</span>' +
+           '<span class="r">' + t.correct + '/' + t.n + ' · ' + Math.round(t.pct) + '%</span></li>';
+    });
+    h += '</ul>';
+    var w0 = weak[0];
+    h += '<div class="banner blue"><span><b>처방 — </b>' + esc(w0.id + " " + w0.name) +
+         ' → 오답노트 만기 재시험 + 연결 암기카드부터 보세요.</span></div>';
+  }
+  h += '</div>';
+
+  // 미답
+  if (g.unanswered.length) {
+    h += '<div class="card"><h2>미답 ' + g.unanswered.length + '문항 · 0점 처리</h2><div class="row">';
+    g.unanswered.forEach(function (qid) {
+      h += '<span class="chip red">' + (noOf[qid] || "?") + '번</span>';
+    });
+    h += '</div></div>';
+  }
+
+  // 버튼
+  h += '<div class="acts">' +
+       '<button class="btn" data-act="goto" data-screen="mistakes">오답노트 보기</button>' +
+       '<button class="btn' + (S.mockExplain ? " on" : "") + '" data-act="mock-expl">문항별 해설 보기</button>' +
+       '<button class="btn" data-act="mock-report">약점 리포트 복사</button>' +
+       '<button class="btn ghost" data-act="go-home">홈</button></div>';
+
+  if (S.mockExplain) h += viewMockExplain(R, noOf);
+  if (S.claudeText) {
+    h += '<div class="card"><h2>아래 글을 복사해서 클로드에 붙여넣으세요</h2>' +
+         '<textarea style="min-height:180px" readonly>' + esc(S.claudeText) + '</textarea></div>';
+  }
+  return h;
+}
+
+/* 제출 뒤에만 열리는 읽기 전용 해설 */
+function viewMockExplain(R, noOf) {
+  var h = '<div class="card"><h2>문항별 해설 · 번호를 누르세요</h2><div class="numlist">';
+  R.order.forEach(function (o) {
+    var ok = R.correct[o.qid] === true;
+    h += '<button type="button" class="btn sm' + (S.mockExplainQid === o.qid ? " on" : "") +
+         '" data-act="mock-expl-q" data-qid="' + esc(o.qid) + '">' + o.no + (ok ? " ✓" : " ✕") + '</button>';
+  });
+  h += '</div>';
+
+  var qid = S.mockExplainQid;
+  if (!qid) { h += '<p class="small muted">보고 싶은 번호를 누르면 해설이 나옵니다.</p></div>'; return h; }
+  var q = S.byQid[qid];
+  if (!q) { h += '<p class="small muted">문항 데이터가 없습니다.</p></div>'; return h; }
+  var a = R.answers[qid] || {};
+  var ok = R.correct[qid] === true;
+  h += '<hr class="rule">' +
+       '<div class="qhead"><span class="chip ink">' + (noOf[qid] || "?") + '번</span>' +
+       '<span class="chip">' + esc(subjectOf(q.subject).short_name) + '</span>' +
+       '<span class="chip">' + esc(String(q.points)) + '점</span>' +
+       (a.conf === 0 ? '<span class="chip blue">찍음</span>' : "") +
+       (a.flag ? '<span class="chip amber">⚑ 검토</span>' : "") + '</div>' +
+       '<p class="stem">' + esc(q.stem) + '</p>';
+  if (q.type === "mcq") {
+    h += '<div class="choices">';
+    (q.choices || []).forEach(function (c, oi) {
+      var cls = "choice";
+      if (oi === q.answer) cls += " ok";
+      else if (a.given === oi) cls += " bad";
+      h += '<span class="' + cls + '"><span class="k">' + CIRC[oi] + '</span><span class="txt">' + esc(c) +
+           (Array.isArray(q.wrong_option_explanations) && q.wrong_option_explanations[oi]
+             ? '<span class="why">' + esc(q.wrong_option_explanations[oi]) + '</span>' : "") +
+           '</span></span>';
+    });
+    h += '</div>';
+  }
+  h += '<div class="verdict' + (ok ? " ok" : "") + '"><b>' + (ok ? "✓ 맞음" : "✕ 틀림") + '</b></div>' +
+       '<div class="ansbox"><div class="mine' + (ok ? " okmine" : "") + '"><small>내 답</small>' +
+       esc(givenText(q, a.given)) + '</div>' +
+       '<div class="real"><small>정답</small>' + esc(answerText(q)) + '</div></div>' +
+       explainBody(q) + '</div>';
+  return h;
+}
+
+/* ---------------- 모의고사 동작 ---------------- */
+function startMock(key) {
+  var m = mockPlans()[key];
+  if (!m || !m.qids.length) { toast("편성할 문항이 없습니다."); return; }
+  var sess = Store.get("session", null);
+  if (sess && sess.mode === "mock" && Array.isArray(sess.qids) && sess.qids.length) {
+    toast("진행 중인 모의고사가 있습니다. 먼저 이어하거나 버려 주세요.");
+    return;
+  }
+  stopMockTimer();
+  S.quiz = {
+    sid: newSid(), mode: "mock",
+    preset: {
+      kind: "mock", key: m.preset, name: m.name, partial: m.partial === true,
+      planned_count: m.planned_count, minutes: m.minutes, warnings: m.warnings
+    },
+    qids: m.qids.slice(), idx: 0, answers: {},
+    startedAt: nowISO(), deadlineAt: new Date(Date.now() + m.minutes * 60 * 1000).toISOString(),
+    qStart: Date.now(), graded: null, awaitSelf: false, attIndex: null,
+    warnings: m.warnings, stats: { correct: 0, added: 0 }, done: {}
+  };
+  S.mockAskStart = null;
+  S.mockAskSubmit = false;
+  S.mockPad = false;
+  S.claudeText = null;
+  saveSession();
+  S.screen = "mockexam";
+  render({ top: true });
+}
+
+function resumeMock() {
+  var s = Store.get("session", null);
+  if (!s || s.mode !== "mock" || !Array.isArray(s.qids) || !s.qids.length) {
+    toast("이어서 볼 모의고사가 없습니다.");
+    return false;
+  }
+  S.quiz = {
+    sid: s.sid || newSid(), mode: "mock", preset: s.preset || { kind: "mock", key: "full" },
+    qids: s.qids, idx: clamp(Number(s.idx) || 0, 0, s.qids.length - 1),
+    answers: s.answers || {}, startedAt: s.startedAt || nowISO(), deadlineAt: s.deadlineAt || null,
+    qStart: Date.now(), graded: null, awaitSelf: false, attIndex: null,
+    warnings: [], stats: { correct: 0, added: 0 }, done: s.done || {}
+  };
+  S.claudeText = null;
+  S.mockAskSubmit = false;
+  var d = deadlineMs(S.quiz.deadlineAt);
+  if (d != null && d <= Date.now()) {
+    toast("시간이 끝나 자동으로 제출했습니다.");
+    finishMock(true);
+    return true;
+  }
+  S.screen = "mockexam";
+  render({ top: true });
+  return true;
+}
+
+/* 문항에 머문 시간을 누적한다(모의고사는 왔다갔다 하므로 덮어쓰지 않는다) */
+function mockAddSec() {
+  var Q = S.quiz;
+  if (!Q || Q.mode !== "mock") return;
+  var qid = Q.qids[Q.idx];
+  if (!Q.answers[qid]) Q.answers[qid] = { given: null, conf: null, sec: 0, flag: false };
+  var used = Math.round((Date.now() - (Q.qStart || Date.now())) / 1000);
+  Q.answers[qid].sec = clamp((Q.answers[qid].sec || 0) + Math.max(0, used), 0, 7200);
+  Q.qStart = Date.now();
+}
+function mockAnswer() {
+  var Q = S.quiz;
+  var qid = Q.qids[Q.idx];
+  if (!Q.answers[qid]) Q.answers[qid] = { given: null, conf: null, sec: 0, flag: false };
+  return Q.answers[qid];
+}
+/* 시험 화면의 단답 입력칸을 세션에 담는다 */
+function storeMockShort() {
+  var Q = S.quiz;
+  if (!Q || Q.mode !== "mock" || S.screen !== "mockexam") return;
+  var q = S.byQid[Q.qids[Q.idx]];
+  if (!q || q.type !== "short") return;
+  var vals = readShortInputs();
+  if (!vals.length) return;
+  var a = mockAnswer();
+  a.given = (Array.isArray(q.blanks) && q.blanks.length) ? vals : (vals[0] || "");
+  if (isAnsweredAns(q, a) && a.conf == null) a.conf = 2;
+  mockAddSec();
+  saveSession();
+}
+function mockGoto(i) {
+  var Q = S.quiz;
+  if (!Q) return;
+  storeMockShort();
+  mockAddSec();
+  Q.idx = clamp(i, 0, Q.qids.length - 1);
+  Q.qStart = Date.now();
+  saveSession();
+  render({ top: true });
+}
+
+function finishMock(auto) {
+  var Q = S.quiz;
+  if (!Q || Q.mode !== "mock") return;
+  stopMockTimer();
+  storeMockShort();
+  mockAddSec();
+
+  var meta = Q.preset || {};
+  var mockObj = {
+    preset: meta.key || "full", name: meta.name || "모의고사",
+    qids: Q.qids.slice(), partial: meta.partial === true
+  };
+  var g = C.gradeMock(mockObj, Q.answers, S.questions, BP, TOPICS);
+
+  // 문항별 시도 기록(mode "mock" + sid + sec) → 오답·찍음 정답은 오답노트로
+  var t = todayStr();
+  var correctMap = {};
+  Q.qids.forEach(function (qid) {
+    var q = S.byQid[qid];
+    if (!q) return;
+    var a = Q.answers[qid] || {};
+    var correct, nearMiss = false, r;
+    if (q.type === "mcq") correct = C.gradeMcq(q, a.given);
+    else { r = C.gradeShort(q, a.given); correct = r.correct === true; nearMiss = !!r.nearMiss; }
+    correctMap[qid] = !!correct;
+    var att = {
+      qid: qid, at: nowISO(), mode: "mock", sid: Q.sid, given: a.given,
+      correct: !!correct, sec: a.sec || 0, conf: (a.conf == null ? 0 : a.conf),
+      why: null, self_marked: false, near_miss: nearMiss
+    };
+    S.attempts.push(att);
+    var m = C.applyAttemptToMistake(S.mistakes[qid] || null, att, q, mctx());
+    if (m) S.mistakes[qid] = m;               // null이면 바꾸지 않는다
+  });
+  saveAttempts(); saveMistakes(); rebuildAttIndex();
+
+  var rec = C.mockRecord(mockObj, g, Q.sid, t);
+  S.mocks.push(rec);
+  Store.set("mocks", S.mocks);
+
+  S.mockResult = {
+    grade: g, rec: rec, order: mockOrder(Q), answers: Q.answers, correct: correctMap,
+    preset: mockObj.preset, name: mockObj.name, date: t,
+    sec: Math.round((Date.now() - new Date(Q.startedAt).getTime()) / 1000),
+    auto: !!auto
+  };
+  S.quiz = null;
+  clearSession();
+  S.mockPlans = null;                          // 다음 편성은 이번 문항을 피해서 다시 짠다
+  S.mockAskSubmit = false;
+  S.mockPad = false;
+  S.mockExplain = false;
+  S.mockExplainQid = null;
+  S.claudeText = null;
+  S.screen = "mockresult";
+  render({ top: true });
+}
+
+/* ⑨-B 주간 약점 리포트 */
+function mockReportText() {
+  var t = todayStr();
+  var w = C.weeklyReport(S.attempts, S.mocks, TOPICS, S.questions, t);
+  var exp = C.expectedScore(S.mocks, TOPICS, S.questions, S.attByQid, BP, t);
+  var rd = C.readiness(exp, BP);
+  var dd = C.dday(S.settings.exam_date, t);
+  var bySub = w.by_subject.map(function (b, i) {
+    return (MARK[i] || b.id) + " " + subjectOf(b.id).short_name + " " +
+           (b.pct == null ? "기록 없음" : Math.round(b.pct) + "%(" + b.n + "문항)");
+  }).join(" / ");
+  var weak = w.weak_topics.length
+    ? w.weak_topics.map(function (x) { return x.id + " " + x.name + " " + Math.round(x.pct) + "%(" + x.n + ")"; }).join(" / ")
+    : "기록 없음";
+  var why = WHYS.map(function (x) { return x[1] + " " + (w.why_dist[x[0]] || 0); }).join(" / ");
+  var conf = "확실 " + w.conf_dist[2] + " / 애매 " + w.conf_dist[1] + " / 찍음 " + w.conf_dist[0];
+  var mk = w.mocks.length
+    ? w.mocks.map(function (m) {
+        var nm = (C.MOCK_PRESETS[m.preset] && C.MOCK_PRESETS[m.preset].name) || m.preset;
+        return m.date + " " + nm + " " + m.scaled + "점(보정 " + m.adj + ")" +
+               (m.preset === "full" ? (m.pass ? " PASS" : " FAIL") : " 과목만");
+      }).join(" / ")
+    : "지난 7일 기록 없음";
+
+  return "나는 맞춤형화장품조제관리사 12회(" + S.settings.exam_date + ") 수험생이고 오늘은 D-" +
+    (dd == null ? "?" : dd) + "야. 아래는 내 학습 앱의 지난 7일 기록이야. " +
+    "(1) 과락 위험 과목과 이유 (2) 이번 주 공부 순서 3개(세부항목 단위, 각 예상 소요 시간) " +
+    "(3) 단답형 점수를 올릴 구체적 방법 (4) 버릴 것(시간 대비 효율 낮은 항목) 을 알려줘. 하루 " +
+    S.settings.daily_minutes + "분 기준으로.\n" +
+    "[예상 점수] " + exp.E + "점 (±" + exp.band + ", " + exp.low + "~" + exp.high + ") · " + exp.note + "\n" +
+    "[READINESS] " + rd.label + " — " + rd.reasons.join(" / ") + "\n" +
+    "[지난 7일] 푼 문항 " + w.n_attempts + "개 · 정답률 " + Math.round(w.correct_pct) + "%\n" +
+    "[과목별 예상 정답률] " + bySub + "\n" +
+    "[세부항목 정답률 하위 8개] " + weak + "\n" +
+    "[오답 이유 분포] " + why + " / [자신감 분포] " + conf + "\n" +
+    "[모의고사] " + mk;
+}
+
+/* 시작할 때 시간이 이미 끝난 모의고사가 있으면 자동으로 제출한다 */
+function autoSubmitExpiredMock() {
+  var s = Store.get("session", null);
+  if (!s || s.mode !== "mock" || !Array.isArray(s.qids) || !s.qids.length) return false;
+  var d = deadlineMs(s.deadlineAt);
+  if (d == null || d > Date.now()) return false;
+  S.quiz = {
+    sid: s.sid || newSid(), mode: "mock", preset: s.preset || { kind: "mock", key: "full" },
+    qids: s.qids, idx: clamp(Number(s.idx) || 0, 0, s.qids.length - 1),
+    answers: s.answers || {}, startedAt: s.startedAt || nowISO(), deadlineAt: s.deadlineAt,
+    qStart: Date.now(), graded: null, awaitSelf: false, attIndex: null,
+    warnings: [], stats: { correct: 0, added: 0 }, done: {}
+  };
+  finishMock(true);
+  toast("시간이 끝나 자동으로 제출했습니다.");
+  return true;
 }
 
 /* ---------------- 잠금 화면 ---------------- */
@@ -988,6 +1798,16 @@ function viewSettings() {
   h += '<div class="card"><h2>데이터 점검</h2>' +
        '<div class="acts"><button class="btn" data-act="datacheck">데이터 점검 실행</button></div>';
   if (S.dataCheck) h += renderDataCheck(S.dataCheck);
+  if (S.mockCheck) {
+    h += '<p class="small muted mt">모의고사 가능 여부</p><ul class="list">';
+    S.mockCheck.forEach(function (m) {
+      h += '<li><span class="l">' + esc(m.name) + '</span><span class="r">' +
+           m.n + '/' + m.planned + '문항 · ' +
+           '<span class="chip ' + (m.missing ? "amber" : "green") + '">' +
+           (m.missing ? "부족 " + m.missing + " · 환산" : "정규 편성") + '</span></span></li>';
+    });
+    h += '</ul>';
+  }
   h += '</div>';
 
   // 앱 정보
@@ -1049,6 +1869,11 @@ function newSid() { return "S" + Date.now().toString(36); }
 
 function startQuiz(mode, qids, preset, warnings) {
   if (!qids || !qids.length) { toast("조건에 맞는 문항이 없습니다."); return false; }
+  var live = Store.get("session", null);
+  if (live && live.mode === "mock" && Array.isArray(live.qids) && live.qids.length) {
+    toast("모의고사가 진행 중입니다. 모의 탭에서 제출하거나 버린 뒤에 시작해 주세요.");
+    return false;
+  }
   S.quiz = {
     sid: newSid(), mode: mode, preset: preset || {}, qids: qids, idx: 0, answers: {},
     startedAt: nowISO(), qStart: Date.now(), graded: null, awaitSelf: false,
@@ -1094,6 +1919,7 @@ function startStudy(over) {
 function resumeSession() {
   var s = Store.get("session", null);
   if (!s || !s.qids || !s.qids.length) { toast("이어서 풀 세션이 없습니다."); return; }
+  if (s.mode === "mock") { resumeMock(); return; }
   var Q = {
     sid: s.sid || newSid(), mode: s.mode || "study", preset: s.preset || {},
     qids: s.qids, idx: clamp(Number(s.idx) || 0, 0, s.qids.length - 1),
@@ -1119,6 +1945,16 @@ function resumeSession() {
 
   S.screen = (Q.mode === "diag") ? "diag" : "quiz";
   render({ top: true });
+}
+
+/* QUICK — 적응형 세트(취약·복습 만기·새 문항)를 즉시 해설 모드로 푼다 */
+function startQuick(n) {
+  var set = C.buildAdaptiveSet(n, S.questions, TOPICS, S.attByQid, S.mistakes,
+                               todayStr(), C.seededRandom(Date.now() >>> 0));
+  if (!set.qids.length) { toast("지금 뽑을 문항이 없습니다."); return; }
+  if (startQuiz("drill", set.qids, { kind: "quick", n: n, mix: set.mix })) {
+    toast("QUICK " + set.qids.length + "문항 — 약한 " + set.mix.W + " · 복습 " + set.mix.R + " · 새 " + set.mix.N);
+  }
 }
 
 function curAnswer() {
@@ -1171,7 +2007,9 @@ function commitAttempt(correct, selfMarked, nearMiss) {
   var hadMistake = !!S.mistakes[qid];
   var att = {
     qid: qid, at: nowISO(),
-    mode: Q.mode === "diag" ? "diag" : ((Q.preset && Q.preset.mode === "due") ? "review" : "study"),
+    mode: Q.mode === "diag" ? "diag"
+        : (Q.mode === "drill" ? "drill"
+        : ((Q.preset && Q.preset.mode === "due") ? "review" : "study")),
     sid: Q.sid, given: a.given, correct: !!correct, sec: a.sec || 0,
     conf: (a.conf == null ? 0 : a.conf), why: null,
     self_marked: !!selfMarked, near_miss: !!nearMiss
@@ -1436,7 +2274,11 @@ var ACTIONS = {
   tab: function (t) {
     var id = t.getAttribute("data-tab");
     var map = { home: "home", study: "study", mock: "mock", mistakes: "mistakes", cards: "cards", settings: "settings" };
+    // 시험 화면을 떠날 때는 쓰던 답을 먼저 저장한다(세션은 남는다)
+    if (S.screen === "mockexam") { storeMockShort(); mockAddSec(); saveSession(); }
+    if (id === "mock" && S.quiz && S.quiz.mode === "mock") { S.screen = "mockexam"; render({ top: true }); return; }
     S.screen = map[id] || "home";
+    S.mockAskStart = null;
     S.claudeText = null;
     render({ top: true });
   },
@@ -1529,9 +2371,78 @@ var ACTIONS = {
   "reset-cancel": function () { S.resetStage = 0; render(); },
   datacheck: function () {
     S.dataCheck = C.dataCheck(S.questions, S.cards, TOPICS);
+    S.mockCheck = MOCK_ORDER.map(function (k) {
+      var m = C.buildMock(k, S.questions, BP, { attemptsByQid: S.attByQid },
+                          C.seededRandom(hashStr("check|" + k)));
+      var miss = 0;
+      m.slots_missing.forEach(function (x) { miss += (x.need - x.got); });
+      return { key: k, name: m.name, n: m.qids.length, planned: m.planned_count, missing: miss, partial: m.partial };
+    });
     render();
     toast("데이터 점검을 끝냈습니다.");
-  }
+  },
+
+  /* ---------- QUICK ---------- */
+  quick: function (t) { startQuick(Number(t.getAttribute("data-n")) || 10); },
+
+  /* ---------- 모의고사 ---------- */
+  "mock-ask": function (t) { S.mockAskStart = t.getAttribute("data-preset"); render(); },
+  "mock-cancel": function () { S.mockAskStart = null; render(); },
+  "mock-go": function (t) { startMock(t.getAttribute("data-preset")); },
+  "mock-resume": function () { resumeMock(); },
+  "mock-discard": function () {
+    clearSession();
+    S.quiz = null;
+    S.mockPlans = null;
+    stopMockTimer();
+    toast("진행 중이던 모의고사를 버렸습니다.");
+    render();
+  },
+  "mock-pad": function () { S.mockPad = !S.mockPad; render(); },
+  "mock-goto": function (t) { mockGoto(Number(t.getAttribute("data-i")) || 0); },
+  "mock-prev": function () { var Q = S.quiz; if (Q) mockGoto(Q.idx - 1); },
+  "mock-next": function () { var Q = S.quiz; if (Q) mockGoto(Q.idx + 1); },
+  "mock-pick": function (t) {
+    var Q = S.quiz;
+    if (!Q || Q.mode !== "mock") return;
+    var a = mockAnswer();
+    a.given = Number(t.getAttribute("data-i"));       // 정수 0~4 (채점은 엄격 비교)
+    if (a.conf == null) a.conf = 2;                   // 찍음을 누르지 않으면 '확실'로 본다
+    mockAddSec();
+    saveSession();
+    render();
+  },
+  "mock-short-done": function () { storeMockShort(); render(); toast("답을 저장했습니다."); },
+  "mock-flag": function () {
+    var Q = S.quiz;
+    if (!Q || Q.mode !== "mock") return;
+    storeMockShort();
+    var a = mockAnswer();
+    a.flag = !a.flag;
+    mockAddSec();
+    saveSession();
+    render();
+  },
+  "mock-guess": function () {
+    var Q = S.quiz;
+    if (!Q || Q.mode !== "mock") return;
+    storeMockShort();
+    var a = mockAnswer();
+    a.conf = (a.conf === 0) ? 2 : 0;
+    mockAddSec();
+    saveSession();
+    render();
+  },
+  "mock-submit": function () { S.mockAskSubmit = true; render({ top: true }); },
+  "mock-submit-cancel": function () { S.mockAskSubmit = false; render(); },
+  "mock-submit-ok": function () { finishMock(false); },
+  "mock-expl": function () { S.mockExplain = !S.mockExplain; render(); },
+  "mock-expl-q": function (t) {
+    var qid = t.getAttribute("data-qid");
+    S.mockExplainQid = (S.mockExplainQid === qid) ? null : qid;
+    render();
+  },
+  "mock-report": function () { copyText(mockReportText()); }
 };
 
 function onClick(e) {
@@ -1623,6 +2534,7 @@ function onInput(e) {
   }
   if (t.classList && t.classList.contains("shortin")) {
     // 자동 저장(다시 그리지 않는다 — 조합 중인 글자를 깨뜨리지 않기 위해)
+    if (S.screen === "mockexam") { storeMockShort(); syncMockBar(); return; }
     if (S.quiz && !S.quiz.graded) { storeShortAnswer(); syncQuizButtons(); }
     return;
   }
@@ -1639,6 +2551,7 @@ function onKeydown(e) {
     for (var i = 0; i < ins.length; i++) {
       if (ins[i] === t && ins[i + 1] && !ins[i + 1].value.trim()) { ins[i + 1].focus(); return; }
     }
+    if (S.screen === "mockexam") { storeMockShort(); syncMockBar(); toast("답을 저장했습니다."); return; }
     storeShortAnswer();
     var Q = S.quiz;
     if (!Q) return;
@@ -1655,7 +2568,11 @@ function saveAll() {
   saveSettings();
   saveAttempts();
   saveMistakes();
-  if (S.quiz) { if (S.quiz.graded === null) storeShortAnswer(); saveSession(); }
+  if (S.quiz) {
+    if (S.quiz.mode === "mock") { storeMockShort(); mockAddSec(); }
+    else if (S.quiz.graded === null) storeShortAnswer();
+    saveSession();
+  }
 }
 
 /* ================================================================
@@ -1676,7 +2593,7 @@ function init() {
   window.addEventListener("beforeunload", saveAll);
 
   S.screen = "home";
-  render({ top: true });
+  if (!autoSubmitExpiredMock()) render({ top: true });
 
   if (!S.questions.length) {
     el("main").insertAdjacentHTML("afterbegin",

@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-02"],
     tags: ["원료분류", "기타원료", "pH조절제", "2.1.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-02"],
     tags: ["원료선택", "사용제한원료", "포지티브리스트", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-01"],
     tags: ["지표성분", "안정성", "용어", "단답", "2.1.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -113,7 +113,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-02"],
     tags: ["기능별구분", "부형제", "유효성분", "첨가제", "짝짓기", "2.1.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -145,7 +145,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-04"],
     tags: ["계면활성제", "음이온", "양이온", "양쪽성", "비이온", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -166,7 +166,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2023-09-21",
     cards: ["C-C3-07"],
     tags: ["색소", "레이크", "기질", "용어", "단답", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -198,7 +198,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-05"],
     tags: ["보습제", "습윤제", "밀폐제", "연화제", "장벽대체제", "TEWL", "2.1.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -230,7 +230,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-07"],
     tags: ["무기안료", "체질안료", "백색안료", "진주광택안료", "표읽기", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -251,7 +251,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-06"],
     tags: ["고분자화합물", "점증제", "카보머", "단답", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -283,7 +283,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-03"],
     tags: ["유성원료", "왁스", "고급알코올", "고급지방산", "2.1.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -307,7 +307,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C3-08"],
     tags: ["전성분", "표시방법", "별표4", "빈칸", "단답", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -339,7 +339,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-03"],
     tags: ["취급보관", "정제수", "산화", "비타민", "품질성적서", "2.1.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -360,7 +360,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C3-01"],
     tags: ["비타민E", "토코페롤", "산화방지제", "단답", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   },
   {
@@ -392,7 +392,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C3-08"],
     tags: ["전성분", "사례", "페녹시에탄올", "리모넨", "기재생략", "18점", "2.1.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C3 2026-09-07" }]
   }
 ]);

@@ -17,7 +17,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-01"],
     tags: ["자외선차단성분", "사용한도", "에칠헥실디메칠파바", "숫자", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -37,7 +37,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     explanation: "별표 2 '자외선 차단성분' 표의 값은 4-메칠벤질리덴캠퍼 4%, 벤조페논-8(디옥시벤존) 3%, 시녹세이트 5%, 멘틸안트라닐레이트 5%, 이소아밀-p-메톡시신나메이트 10%다. 따라서 짝이 맞는 것은 ② 벤조페논-8 3%뿐이다.",
     wrong_option_explanations: [
       "① 틀렸다. 4-메칠벤질리덴캠퍼(CAS No. 38102-62-4 / 36861-47-9)의 사용한도는 10%가 아니라 4%다.",
-      "② 정답 — 벤조페논-8(디옥시벤존, CAS No. 131-53-3)의 사용한도는 3%다. 벤조페논류 중 가장 낮은 값이다.",
+      "② 정답 — 벤조페논-8(디옥시벤존, CAS No. 131-53-3)의 사용한도는 3%다. 같은 벤조페논류인 벤조페논-3(2.4%, 다만 얼굴·손 및 입술에 사용되는 제품에는 5%)·벤조페논-4(5%)와 값이 모두 다르다.",
       "③ 틀렸다. 시녹세이트(CAS No. 104-28-9)의 사용한도는 15%가 아니라 5%다. 15%는 드로메트리졸트리실록산의 값이다.",
       "④ 틀렸다. 멘틸안트라닐레이트(CAS No. 134-09-8)의 사용한도는 0.5%가 아니라 5%다.",
       "⑤ 틀렸다. 이소아밀-p-메톡시신나메이트(CAS No. 71617-10-2)의 사용한도는 4%가 아니라 10%다."
@@ -49,8 +49,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-01"],
     tags: ["자외선차단성분", "사용한도", "짝짓기", "벤조페논", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: ② 오답해설의 \"벤조페논류 중 가장 낮은 값\" 서술 삭제(별표 2 기준 벤조페논-3 2.4% < 벤조페논-8 3%). 5개 보기 값·CAS는 별표 2 자외선 차단성분 표와 일치 확인" }]
   },
   {
     id: "Q-C7-03", subject: 2, topic: "2.3.1", level: "D",
@@ -70,13 +70,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-03"],
     tags: ["염모제", "과산화수소", "농도상한", "숫자", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
     id: "Q-C7-04", subject: 2, topic: "2.3.1", level: "D",
     type: "mcq", qtype: "pick_wrong", points: 12, difficulty: 3, importance: "M", vg: "VG-C7-자외선비고",
-    stem: "「화장품 안전기준 등에 관한 규정」 별표 2의 '자외선 차단성분' 표에 붙은 비고(제한 조건)에 대한 설명으로 옳지 않은 것은?",
+    stem: "「화장품 안전기준 등에 관한 규정」 별표 2의 '자외선 차단성분' 표의 사용한도와 비고(제한 조건)에 대한 설명으로 옳지 않은 것은?",
     choices: [
       "트리스-바이페닐트라이아진(사용한도 10%)은 에어로졸(펌프스프레이 포함) 제품에는 사용할 수 없다.",
       "페닐렌비스-디페닐트리아진(사용한도 5%)은 흡입을 통해 사용자의 폐에 노출될 수 있는 제품에는 사용하지 말아야 한다.",
@@ -102,8 +102,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-02"],
     tags: ["자외선차단성분", "비고", "나노입자", "에어로졸", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: 지문을 \"비고(제한 조건)\"에서 \"사용한도와 비고(제한 조건)\"로 정정(⑤ \"산으로서 10%\"는 비고가 아니라 사용한도 칸 내용). 조건 문구·CAS는 별표 2 원문과 일치 확인" }]
   },
   {
     id: "Q-C7-05", subject: 2, topic: "2.3.1", level: "D",
@@ -126,7 +126,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-03"],
     tags: ["트리클로카반", "이중등재", "보존제", "빈칸", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -153,13 +153,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     key_concept: "별표 2 이중 등재 원료 — 어느 항목(보존제 성분 / 자외선 차단성분 / 염모제 성분 / 기타)인지에 따라 한도와 적용 범위가 달라진다",
     memory_sentence: "트리클로산은 어느 항목이든 0.3%, 징크피리치온은 보존제 0.5% / 기타 1.0%로 다르다.",
-    trap: "이중 등재 원료를 물을 때는 반드시 항목 이름을 확인해야 한다. 징크피리치온·트리클로카반·살리실릭애씨드는 항목마다 값이 다르지만 트리클로산만 두 항목 값이 같다.",
+    trap: "이중 등재 원료를 물을 때는 반드시 항목 이름을 확인해야 한다. '보존제 성분'과 '기타'에 함께 오른 네 원료 중 징크피리치온(0.5%/1.0%)·트리클로카반(0.2%/1.5%)·살리실릭애씨드(0.5% / 2%·3%)는 값이 다르고 트리클로산만 0.3%로 같다. ('염모제 성분'과 '기타'에 함께 오른 레조시놀은 산화염모제에 2.0%로 값이 같다.)",
     source: { law: "화장품 안전기준 등에 관한 규정 별표 2(보존제 성분·염모제 성분·기타)", guide: "4판 p.82", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-03-18",
     cards: ["C-C7-03"],
     tags: ["이중등재", "트리클로산", "징크피리치온", "벤질알코올", "별표2"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: trap의 \"트리클로산만 두 항목 값이 같다\"를 보존제↔기타 4종으로 범위 한정하고 레조시놀(염모제↔기타 2.0% 동일)을 괄호로 보완. 보기 ①~⑤ 값은 별표 2 원문과 일치 확인" }]
   },
   {
     id: "Q-C7-07", subject: 2, topic: "2.1.2", level: "D",
@@ -190,7 +190,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C7-06"],
     tags: ["자외선차단", "PA", "PFA", "등급표", "가이드"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -211,7 +211,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2025-12-16",
     cards: ["C-C7-05"],
     tags: ["기능성화장품", "고시원료", "아데노신", "주름개선", "별표4"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -243,7 +243,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C7-06"],
     tags: ["자외선", "UVA", "UVB", "SPF", "MED", "MPPD", "가이드"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -264,7 +264,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-C7-04"],
     tags: ["알레르기유발성분", "25종", "식별", "열거형", "착향제"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -296,7 +296,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-C7-04", "C-C7-03"],
     tags: ["알레르기유발성분", "25종", "식별", "벤질알코올", "이중등재"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   },
   {
@@ -328,7 +328,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C7-01", "C-C7-04"],
     tags: ["사례", "자외선차단성분", "알레르기표시", "계산", "18점"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C7 2026-09-07" }]
   }
 ]);
