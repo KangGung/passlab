@@ -134,6 +134,29 @@ test("normalizeShort: (2)(3) 전각→반각 + 영문 소문자", () => {
   assert.equal(C.normalizeShort("SPF"), "spf");
 });
 
+test("normalizeShort: 따옴표·낫표 제거 (법령명 「…」)", () => {
+  // (a) 낫표
+  assert.equal(C.normalizeShort("「화장품법」"), C.normalizeShort("화장품법"));
+  assert.equal(C.normalizeShort("「화장품법」"), "화장품법");
+  // (b) 겹낫표·큰따옴표·작은따옴표·홑화살괄호·겹화살괄호
+  assert.equal(C.normalizeShort("『화장품법』"), "화장품법");
+  assert.equal(C.normalizeShort("“화장품법”"), "화장품법");
+  assert.equal(C.normalizeShort("‘화장품법’"), "화장품법");
+  assert.equal(C.normalizeShort('"화장품법"'), "화장품법");
+  assert.equal(C.normalizeShort("'화장품법'"), "화장품법");
+  assert.equal(C.normalizeShort("〈화장품법〉"), "화장품법");
+  assert.equal(C.normalizeShort("《화장품법》"), "화장품법");
+  assert.equal(C.normalizeShort("＂화장품법＂"), "화장품법");   // 전각 따옴표도 (2)에서 반각이 된 뒤 지워진다
+  // (c) 낱말 안의 어포스트로피도 지운다 → 밋밋한 표기와 같아진다
+  assert.equal(C.normalizeShort("올리브’오일"), C.normalizeShort("올리브오일"));
+  assert.equal(C.normalizeShort("l’ascorbic"), C.normalizeShort("lascorbic"));
+  // 실제 사례(Q-B2-10 규정명)
+  const lawName = "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정";
+  assert.equal(C.normalizeShort("「" + lawName + "」"), C.normalizeShort(lawName));
+  // 괄호 처리는 그대로 — 괄호 안 내용은 계속 지운다
+  assert.equal(C.normalizeShort("「화장품법」(법률 제20901호)"), "화장품법");
+});
+
 test("normalizeShort: (4) 중점·빗금 통일", () => {
   assert.equal(C.normalizeShort("납ㆍ니켈"), "납·니켈");
   assert.equal(C.normalizeShort("납•니켈"), "납·니켈");
@@ -222,6 +245,15 @@ test("gradeShort ①: 정확 일치 → stage 1", () => {
   assert.equal(r.normalized, "페녹시에탄올");
   assert.equal(r.blanks, null);
   assert.equal(C.gradeShort(q, "PHENOXYETHANOL").stage, 1);
+});
+
+test("gradeShort: 법령명을 낫표로 감싸 써도 정답 (Q-B2-10)", () => {
+  const lawName = "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정";
+  const q = short({ answer_text: [lawName] });
+  const r = C.gradeShort(q, "「" + lawName + "」");
+  assert.equal(r.correct, true);
+  assert.equal(r.stage, 1);
+  assert.equal(C.gradeShort(q, "『" + lawName + "』").correct, true);
 });
 
 test("gradeShort ②: 동의어·표기 변형 → stage 2 (정답)", () => {
