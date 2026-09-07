@@ -17,7 +17,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C5-05"],
     tags: ["화장품관리", "사용기한", "정의", "단답", "2.4.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -49,7 +49,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C5-05"],
     tags: ["화장품관리", "사용기한", "개봉후사용기간", "맞춤형", "2.4.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C5-05"],
     tags: ["화장품관리", "안정성시험", "보관조건", "매칭", "2.4.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -113,7 +113,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C5-04"],
     tags: ["화장품관리", "사용방법", "보관", "2.4.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -145,7 +145,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C5-04"],
     tags: ["화장품관리", "사용방법", "품질문제", "미생물오염", "2.4.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -177,7 +177,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C5-01"],
     tags: ["사용할때의주의사항", "공통사항", "별표3", "2.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -201,7 +201,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-C5-02"],
     tags: ["사용할때의주의사항", "퍼머넌트웨이브", "보관", "빈칸", "2.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -233,7 +233,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-08-05",
     cards: ["C-C5-01"],
     tags: ["사용할때의주의사항", "유형별", "별표1", "매칭", "2.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -245,17 +245,17 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     blanks: null,
     grade: "exact", strict_term: false, unit: "%", number_tolerance: 0,
     near_miss: ["5%", "0.5%", "2.5%", "2%", "4.2%", "0.24%"],
-    explanation: "[별표 1] 제2호나목 15)는 대상 제품을 \"벤조페논-3(옥시벤존) 함유 제품(2.4 퍼센트 이하의 벤조페논-3가 함유된 제품은 제외한다)\"으로 정하고, 표시 문구를 \"용법·용량에 따른 부위에만 사용하고 전신에 사용하지 말 것\"으로 정한다. 이 15)는 식품의약품안전처고시 제2026-56호로 신설되어 2026년 9월 2일부터 시행되었다(부칙 제1조 단서). 벤조페논-3의 사용한도(「화장품 안전기준 등에 관한 규정」 별표 2)와는 다른 숫자이므로 구분해야 한다.",
+    explanation: "[별표 1] 제2호나목 15)는 대상 제품을 \"벤조페논-3(옥시벤존) 함유 제품(2.4 퍼센트 이하의 벤조페논-3가 함유된 제품은 제외한다)\"으로 정하고, 표시 문구를 \"용법·용량에 따른 부위에만 사용하고 전신에 사용하지 말 것\"으로 정한다. 이 15)는 식품의약품안전처고시 제2026-56호로 신설되어 2026년 9월 2일부터 시행되었다(부칙 제1조 단서). 숫자 2.4 자체는 「화장품 안전기준 등에 관한 규정」 [별표 2]가 정한 벤조페논-3의 사용한도(2.4%, 다만 얼굴, 손 및 입술에 사용되는 제품에는 5%)와 같은 값이지만, 이 문항이 묻는 것은 사용한도가 아니라 \"주의사항 표시 대상에서 제외되는 기준\"이라는 점이 다르다.",
     wrong_option_explanations: null,
     key_concept: "벤조페논-3 함유 제품 주의사항의 제외 기준 함량(2.4% 이하)",
     memory_sentence: "벤조페논-3은 2.4% 이하면 주의사항 표시 제외 — 넘으면 '용법·용량에 따른 부위에만, 전신 금지'.",
-    trap: "가이드 4판 p.144 참고자료 표에는 성분별 주의사항이 14개까지만 실려 있어 벤조페논-3(15번)이 없다. 2026-09-02 시행 신설분이므로 가이드만 보고 '없는 항목'이라고 판단하면 틀린다. 알레르기 유발성분 표시 기준(0.01%·0.001%)이나 자외선 차단성분 사용한도 숫자와 섞이지 않게 한다.",
+    trap: "가이드 4판 p.144 참고자료 표에는 성분별 주의사항이 14개까지만 실려 있어 벤조페논-3(15번)이 없다. 2026-09-02 시행 신설분이므로 가이드만 보고 '없는 항목'이라고 판단하면 틀린다. 값 2.4는 별표 2의 벤조페논-3 사용한도와 우연히 같으므로 외우기는 쉽지만 제도가 다르다는 점을 기억한다. 얼굴·손·입술 제품의 한도인 5%를 답으로 적지 않도록 한다.",
     source: { law: "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 별표 1 제2호나목 15)", guide: null, asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-09-02",
     cards: ["C-C5-03"],
     tags: ["사용할때의주의사항", "성분별", "벤조페논-3", "개정", "단답", "2.4.3"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: 해설·trap의 사실 오류 정정 — 「화장품 안전기준 등에 관한 규정」 별표 2의 벤조페논-3 사용한도는 2.4%(얼굴·손·입술 제품 5%)로 주의사항 제외 기준과 \"다른 숫자\"가 아니라 같은 값이다. 값은 같고 제도가 다르다는 설명으로 교체. 정답(2.4%)·보기·근거 변동 없음" }]
   },
   {
     id: "Q-C5-10", subject: 2, topic: "2.5.1", level: "D",
@@ -286,7 +286,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2022-02-18",
     cards: ["C-C5-06"],
     tags: ["위해여부판단", "안전성정보", "유해사례", "정의", "2.5.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -318,7 +318,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2022-02-18",
     cards: ["C-C5-06"],
     tags: ["위해여부판단", "안전성정보", "신속보고", "정기보고", "2.5.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -350,7 +350,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2022-02-18",
     cards: ["C-C5-06"],
     tags: ["위해여부판단", "안전성정보", "사례판단", "신속보고", "정기보고", "2.5.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   }
 ]);

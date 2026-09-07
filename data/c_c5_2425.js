@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "공통은 4줄 — '직사광선 이상 → 상담 / 상처 자제 / 어린이 손 / 직사광선 보관'. 나머지는 전부 개별.",
     source: { law: "화장품법 시행규칙 별표 3, 화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 별표 1 제2호가목", guide: "4판 p.141~142", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-06", "Q-C5-08"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -18,7 +18,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "둘 다 15도 이하 어두운 곳. 개봉하면 헤어는 '7일', 속눈썹은 '즉시 폐기'.",
     source: { law: "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 별표 1 제2호가목 5)·14), 제2조", guide: "4판 p.141~143", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-07"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -29,7 +29,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "2 알부틴 · 0.5/10/3.5 AHA · 0.05 포름알데하이드 · 0.2 레틴아마이드 · 2.4 벤조페논-3 / '3세 이하 금지'는 살리실릭·IPBC·파라벤(기저귀)·외음부 세정제.",
     source: { law: "화장품 사용할 때의 주의사항 및 알레르기 유발성분 표시에 관한 규정 별표 1 제2호나목", guide: "4판 p.144", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-09"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "손·뚜껑·서늘·혼용금지·기한 다섯 가지. 문제는 늘 '개봉(산화)·물기(세균)·햇빛(원료 변화)' 세 방향에서 온다.",
     source: { law: null, guide: "4판 p.136~139", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-04", "Q-C5-05"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -51,7 +51,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "사용기한은 '제조된 날부터 최소한의 기한', 내가 안정성시험으로 정한다. 25/60은 장기·40/75는 가속·-15~45는 가혹·스프레이는 개봉 후 면제.",
     source: { law: "화장품법 제2조제5호·제10조제1항", guide: "4판 p.128~129, p.131~132", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-01", "Q-C5-02", "Q-C5-03"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   },
   {
@@ -62,7 +62,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "정의 4개(유해·중대 5·실마리·안전성) + 보고 3층(임의는 '할 수 있다' / 신속 15일 / 정기 반기+1월). 의무자는 책임판매·맞춤형판매 둘.",
     source: { law: "화장품 안전성 정보관리 규정 제2조·제4조·제5조·제6조·제9조", guide: "4판 p.149~150", asof: "2026-09", confidence: "high" },
     related: ["Q-C5-10", "Q-C5-11", "Q-C5-12"],
-    verified: false,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C5 2026-09-07" }]
   }
 ]);
