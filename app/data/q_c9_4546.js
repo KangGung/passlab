@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-01"],
     tags: ["맞춤형화장품", "사용법", "제품안내", "주의사항"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-02"],
     tags: ["맞춤형화장품", "사용법", "주의사항", "근거법령"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-01"],
     tags: ["맞춤형화장품", "준수사항", "소비자설명", "제품안내"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -113,7 +113,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C9-03"],
     tags: ["맞춤형화장품", "배합금지", "사용제한원료", "안전기준규정"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -134,13 +134,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C9-03"],
     tags: ["맞춤형화장품", "배합금지", "기능성화장품", "안전기준규정"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
     id: "Q-C9-06", subject: 4, topic: "4.6.3", level: "D",
     type: "short", qtype: "term", points: 8, difficulty: 2, importance: "H", vg: null,
-    stem: "맞춤형화장품판매업소에서 화장품 내용물(벌크 제품) 없이 원료와 원료만을 섞어 새로운 제품을 만드는 행위는, 교수·학습 가이드 §4.6.3에 따르면 맞춤형화장품의 혼합이 아니라 무엇에 해당하는가? 「화장품법」상의 용어로 쓰시오.",
+    stem: "맞춤형화장품판매업소에서 화장품 내용물(벌크 제품) 없이 원료와 원료만을 섞어 새로운 제품을 만드는 행위는, 교수·학습 가이드 §4.6.3에 따르면 맞춤형화장품의 혼합이 아니라 무엇에 해당하는가? 가이드 문장에 그대로 적혀 있는 표현으로 쓰시오.",
     choices: [], answer: null, shuffle: false,
     answer_text: ["화장품 제조", "화장품제조", "제조"],
     blanks: null,
@@ -155,8 +155,11 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C9-04"],
     tags: ["맞춤형화장품", "영업범위", "혼합", "소분"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [
+      { date: "2026-09-07", note: "신규 C9 2026-09-07" },
+      { date: "2026-09-07", note: "검증 수정: 정답 '화장품 제조'는 가이드 §4.6.3(인쇄 p.303)의 문장이고 「화장품법」에 직접 정의된 용어는 아니어서, '「화장품법」상의 용어로 쓰시오'가 '화장품제조업'을 유도할 수 있었다. 발문을 '가이드 문장에 그대로 적혀 있는 표현으로 쓰시오'로 고쳤다(정답·허용표기는 그대로)." }
+    ]
   },
   {
     id: "Q-C9-07", subject: 4, topic: "4.6.3", level: "D",
@@ -187,7 +190,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C9-04", "C-C9-03"],
     tags: ["맞춤형화장품", "판매가능구성", "내용물", "원료범위"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -219,7 +222,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C9-04", "C-C9-03"],
     tags: ["맞춤형화장품", "판매가능구성", "사례판단", "혼합"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -243,7 +246,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-05"],
     tags: ["맞춤형화장품", "시설기준", "위생관리", "구분구획"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -275,7 +278,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C9-05"],
     tags: ["맞춤형화장품", "위생관리", "혼합소분장소", "자외선살균기"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -307,7 +310,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C9-05"],
     tags: ["맞춤형화장품", "소분", "리필", "위생관리", "용기"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -328,7 +331,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-06"],
     tags: ["조제관리사", "자격시험", "시행규칙", "숫자"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -360,7 +363,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-06"],
     tags: ["맞춤형화장품판매업", "신고", "변경신고", "신고필증"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   },
   {
@@ -392,7 +395,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C9-06"],
     tags: ["조제관리사", "자격증", "대여금지", "비종사신고", "자격취소"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C9 2026-09-07" }]
   }
 ]);
