@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2025-10-02",
     cards: ["C-C1-01"],
     tags: ["개인정보보호법", "개인정보 정의", "제2조", "고객관리 프로그램"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C1" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
       "수집하려는 개인정보의 항목",
       "개인정보의 보유 및 이용 기간",
       "동의를 거부할 권리가 있다는 사실 및 동의 거부에 따른 불이익이 있는 경우에는 그 불이익의 내용",
-      "개인정보 보호책임자의 성명 또는 개인정보 보호업무를 처리하는 부서의 명칭과 전화번호 등 연락처"
+      "개인정보 보호책임자의 성명 또는 개인정보 보호업무 및 관련 고충사항을 처리하는 부서의 명칭과 전화번호 등 연락처"
     ],
     answer: 4, shuffle: false,
     answer_text: null, blanks: null,
@@ -60,8 +60,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2025-10-02",
     cards: ["C-C1-02"],
     tags: ["개인정보보호법", "수집·이용 동의", "제15조", "고지사항"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C1" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C1" }, { date: "2026-09-07", note: "검증 수정: 보기⑤를 법 제30조제1항제6호 조문 문구(“개인정보 보호업무 및 관련 고충사항을 처리하는 부서”)로 정확히 맞춤. 정답·논점 변동 없음" }]
   },
   {
     id: "Q-C1-03", subject: 1, topic: "1.2.2", level: "D",
@@ -92,13 +92,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-09-11",
     cards: ["C-C1-03"],
     tags: ["개인정보보호법", "민감정보", "고유식별정보", "주민등록번호", "제23조", "제24조"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C1" }]
   },
   {
     id: "Q-C1-04", subject: 1, topic: "1.2.3", level: "D",
     type: "mcq", qtype: "match", points: 8, difficulty: 2, importance: "M", vg: null,
-    stem: "「개인정보 보호법」과 교수·학습 가이드가 정한 개인정보 파기 방법의 연결로 옳은 것은?",
+    stem: "「개인정보 보호법」 및 같은 법 시행령에 따른 개인정보 파기 방법의 연결로 옳은 것은?",
     choices: [
       "전자적 파일 형태의 개인정보 — 복원이 불가능한 방법으로 영구 삭제",
       "전자적 파일 형태의 개인정보 — 파쇄 또는 소각",
@@ -109,7 +109,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     answer: 0, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "법 제21조제1항은 보유기간의 경과, 처리 목적 달성, 가명정보의 처리 기간 경과 등으로 개인정보가 불필요하게 되었을 때 지체 없이 파기하도록 하고, 제2항은 파기할 때 복구 또는 재생되지 아니하도록 조치할 것을 요구한다. 가이드 4판 p.48은 파기 방법을 매체별로 나누어 전자적 파일 형태는 복원이 불가능한 방법으로 영구 삭제(기술적 특성으로 영구 삭제가 현저히 곤란하면 법 제58조의2에 해당하는 정보로 처리하여 복원이 불가능하도록 조치), 전자적 파일 형태 외의 기록물·인쇄물·서면 그 밖의 기록매체는 파쇄 또는 소각으로 정리한다. 따라서 ①이 옳다.",
+    explanation: "법 제21조제1항은 보유기간의 경과, 처리 목적 달성, 가명정보의 처리 기간 경과 등으로 개인정보가 불필요하게 되었을 때 지체 없이 파기하도록 하고, 제2항은 파기할 때 복구 또는 재생되지 아니하도록 조치할 것을 요구한다. 같은 법 시행령 제16조(가이드 4판 p.48이 인용)는 파기 방법을 매체별로 나누어 전자적 파일 형태는 복원이 불가능한 방법으로 영구 삭제(기술적 특성으로 영구 삭제가 현저히 곤란하면 법 제58조의2에 해당하는 정보로 처리하여 복원이 불가능하도록 조치), 전자적 파일 형태 외의 기록물·인쇄물·서면 그 밖의 기록매체는 파쇄 또는 소각으로 정리한다. 따라서 ①이 옳다.",
     wrong_option_explanations: [
       "① 정답 — 전자적 파일 형태의 개인정보는 복원이 불가능한 방법으로 영구 삭제한다(4판 p.48).",
       "② 틀리다. 파쇄 또는 소각은 전자적 파일 형태 “외의” 기록물·인쇄물·서면 그 밖의 기록매체에 적용하는 파기 방법이다.",
@@ -120,16 +120,16 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     key_concept: "파기 시기(지체 없이)와 매체별 파기 방법, 보존 시 분리 저장·관리",
     memory_sentence: "전자 파일은 “영구 삭제”, 종이·기록물은 “파쇄 또는 소각” — 법령상 보존해야 하면 파기 대신 “분리 저장·관리”.",
     trap: "파기 기한을 일수로 묻는 보기가 나오면 법 제21조제1항의 문구는 “지체 없이”다(구체적 일수는 시행령 사항이고 이 배치의 소스 범위에 없다). 파기 시 “복구 또는 재생되지 아니하도록” 조치해야 한다는 제2항 문구도 함께 기억한다.",
-    source: { law: "개인정보 보호법 제21조", guide: "4판 p.48", asof: "2026-09", confidence: "high" },
+    source: { law: "개인정보 보호법 제21조, 같은 법 시행령 제16조", guide: "4판 p.48", asof: "2026-09", confidence: "high" },
     law_effective_date: "2025-10-02",
     cards: ["C-C1-04"],
     tags: ["개인정보보호법", "파기", "제21조", "고객정보 관리"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C1" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C1" }, { date: "2026-09-07", note: "검증 수정: 지문의 “교수·학습 가이드가 정한”을 “같은 법 시행령에 따른”으로 바꾸고 source.law에 시행령 제16조 추가(가이드 p.48이 스스로 법 제21조·시행령 제16조 소관으로 표기). 보기·정답 변동 없음" }]
   },
   {
     id: "Q-C1-05", subject: 1, topic: "1.2.3", level: "D",
-    type: "mcq", qtype: "case", points: 18, difficulty: 4, importance: "H", vg: "VG-C1-유출통지",
+    type: "mcq", qtype: "case", points: 12, difficulty: 3, importance: "H", vg: "VG-C1-유출통지",
     stem: "맞춤형화장품판매업소를 운영하는 A는 고객관리 프로그램에 고객의 성명·연락처·피부 상담 기록을 저장해 왔다. 어느 날 프로그램 계정이 도용되어 고객 300명의 개인정보가 외부로 유출된 사실을 알게 되었다. A가 「개인정보 보호법」과 같은 법 시행령에 따라 취해야 하는 조치로 옳은 것은?",
     choices: [
       "유출 사실을 보호위원회 또는 전문기관에 신고하였다면 해당 정보주체에게는 따로 알리지 않아도 된다.",
@@ -141,7 +141,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     answer: 2, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "법 제34조제1항은 개인정보가 유출등 되었음을 알게 되었을 때 지체 없이 해당 정보주체에게 유출등이 된 개인정보의 항목, 유출등이 된 시점과 그 경위, 피해 최소화를 위해 정보주체가 할 수 있는 방법 등에 관한 정보, 개인정보처리자의 대응조치 및 피해 구제절차, 신고 접수 담당부서 및 연락처를 알리도록 하고, 다만 정보주체의 연락처를 알 수 없는 경우 등 정당한 사유가 있으면 대통령령으로 정하는 바에 따라 통지를 갈음하는 조치를 취할 수 있게 한다. 가이드 4판 p.51은 그 갈음 방법을 “법 제34조제1항 각 호의 사항을 인터넷 홈페이지에 30일 이상 게시, 홈페이지를 운영하지 아니하는 개인정보처리자는 사업장등의 보기 쉬운 장소에 30일 이상 게시”로 정리한다. 따라서 ③이 옳다. 통지와 신고(2026-09-11 시행 개정 법 제34조제4항)는 각각 별도의 의무이고, 피해 최소화 대책 마련도 개인정보처리자 자신의 의무다(같은 조 제3항).",
+    explanation: "법 제34조제1항은 개인정보가 유출등 되었음을 알게 되었을 때 지체 없이 해당 정보주체에게 유출등이 된 개인정보의 항목, 유출등이 된 시점과 그 경위, 피해 최소화를 위해 정보주체가 할 수 있는 방법 등에 관한 정보, 개인정보처리자의 대응조치 및 피해 구제절차, 신고 접수 담당부서 및 연락처, 그리고 2026-09-11 시행 개정으로 추가된 제6호(손해배상·법정손해배상 청구 및 분쟁조정 등 피해를 입은 정보주체의 법적 권리와 그 행사 방법에 관한 정보)·제7호(그 밖에 대통령령으로 정하는 사항)까지 모두 7개 사항을 알리도록 하고, 다만 정보주체의 연락처를 알 수 없는 경우 등 정당한 사유가 있으면 대통령령으로 정하는 바에 따라 통지를 갈음하는 조치를 취할 수 있게 한다. 가이드 4판 p.51은 그 갈음 방법을 “법 제34조제1항 각 호의 사항을 인터넷 홈페이지에 30일 이상 게시, 홈페이지를 운영하지 아니하는 개인정보처리자는 사업장등의 보기 쉬운 장소에 30일 이상 게시”로 정리한다. 따라서 ③이 옳다. 통지와 신고(2026-09-11 시행 개정 법 제34조제4항)는 각각 별도의 의무이고, 피해 최소화 대책 마련도 개인정보처리자 자신의 의무다(같은 조 제3항).",
     wrong_option_explanations: [
       "① 틀리다. 법 제34조제1항은 유출등을 알게 되었을 때 “지체 없이 해당 정보주체에게” 알리도록 하고, 보호위원회 또는 전문기관 신고는 같은 조 제4항(2026-09-11 시행 개정 전에는 제3항)의 별도 의무다. 통지와 신고는 둘 다 해야 한다.",
       "② 틀리다. 유출등이 된 개인정보의 항목(제1호)이나 유출 시점과 경위(제2호)의 구체적인 내용을 확인하지 못한 경우에는 유출된 사실과 그때까지 확인된 내용, 제3호부터 제5호까지의 사항을 서면등의 방법으로 우선 통지하고, 추가로 확인되는 내용은 확인되는 즉시 통지해야 한다(4판 p.51).",
@@ -156,8 +156,8 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-09-11",
     cards: ["C-C1-04"],
     tags: ["개인정보보호법", "유출 통지", "제34조", "사례", "고객상담"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C1" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C1" }, { date: "2026-09-07", note: "검증 수정: 배점 18→12점·difficulty 4→3(blueprint.js 과목① 슬롯은 18점 0개 — 과목①에 18점 문항이 있으면 모의고사 슬롯에 배치 불가). 해설에 개정 제34조제1항 제6호·제7호를 추가해 통지 사항 7개로 보완" }]
   },
   {
     id: "Q-C1-06", subject: 1, topic: "1.2.3", level: "D",
@@ -188,7 +188,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-09-11",
     cards: ["C-C1-04"],
     tags: ["개인정보보호법", "영상정보처리기기", "CCTV", "제25조", "매장운영"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C1" }]
   },
   {
@@ -209,7 +209,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-09-11",
     cards: ["C-C1-04"],
     tags: ["개인정보보호법", "유출 통지", "72시간", "단답", "제34조"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C1" }]
   },
   {
@@ -225,12 +225,12 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     wrong_option_explanations: null,
     key_concept: "고유식별정보의 정의와 4종 목록",
     memory_sentence: "고유식별정보 4종 = 주민등록번호·여권번호·운전면허 면허번호·외국인등록번호(주민등록번호만 별도 규정 제24조의2).",
-    trap: "“민감정보”라고 쓰면 0점이다. “개인식별정보”·“식별정보”처럼 법령에 없는 이름도 오답이므로 조문 용어 그대로 “고유식별정보”라고 적는다. 고객의 주민등록증에 적힌 이름·생년월일·성별·발행일·발행기관·사진은 주민등록번호가 아니어서 동의를 받아 수집할 수 있다는 해석례(4판 p.47)와 구별한다.",
+    trap: "“민감정보”라고 쓰면 0점이다. “개인식별정보”·“식별정보”처럼 법령에 없는 이름도 오답이므로 조문 용어 그대로 “고유식별정보”라고 적는다. 고객의 주민등록증에 적힌 이름·생년월일·성별·발행일·주민등록기관·사진은 주민등록번호가 아니어서 동의를 받아 수집할 수 있다는 해석례(4판 p.47)와 구별한다.",
     source: { law: "개인정보 보호법 제24조제1항, 같은 법 시행령 제19조", guide: "4판 p.42·p.47", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-09-11",
     cards: ["C-C1-03"],
     tags: ["개인정보보호법", "고유식별정보", "단답", "제24조", "고객정보 입력"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C1" }]
   }
 ]);
