@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C8-01"],
     tags: ["관능평가", "정의", "유효성", "오감", "4.3.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -38,22 +38,25 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     choices: [], answer: null, shuffle: false,
     answer_text: ["㉠ 기호형 / ㉡ 분석형"],
     blanks: [
-      { label: "㉠", accepted: ["기호형", "기호형 관능평가", "기호형 평가", "기호형(嗜好型)", "기호"] },
-      { label: "㉡", accepted: ["분석형", "분석형 관능평가", "분석형 평가", "분석형(分析型)", "분석"] }
+      { label: "㉠", accepted: ["기호형", "기호형 관능평가", "기호형 평가", "기호형(嗜好型)"] },
+      { label: "㉡", accepted: ["분석형", "분석형 관능평가", "분석형 평가", "분석형(分析型)"] }
     ],
     grade: "exact", strict_term: true, unit: null, number_tolerance: 0,
-    near_miss: ["선호형", "기호성", "주관형", "객관형", "감별형", "식별형", "종합형"],
+    near_miss: ["선호형", "기호성", "기호", "분석", "주관형", "객관형", "감별형", "식별형", "종합형"],
     explanation: "가이드는 '관능평가에는 좋고 싫음을 주관적으로 판단하는 기호형과, 표준품 및 한도품 등 기준과 비교하여 합격품, 불량품을 객관적으로 평가, 선별하거나 사람의 식별력 등을 조사하는 분석형의 2가지 종류가 있음'이라고 적는다(4판 p.284). 즉 ㉠은 기호형, ㉡은 분석형이다. 기호형은 '좋다/싫다'라는 선호를, 분석형은 '합격/불량' 판정과 식별력을 다룬다.",
     wrong_option_explanations: null,
     key_concept: "관능평가 2종: 기호형(주관적 좋고 싫음) vs 분석형(표준품ㆍ한도품 기준 비교, 합격ㆍ불량 선별, 식별력 조사)",
     memory_sentence: "좋고 싫음 = 기호형, 합격ㆍ불량 가르기 = 분석형.",
-    trap: "'객관적'이라는 낱말만 보고 ㉡에 '객관형'이라 쓰기 쉽지만 가이드 용어는 '분석형'이다. 또 표준품ㆍ한도품과 비교하는 쪽이 분석형인데, 기준과 비교하니 '기준형'이라 잘못 쓰는 경우도 있다.",
+    trap: "'객관적'이라는 낱말만 보고 ㉡에 '객관형'이라 쓰기 쉽지만 가이드 용어는 '분석형'이다. 또 표준품ㆍ한도품과 비교하는 쪽이 분석형인데, 기준과 비교하니 '기준형'이라 잘못 쓰는 경우도 있다. 가이드 용어는 언제나 '-형'까지 붙는다 — '기호'ㆍ'분석'만 쓰면 용어를 절반만 쓴 것이므로 반드시 '기호형'ㆍ'분석형'으로 적는다.",
     source: { law: null, guide: "4판 p.284", asof: "2026-09", confidence: "high" },
     law_effective_date: null,
     cards: ["C-C8-01"],
     tags: ["관능평가", "기호형", "분석형", "빈칸", "단답", "4.3.1"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [
+      { date: "2026-09-07", note: "신규 C8 2026-09-07" },
+      { date: "2026-09-07", note: "검증 수정: 허용표기에서 '기호'ㆍ'분석' 단독 표기를 삭제(가이드 용어는 '기호형'ㆍ'분석형'으로 '-형'이 용어의 일부이고, '기호'는 symbol과도 혼동됨) → near_miss로 이동, trap에 '-형까지 쓸 것' 추가. strict_term:true 유지(엔진 동의어표는 화학명 전용이라 이 문항 채점에 영향 없음)." }
+    ]
   },
   {
     id: "Q-C8-03", subject: 4, topic: "4.3.1", level: "D",
@@ -84,7 +87,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C8-02"],
     tags: ["관능평가", "표준품", "표준견본", "한도견본", "짝짓기", "4.3.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -105,7 +108,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C8-03"],
     tags: ["관능평가", "맹검", "사용시험", "자가평가", "단답", "4.3.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -137,7 +140,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C8-04"],
     tags: ["기능성화장품", "범위", "시행규칙 제2조", "단서", "4.4.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -169,7 +172,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-04-02",
     cards: ["C-C8-04"],
     tags: ["맞춤형화장품", "효능효과", "화장품 유형", "기능성화장품", "4.4.1"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -201,7 +204,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C8-05"],
     tags: ["부작용", "위해평가 가이드라인", "광감작", "안점막자극", "전신독성", "4.4.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -225,13 +228,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C8-05"],
     tags: ["부작용", "접촉피부염", "피부감작성", "알레르기", "빈칸", "단답", "4.4.2"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
     id: "Q-C8-09", subject: 4, topic: "4.4.2", level: "D",
     type: "mcq", qtype: "procedure", points: 12, difficulty: 3, importance: "H", vg: null,
-    stem: "맞춤형화장품 사용과 관련하여 부작용이 발생한 경우의 대처와 보고에 관한 설명으로 옳은 것은?",
+    stem: "「화장품법 시행규칙」 제12조의2와 이를 설명한 교수ㆍ학습 가이드 4.4.2(맞춤형화장품의 부작용의 종류와 현상)를 기준으로 할 때, 맞춤형화장품 사용과 관련하여 부작용이 발생한 경우의 대처와 보고에 관한 설명으로 옳은 것은?",
     choices: [
       "표준작업지침서(SOP)는 화장품제조업자에게만 요구되는 문서이므로 맞춤형화장품 판매장의 업무에는 필요하지 않다.",
       "맞춤형화장품 사용과 관련된 부작용 발생 사례는 매 반기가 끝난 후 1개월 이내에 정기보고만 하면 되고 그 밖의 보고 의무는 없다.",
@@ -242,23 +245,26 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     answer: 4, shuffle: false,
     answer_text: null, blanks: null,
     grade: "exact", strict_term: false, unit: null, number_tolerance: 0, near_miss: [],
-    explanation: "가이드는 사례보고 항목에서 '맞춤형화장품 사용과 관련된 부작용 발생 사례에 대해서는 지체 없이 식품의약품안전처장에게 보고해야 함'이라고 적는다(4판 p.292). 근거 조문은 「화장품법 시행규칙」 제12조의2제5호로, '맞춤형화장품 사용과 관련된 부작용 발생사례에 대해서는 식품의약품안전처장이 정하여 고시하는 바에 따라 식품의약품안전처장에게 보고할 것'이다(4판 p.291). 같은 조 제4호는 판매 시 가목(혼합ㆍ소분에 사용된 내용물ㆍ원료의 내용 및 특성)과 나목(맞춤형화장품 사용 시의 주의사항)을 모두 설명하도록 한다. 또 가이드는 '문제 발생 시 확보된 Standard Operating Procedure(SOP)에 따라 대응함'이라고 하고, SOP는 '품질관리(Quality Control)가 필요한 모든 업무에 필요함'이라고 한다(4판 p.292).",
+    explanation: "가이드는 사례보고 항목에서 '맞춤형화장품 사용과 관련된 부작용 발생 사례에 대해서는 지체 없이 식품의약품안전처장에게 보고해야 함'이라고 적는다(4판 p.292). 근거 조문은 「화장품법 시행규칙」 제12조의2제5호로, '맞춤형화장품 사용과 관련된 부작용 발생사례에 대해서는 식품의약품안전처장이 정하여 고시하는 바에 따라 식품의약품안전처장에게 보고할 것'이다(4판 p.291). 같은 조 제4호는 판매 시 가목(혼합ㆍ소분에 사용된 내용물ㆍ원료의 내용 및 특성)과 나목(맞춤형화장품 사용 시의 주의사항)을 모두 설명하도록 한다. 또 가이드는 '문제 발생 시 확보된 Standard Operating Procedure(SOP)에 따라 대응함'이라고 하고, SOP는 '품질관리(Quality Control)가 필요한 모든 업무에 필요함'이라고 한다(4판 p.292).\n\n※ 기한 표현 두 가지를 구분할 것. 시행규칙 제12조의2제5호가 가리키는 고시인 「화장품 안전성 정보관리 규정」은 제5조에서 중대한 유해사례 등 신속보고 대상 정보를 '그 정보를 알게 된 날로부터 15일 이내'에 보고하도록 하고, 제6조에서 신속보고되지 않은 안전성 정보를 '매 반기 종료 후 1월 이내'에 정기보고하도록 한다. 즉 '지체 없이'(가이드 4판 p.292의 맞춤형화장품 부작용 사례보고 서술)와 '15일 이내'(안전성 정보관리 규정 제5조 신속보고)는 각각 자기 문서 안에서 모두 옳은 말이며, 이 문항은 문두에 적은 대로 시행규칙 제12조의2ㆍ가이드 4.4.2의 서술을 기준으로 묻는다.",
     wrong_option_explanations: [
       "① 가이드는 SOP가 '품질관리가 필요한 모든 업무에 필요함'이라고 적는다(4판 p.292). 제조업자 전용 문서가 아니다.",
-      "② 가이드의 사례보고 문장은 '지체 없이' 보고하도록 한다(4판 p.292). 정기보고만으로 갈음할 수 있다는 서술은 없다.",
+      "② 「화장품 안전성 정보관리 규정」 제6조의 정기보고(매 반기 종료 후 1월 이내)는 '제5조에 따라 신속보고 되지 아니한' 안전성 정보를 대상으로 하고, 같은 규정 제5조는 중대한 유해사례 등을 알게 된 날부터 15일 이내에 신속보고하도록 한다. 가이드도 맞춤형화장품 부작용 발생 사례는 '지체 없이' 보고하라고 적는다(4판 p.292). 따라서 정기보고만 하면 되고 '그 밖의 보고 의무는 없다'고 단정한 이 보기는 틀리다.",
       "③ 시행규칙 제12조의2제4호는 가목ㆍ나목 두 가지를 모두 설명하도록 정한다(4판 p.291). 사용 시의 주의사항도 설명 의무 대상이다.",
       "④ 가이드는 '문제 발생 시 확보된 SOP에 따라 대응함'이라고 명시한다(4판 p.292). SOP의 목적 자체가 담당자가 달라도 일관되게 업무를 수행하게 하는 것이다.",
       "⑤ 정답 — 4판 p.292 사례보고 항목의 문장이며, 근거는 시행규칙 제12조의2제5호다."
     ],
     key_concept: "부작용 대처 = SOP대로 대응 + 부작용 발생 사례는 지체 없이 식약처장 보고(시행규칙 제12조의2제5호), 판매 시 설명 2가지(내용물ㆍ원료의 내용과 특성 / 사용 시의 주의사항)",
     memory_sentence: "부작용은 SOP대로, 사례는 지체 없이 식약처장께. 판매할 때 설명은 '무엇을 섞었나' + '어떻게 조심하나' 둘.",
-    trap: "안전성 정보의 정기보고(매 반기 종료 후 1월 이내)와 헷갈려 '반기 보고만 하면 된다'로 답하기 쉽다. 맞춤형화장품 부작용 사례는 가이드가 '지체 없이'라고 못 박는다. 또 설명 의무를 '내용물ㆍ원료 설명' 하나로 줄인 보기도 자주 나온다.",
-    source: { law: "화장품법 시행규칙 제12조의2제4호ㆍ제5호", guide: "4판 p.291~292", asof: "2026-09", confidence: "high" },
+    trap: "기한 표현은 '어느 문서를 묻는가'로 갈린다. 가이드 4.4.2는 맞춤형화장품 부작용 발생 사례를 '지체 없이' 보고한다고 적고, 「화장품 안전성 정보관리 규정」은 제5조 신속보고 '15일 이내'ㆍ제6조 정기보고 '매 반기 종료 후 1월 이내'를 정한다. 둘 다 참이므로 문두에서 어느 기준을 묻는지 먼저 확인해야 한다. 이 보기들에서 ②가 틀린 이유는 기간 자체가 아니라 '정기보고만 하면 되고 그 밖의 보고 의무는 없다'고 단정했기 때문이다. 또 설명 의무를 '내용물ㆍ원료 설명' 하나로 줄인 보기도 자주 나온다.",
+    source: { law: "화장품법 시행규칙 제12조의2제4호ㆍ제5호(참고: 화장품 안전성 정보관리 규정 제5조ㆍ제6조)", guide: "4판 p.291~292", asof: "2026-09", confidence: "high" },
     law_effective_date: "2026-04-02",
     cards: ["C-C8-05"],
     tags: ["부작용", "보고", "SOP", "제12조의2", "준수사항", "4.4.2"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [
+      { date: "2026-09-07", note: "신규 C8 2026-09-07" },
+      { date: "2026-09-07", note: "검증 수정: 보고 기한 이중 기준 정리. 문두에 판단 기준(「화장품법 시행규칙」 제12조의2ㆍ가이드 4.4.2)을 명시하고, 해설ㆍ②해설ㆍtrap에 「화장품 안전성 정보관리 규정」 제5조(신속보고 15일 이내)ㆍ제6조(정기보고 매 반기 종료 후 1월 이내)를 함께 적어 '지체 없이'와 '15일'이 각각 다른 문서에서 모두 참임을 밝힘. source.law에 안전성 정보관리 규정 참고 추가." }
+    ]
   },
   {
     id: "Q-C8-10", subject: 4, topic: "4.4.3", level: "D",
@@ -289,7 +295,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-03-18",
     cards: ["C-C8-06"],
     tags: ["맞춤형화장품", "사용 가능 원료", "제5조", "별표1", "별표2", "4.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -310,7 +316,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2025-12-16",
     cards: ["C-C8-06"],
     tags: ["기능성화장품", "고시 원료", "아데노신", "주름개선", "별표4", "단답", "4.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   },
   {
@@ -342,7 +348,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2026-09-11",
     cards: ["C-C8-06", "C-C8-05"],
     tags: ["사례", "상담", "민감정보", "제5조", "기능성 고시 원료", "설명 의무", "4.4.3"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }]
   }
 ]);
