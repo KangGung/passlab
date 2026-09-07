@@ -28,7 +28,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-01"],
     tags: ["제조원리", "분산계", "계면화학", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -60,7 +60,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-02"],
     tags: ["제조원리", "유화", "에멀젼", "안정성", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -81,7 +81,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-01"],
     tags: ["제조원리", "가용화", "미셀", "단답", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -113,7 +113,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-01"],
     tags: ["제조원리", "HLB", "계면활성제", "가용화", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -145,7 +145,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-03"],
     tags: ["제조공정", "로션", "크림", "순서", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -169,7 +169,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C4-04"],
     tags: ["제조공정", "용어정의", "벌크제품", "반제품", "CGMP", "단답", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -201,7 +201,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-05"],
     tags: ["유형특성", "화장품정의", "의약외품", "의약품", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -233,7 +233,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: null,
     cards: ["C-C4-05"],
     tags: ["유형특성", "사례판단", "제형", "O/W", "W/O", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -260,13 +260,13 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     ],
     key_concept: "4대 기준서 귀속 — 제품표준서는 ‘제품의 이력서’, 제조관리기준서는 ‘만들고 보관·출고하는 규칙’, 품질관리기준서는 ‘시험·검체·표준품’, 제조위생관리기준서는 ‘사람·옷·청소·방충’",
     memory_sentence: "제품표준서=처방·기준, 제조관리=출입·공정·원자재·완제품·위탁, 품질관리=검체·시험기구·안정성·표준품, 제조위생=건강·수세·복장·청소·방충.",
-    trap: "‘선입선출’은 두 기준서에 모두 나온다. 원자재 출고 시 선입선출과 완제품 출하 시 선입선출은 둘 다 제조관리기준서 항목이며(제15조제3항), 품질관리기준서에는 선입선출이 없다.",
+    trap: "‘선입선출’은 제조관리기준서 한 기준서 안에서 두 번 나온다 — 원자재 관리의 ‘출고 시 선입선출 및 칭량된 용기의 표시사항’(제15조제3항제3호 마목)과 완제품 관리의 ‘출하 시의 선입선출방법’(같은 항 제4호 다목)이다. 품질관리기준서·제조위생관리기준서·제품표준서에는 선입선출이 없다.",
     source: { law: "우수화장품 제조 및 품질관리기준 제15조", guide: "4판 p.111~114", asof: "2026-09", confidence: "high" },
     law_effective_date: "2024-08-22",
     cards: ["C-C4-06"],
     tags: ["문서구비", "4대기준서", "CGMP", "제조관리기준서", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
-    history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
+    history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }, { date: "2026-09-07", note: "검증 수정: trap의 ‘선입선출은 두 기준서에 모두 나온다’가 사실과 달라(CGMP 제15조제3항제3호 마목·제4호 다목 모두 제조관리기준서 항목) 제조관리기준서 안에서 두 번 나온다는 서술로 정정" }]
   },
   {
     id: "Q-C4-10", subject: 2, topic: "2.2.2", level: "D",
@@ -286,7 +286,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     law_effective_date: "2024-08-22",
     cards: ["C-C4-06"],
     tags: ["문서구비", "4대기준서", "CGMP", "단답", "열거", "2과목"],
-    verified: false, verified_by: null, verified_at: null,
+    verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   }
 ]);
