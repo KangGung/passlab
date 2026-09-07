@@ -1298,7 +1298,10 @@ test("buildMock: 슬롯이 비면 같은 과목·유형의 다른 배점으로 �
   assert.deepEqual(m.qids.slice().sort(), ["Q-P12", "Q-P8"]);    // 12점 대체가 18점보다 먼저
   assert.equal(m.total_points, 20);                              // 문항 points 합산(8+12)
   assert.deepEqual(m.slots_filled, [{ subject: 1, type: "mcq", points: 8, need: 2, got: 2 }]);
-  assert.equal(m.partial, false);
+  assert.deepEqual(m.slots_missing, []);
+  assert.equal(m.substituted, 1);
+  assert.equal(m.planned_points, 16);
+  assert.equal(m.partial, true);                                 // 문항 수는 맞지만 배점이 계획과 다르다
 });
 
 test("buildMock: 채울 수 없는 슬롯은 slots_missing에 남고 partial=true", () => {
@@ -1333,10 +1336,43 @@ test("buildMock: 미검증 문항은 모의고사에 넣지 않는다", () => {
   assert.equal(m.partial, true);
 });
 
-test("buildMock: 실제 은행(검증 96문항) full → partial, 부족 슬롯 정확", () => {
-  const B = realBank();
-  assert.equal(B.questions.length, 96);
-  const m = C.buildMock("full", B.questions, B.bp, {}, C.seededRandom(20260919));
+/* 2026-09-07 시점 검증 은행(96문항)의 과목·유형·배점 분포 스냅샷.
+ * app/data의 실제 문항 수는 검증 배치가 계속 돌아 늘어나므로(테스트가 깨진다)
+ * "문항이 부족한 은행" 시나리오는 이 고정 픽스처로 재현한다. */
+const BANK96_SHAPE = {
+  1: { mcq: { 8: 5, 12: 3, 18: 0 }, short: { 8: 2, 12: 0, 18: 0 } },
+  2: { mcq: { 8: 8, 12: 6, 18: 1 }, short: { 8: 6, 12: 2, 18: 0 } },
+  3: { mcq: { 8: 12, 12: 10, 18: 2 }, short: { 8: 0, 12: 0, 18: 0 } },
+  4: { mcq: { 8: 9, 12: 11, 18: 3 }, short: { 8: 11, 12: 5, 18: 0 } }
+};
+function bank96() {
+  const out = [];
+  let k = 0;
+  [1, 2, 3, 4].forEach(s => {
+    ["mcq", "short"].forEach(type => {
+      [8, 12, 18].forEach(p => {
+        const cnt = BANK96_SHAPE[s][type][p] || 0;
+        for (let i = 0; i < cnt; i++) {
+          k++;
+          // 세부항목은 3문항씩 흩어 놓는다(같은 세부항목 상한을 건드리지 않는 조건)
+          const base = {
+            id: "Q-B96-" + String(k).padStart(3, "0"), subject: s,
+            topic: s + ".b" + Math.ceil(k / 3), points: p,
+            difficulty: 3, importance: "M", verified: true
+          };
+          out.push(type === "mcq" ? mcq(base) : short(base));
+        }
+      });
+    });
+  });
+  return out;
+}
+
+test("buildMock: 문항이 부족한 은행(96문항 스냅샷) full → partial, 부족 슬롯 정확", () => {
+  const bank = bank96();
+  assert.equal(bank.length, 96);
+  assert.deepEqual([1, 2, 3, 4].map(s => bank.filter(q => q.subject === s).length), [10, 23, 24, 39]);
+  const m = C.buildMock("full", bank, BP, {}, C.seededRandom(20260919));
   assert.equal(m.partial, true);
   assert.equal(m.qids.length, 88);                 // 같은 과목·유형 안에서만 대체 가능 → 12문항 부족
   assert.equal(new Set(m.qids).size, 88);
@@ -1352,6 +1388,63 @@ test("buildMock: 실제 은행(검증 96문항) full → partial, 부족 슬롯 
   const missing = m.slots_missing.reduce((s, x) => s + (x.need - x.got), 0);
   assert.equal(missing, 12);
   assert.equal(m.order.filter(o => o.type === "short").length, 19);
+});
+
+test("buildMock: 실제 app/data 은행으로도 불변식이 성립한다(수치는 검증하지 않는다)", () => {
+  const B = realBank();
+  assert.ok(B.questions.length > 0, "검증된 문항이 하나도 없다");
+  const byId = new Map();
+  B.questions.forEach(q => byId.set(q.id, q));
+  const m = C.buildMock("full", B.questions, B.bp, {}, C.seededRandom(20260919));
+
+  // ① 중복 없음 · 전부 검증 문항
+  assert.equal(new Set(m.qids).size, m.qids.length);
+  m.qids.forEach(id => {
+    const q = byId.get(id);
+    assert.ok(q, id + " 가 은행에 없다");
+    assert.equal(q.verified, true, id + " 는 미검증 문항이다");
+  });
+
+  // ② order = qids와 같은 순서, 번호는 인덱스+1, 문항 속성 일치
+  assert.equal(m.order.length, m.qids.length);
+  m.order.forEach((o, i) => {
+    const q = byId.get(o.qid);
+    assert.equal(o.no, i + 1);
+    assert.equal(o.qid, m.qids[i]);
+    assert.equal(o.subject, Number(q.subject));
+    assert.equal(o.type, q.type === "short" ? "short" : "mcq");
+    assert.equal(o.points, Number(q.points));
+  });
+
+  // ③ 선다형이 모두 단답형보다 앞, 유형 안에서 과목 오름차순
+  const firstShort = m.order.findIndex(o => o.type === "short");
+  const cut = firstShort === -1 ? m.order.length : firstShort;
+  assert.ok(m.order.slice(0, cut).every(o => o.type === "mcq"));
+  assert.ok(m.order.slice(cut).every(o => o.type === "short"));
+  const mcqSubs = m.order.slice(0, cut).map(o => o.subject);
+  const shortSubs = m.order.slice(cut).map(o => o.subject);
+  assert.deepEqual(mcqSubs, mcqSubs.slice().sort((a, b) => a - b));
+  assert.deepEqual(shortSubs, shortSubs.slice().sort((a, b) => a - b));
+
+  // ④ 과목·유형별 문항 수가 블루프린트 슬롯을 넘지 않는다
+  B.bp.subjects.forEach(s => {
+    const inSub = m.order.filter(o => o.subject === s.id);
+    assert.ok(inSub.length <= s.count, "과목 " + s.id + " " + inSub.length + " > " + s.count);
+    assert.ok(inSub.filter(o => o.type === "mcq").length <= s.mcq);
+    assert.ok(inSub.filter(o => o.type === "short").length <= s.short);
+  });
+
+  // ⑤ 채운 문항 + 못 채운 슬롯 = 계획된 100문항, partial 플래그 일관
+  const shortfall = m.slots_missing.reduce((acc, x) => acc + (x.need - x.got), 0);
+  assert.equal(m.planned_count, 100);
+  assert.equal(m.qids.length + shortfall, 100);
+  assert.equal(m.partial, m.qids.length < m.planned_count || m.total_points !== m.planned_points);
+  assert.ok(m.total_points > 0);
+  assert.equal(m.minutes, 120);
+
+  // ⑥ 같은 seed면 같은 시험지
+  const m2 = C.buildMock("full", B.questions, B.bp, {}, C.seededRandom(20260919));
+  assert.deepEqual(m2.qids, m.qids);
 });
 
 /* ================================================================== *
@@ -1507,16 +1600,148 @@ test("gradeMock: 단답 self_marked는 정답으로 인정하고 따로 센다",
   assert.equal(g2.short.self_marked, 0);
 });
 
-test("gradeMock: half 모의는 빠진 과목이 fail_subjects에 들어간다", () => {
+test("gradeMock: half 모의는 합격 판정을 하지 않고(pass null) 빠진 과목을 missing_subjects로 알린다", () => {
   const bank = fullBank(0);
   const m = C.buildMock("half", bank, BP, {}, C.seededRandom(4));
+  assert.equal(m.partial, false);                    // 계획대로 편성됐다
+  assert.equal(m.planned_points, 504);
   const g = C.gradeMock(m, ansMap(bank, m.qids, rightAns), bank, BP);
-  assert.equal(g.partial, true);                     // 504점만 포함 → 환산
+  assert.equal(g.partial, false);                    // → 환산 없음(계획 만점 504점 기준)
+  assert.equal(g.partial_reason, null);
   assert.equal(g.max_included, 504);
-  assert.equal(g.scaled, 1000);
-  assert.deepEqual(g.fail_subjects, [4]);
+  assert.equal(g.max_reference, 504);
+  assert.equal(g.scaled, 504);
+  assert.equal(g.pass, null);                        // 과목④가 아예 없으니 합격 판정 불가
+  assert.deepEqual(g.missing_subjects, [4]);
+  assert.deepEqual(g.fail_subjects, []);             // 빠진 과목은 과락이 아니다
   assert.equal(g.by_subject.find(x => x.id === 4).max_included, 0);
-  assert.equal(g.pass, false);
+  assert.equal(g.by_subject.find(x => x.id === 4).pass, null);
+  assert.deepEqual(g.by_subject.slice(0, 3).map(x => x.scaled), [100, 250, 250]);
+  assert.ok(g.by_subject.slice(0, 3).every(x => x.pass === true && x.ratio === 1));
+  const rec = C.mockRecord(m, g, "sid-h", "2026-09-11");
+  assert.equal(rec.pass, null);                      // 기록에도 null로 남긴다(false 아님)
+  assert.deepEqual(rec.missing_subjects, [4]);
+  assert.equal(rec.max_reference, 504);
+});
+
+test("partial 정의 일치: buildMock과 gradeMock이 같은 시험지에서 같은 판단을 한다", () => {
+  const B = realBank();
+  const cases = [
+    { name: "실제 app/data 은행", bank: B.questions, bp: B.bp },
+    { name: "96문항 스냅샷", bank: bank96(), bp: BP },
+    { name: "완비 은행", bank: fullBank(2), bp: BP },
+    { name: "아주 얇은 은행", bank: bank96().slice(0, 12), bp: BP }
+  ];
+  cases.forEach(c => {
+    const m = C.buildMock("full", c.bank, c.bp, {}, C.seededRandom(1234));
+    const g = C.gradeMock(m, {}, c.bank, c.bp);
+    assert.equal(m.partial, m.qids.length < m.planned_count || m.total_points !== m.planned_points, c.name);
+    assert.equal(g.partial, m.partial, c.name + ": partial 불일치");
+    assert.equal(g.max_included, m.total_points, c.name);
+    assert.equal(g.max_reference, m.planned_points, c.name);
+    if (!m.partial) assert.equal(g.partial_reason, null, c.name);
+    else assert.ok(["missing", "substituted", "both"].indexOf(g.partial_reason) !== -1, c.name + ": " + g.partial_reason);
+  });
+  // 프리셋별로도 일치
+  ["full", "half", "mini3"].forEach(preset => {
+    const bank = fullBank(2);
+    const m = C.buildMock(preset, bank, BP, {}, C.seededRandom(3));
+    const g = C.gradeMock(m, {}, bank, BP);
+    assert.equal(m.partial, false, preset);
+    assert.equal(g.partial, false, preset);
+    assert.equal(g.max_reference, m.planned_points, preset);
+  });
+});
+
+test("gradeMock: partial_reason은 부족(missing)·대체(substituted)·둘 다(both)를 구분한다", () => {
+  // 부족만: 96문항 스냅샷은 12문항 부족 + 대체 4문항 → both
+  const bank = bank96();
+  const both = C.gradeMock(C.buildMock("full", bank, BP, {}, C.seededRandom(20260919)), {}, bank, BP);
+  assert.equal(both.partial, true);
+  assert.equal(both.partial_reason, "both");
+  // 대체만: 문항 수는 맞고 배점만 다르다
+  const BP1 = {
+    exam: { total_points: 16, pass_total: 600 },
+    subjects: [{ id: 1, name: "법", count: 2, points: 100, pass_points: 40,
+                 slots: { mcq: { "8": 2, "12": 0, "18": 0 }, short: { "8": 0, "12": 0, "18": 0 } } }]
+  };
+  const b2 = [
+    mcq({ id: "R-8", subject: 1, topic: "1.1.1", points: 8 }),
+    mcq({ id: "R-12", subject: 1, topic: "1.1.2", points: 12 })
+  ];
+  const m2 = C.buildMock("full", b2, BP1, {}, C.seededRandom(2));
+  assert.equal(m2.substituted, 1);
+  const g2 = C.gradeMock(m2, {}, b2, BP1);
+  assert.equal(g2.partial, true);
+  assert.equal(g2.partial_reason, "substituted");
+  // 부족만: 슬롯을 못 채웠고 대체도 없다
+  const b3 = [mcq({ id: "R-only", subject: 1, topic: "1.1.1", points: 8 })];
+  const m3 = C.buildMock("full", b3, BP1, {}, C.seededRandom(2));
+  assert.equal(m3.substituted, 0);
+  const g3 = C.gradeMock(m3, {}, b3, BP1);
+  assert.equal(g3.partial_reason, "missing");
+  // 메타데이터 없는 손수 만든 mock(축소)도 missing으로 본다
+  assert.equal(C.gradeMock(G_MOCK, G_ANS, G_QS, BP).partial_reason, "missing");
+  // 계획대로면 null
+  const full = fullBank(0);
+  assert.equal(C.gradeMock(C.buildMock("full", full, BP, {}, C.seededRandom(1)), {}, full, BP).partial_reason, null);
+});
+
+test("gradeMock: 총점 판정은 표시 점수(scaled)로 하고, 과락은 과목 환산 점수로 한다", () => {
+  // 과목별 만점 비중과 다르게 뽑힌 축소 모의 — 표시 총점과 판정이 어긋나면 안 된다
+  const qs = [
+    mcq({ id: "P-1", subject: 1, topic: "1.1.1", points: 8 }),
+    mcq({ id: "P-2", subject: 2, topic: "2.1.1", points: 8 }),
+    mcq({ id: "P-3", subject: 3, topic: "3.1.1", points: 8 }),
+    mcq({ id: "P-4", subject: 4, topic: "4.1.1", points: 8 })
+  ];
+  const mk = { preset: "full", qids: qs.map(q => q.id), partial: true, planned_count: 100, planned_points: 1000 };
+  const ok = { given: 0, conf: 2, sec: 10 }, bad = { given: 1, conf: 2, sec: 10 };
+  // 4문항 중 3문항 정답(과목③만 오답) → scaled 750, 과목③ 0점 → 과락
+  const g = C.gradeMock(mk, { "P-1": ok, "P-2": ok, "P-3": bad, "P-4": ok }, qs, BP);
+  assert.equal(g.scaled, 750);
+  assert.deepEqual(g.fail_subjects, [3]);
+  assert.deepEqual(g.missing_subjects, []);
+  assert.equal(g.pass, false);                       // 총점은 넘었지만 과락
+  // 전 과목 정답 → scaled 1000, 과락 없음 → pass true (표시값과 판정이 일치)
+  const g2 = C.gradeMock(mk, { "P-1": ok, "P-2": ok, "P-3": ok, "P-4": ok }, qs, BP);
+  assert.equal(g2.scaled, 1000);
+  assert.deepEqual(g2.fail_subjects, []);
+  assert.equal(g2.pass, true);
+  // 전 과목 오답 → scaled 0 → pass false
+  const g3 = C.gradeMock(mk, { "P-1": bad, "P-2": bad, "P-3": bad, "P-4": bad }, qs, BP);
+  assert.equal(g3.scaled, 0);
+  assert.equal(g3.pass, false);
+  assert.deepEqual(g3.fail_subjects, [1, 2, 3, 4]);
+});
+
+test("gradeMock: 데이터에 없는 qid는 missing_questions로 알리고 채점에서 뺀다", () => {
+  const mk = { preset: "full", qids: ["G1", "없는문항", "G3"], partial: true };
+  const g = C.gradeMock(mk, G_ANS, G_QS, BP);
+  assert.deepEqual(g.missing_questions, ["없는문항"]);
+  assert.equal(g.max_included, 20);                  // 8 + 12 (없는 문항은 만점에서도 뺀다)
+  assert.equal(g.raw, 20);
+  assert.equal(g.mcq.n, 2);
+  assert.deepEqual(g.unanswered, []);                // 없는 문항을 무응답으로 세지 않는다
+  assert.deepEqual(C.gradeMock(G_MOCK, G_ANS, G_QS, BP).missing_questions, []);
+});
+
+test("gradeMock: 빈 답에 붙은 self_marked는 세지 않는다", () => {
+  const qs = [short({ id: "SB", subject: 4, topic: "4.1.1", points: 8, answer_text: ["페녹시에탄올"] })];
+  const mk = { preset: "full", qids: ["SB"], partial: true };
+  const g = C.gradeMock(mk, { SB: { given: "", conf: 1, sec: 5, self_marked: true } }, qs, BP);
+  assert.equal(g.raw, 0);
+  assert.deepEqual(g.unanswered, ["SB"]);
+  assert.deepEqual(g.short, { n: 1, correct: 0, points: 0, self_marked: 0 });
+  const g2 = C.gradeMock(mk, { SB: { given: null, conf: 1, sec: 5, self_marked: true } }, qs, BP);
+  assert.equal(g2.short.self_marked, 0);
+});
+
+test("gradeMock: 선다 given은 0~4 정수만 정답으로 인정한다(문자열 금지)", () => {
+  const qs = [mcq({ id: "N-1", subject: 1, topic: "1.1.1", points: 8, answer: 0 })];
+  const mk = { preset: "full", qids: ["N-1"], partial: true };
+  assert.equal(C.gradeMock(mk, { "N-1": { given: 0, conf: 2, sec: 10 } }, qs, BP).raw, 8);
+  assert.equal(C.gradeMock(mk, { "N-1": { given: "0", conf: 2, sec: 10 } }, qs, BP).raw, 0);
 });
 
 test("mockRecord: pl.v1.mocks 한 줄로 접는다(qids 포함 — 다음 모의 exclude용)", () => {
@@ -1884,4 +2109,156 @@ test("weeklyReport: 약점 토픽은 하위 8개까지, 기록이 없으면 0으
     { id: 1, pct: null, n: 0 }, { id: 2, pct: null, n: 0 },
     { id: 3, pct: null, n: 0 }, { id: 4, pct: null, n: 0 }
   ]);
+});
+
+/* ================================================================
+ * 11. 암기카드 그림(figure) → 인라인 SVG
+ * ================================================================ */
+
+/** SVG 안의 <text> 내용을 전부 뽑는다(그림에 실제로 찍힌 글자 확인용) */
+function svgTexts(svg) {
+  const out = [];
+  const re = /<text\b[^>]*>([^<]*)<\/text>/g;
+  let m;
+  while ((m = re.exec(svg))) out.push(m[1]);
+  return out;
+}
+function viewBoxOf(svg) {
+  const m = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+  return m ? { w: Number(m[1]), h: Number(m[2]) } : null;
+}
+/** 그림에 최소 글자 크기(12px) 미만이 없는지 */
+function minFontSize(svg) {
+  const sizes = [];
+  const re = /font-size="([\d.]+)"/g;
+  let m;
+  while ((m = re.exec(svg))) sizes.push(Number(m[1]));
+  return sizes.length ? Math.min.apply(null, sizes) : null;
+}
+
+test("figureToSvg(compare): 2열 비교표 — 폭 360·글자 12px 이상·<title>/<desc>·표 글자 그대로", () => {
+  const spec = {
+    type: "compare", cols: ["등록", "신고"],
+    rows: [
+      ["대상", "제조업·책임판매업", "맞춤형판매업"],
+      ["변경", "30일", "3가지"]
+    ]
+  };
+  const svg = C.figureToSvg(spec);
+  assert.ok(svg.startsWith("<svg"), "<svg 로 시작해야 한다");
+  assert.ok(svg.endsWith("</svg>"));
+  const vb = viewBoxOf(svg);
+  assert.equal(vb.w, 360, "viewBox 폭은 360 고정");
+  assert.ok(vb.h > 40 && vb.h < 400, "높이는 내용에 맞춰 계산: " + vb.h);
+  assert.ok(/<title>/.test(svg) && /<desc>/.test(svg), "접근성 <title>·<desc>");
+  assert.ok(/role="img"/.test(svg));
+  assert.equal(minFontSize(svg), 12, "글자 최소 12px");
+  assert.ok(!/var\(--/.test(svg), "file:// 안전을 위해 CSS 변수를 쓰지 않는다");
+  assert.ok(svg.indexOf("#F5F0E6") !== -1, "종이색을 값으로 직접 쓴다");
+  const t = svgTexts(svg);
+  ["등록", "신고", "대상", "변경", "30일", "3가지"].forEach(function (x) {
+    assert.ok(t.indexOf(x) !== -1, "표에 '" + x + "'이(가) 찍혀야 한다: " + JSON.stringify(t));
+  });
+});
+
+test("figureToSvg(timeline): 좌→우 시간선 — 기간 칩은 황토색, 라벨·기간이 모두 찍힌다", () => {
+  const spec = {
+    type: "timeline",
+    steps: [{ label: "회수계획서", dur: "5일" }, { label: "가등급", dur: "15일" }, { label: "입증 자료", dur: "2년" }]
+  };
+  const svg = C.figureToSvg(spec);
+  assert.equal(viewBoxOf(svg).w, 360);
+  assert.ok(minFontSize(svg) >= 12);
+  assert.ok(svg.indexOf('fill="#B8821A"') !== -1, "기간 칩은 황토색 #B8821A");
+  assert.ok(/<circle/.test(svg), "단계마다 점이 있다");
+  const t = svgTexts(svg);
+  ["회수계획서", "5일", "가등급", "15일", "입증 자료", "2년"].forEach(function (x) {
+    assert.ok(t.indexOf(x) !== -1, "'" + x + "'이(가) 찍혀야 한다: " + JSON.stringify(t));
+  });
+  assert.ok(/<desc>회수계획서 5일 → 가등급 15일 → 입증 자료 2년<\/desc>/.test(svg), "desc가 순서를 그대로 읽어 준다");
+});
+
+test("figureToSvg(groups): 암기법이 끊는 위치 그대로 묶음 칸, 묶음이 늘면 높이도 는다", () => {
+  const two = {
+    type: "groups",
+    groups: [
+      { name: "영·목·인", items: ["영유아용", "목욕용", "인체 세정용"] },
+      { name: "기·체취", items: ["기초화장용", "체취 방지용"] }
+    ]
+  };
+  const one = { type: "groups", groups: [two.groups[0]] };
+  const svgTwo = C.figureToSvg(two), svgOne = C.figureToSvg(one);
+  assert.equal(viewBoxOf(svgTwo).w, 360);
+  assert.ok(viewBoxOf(svgTwo).h > viewBoxOf(svgOne).h, "묶음이 늘면 높이가 는다");
+  assert.ok(minFontSize(svgTwo) >= 12);
+  const t = svgTexts(svgTwo);
+  ["영·목·인", "영유아용", "목욕용", "인체 세정용", "기·체취", "기초화장용", "체취 방지용"].forEach(function (x) {
+    assert.ok(t.indexOf(x) !== -1, "'" + x + "'이(가) 찍혀야 한다: " + JSON.stringify(t));
+  });
+});
+
+test("figureToSvg(tree): 포함 관계 — 뿌리·가지·잎이 모두 찍히고 연결선이 있다", () => {
+  const spec = {
+    type: "tree", root: "화장품",
+    children: [
+      { name: "기능성화장품", children: ["미백", "주름개선"] },
+      { name: "맞춤형화장품", children: ["혼합한 것", "소분한 것"] }
+    ]
+  };
+  const svg = C.figureToSvg(spec);
+  assert.equal(viewBoxOf(svg).w, 360);
+  assert.ok(minFontSize(svg) >= 12);
+  assert.ok((svg.match(/<line /g) || []).length >= 4, "뿌리→가로선→가지 연결선");
+  const t = svgTexts(svg);
+  ["화장품", "기능성화장품", "미백", "주름개선", "맞춤형화장품", "혼합한 것", "소분한 것"].forEach(function (x) {
+    assert.ok(t.indexOf(x) !== -1, "'" + x + "'이(가) 찍혀야 한다: " + JSON.stringify(t));
+  });
+  assert.ok(svg.indexOf("#2A6F46") !== -1, "가지는 초록 #2A6F46");
+});
+
+test("figureToSvg: 잘못된 스펙은 Error를 던진다(알 수 없는 type·빈 열/행·행 길이 불일치·raw 형식)", () => {
+  assert.throws(() => C.figureToSvg({ type: "pie", data: [1, 2] }), /알 수 없는 type/);
+  assert.throws(() => C.figureToSvg({ type: "compare", cols: [], rows: [["a", "b"]] }), /비어 있습니다/);
+  assert.throws(() => C.figureToSvg({ type: "compare", cols: ["등록"], rows: [] }), /비어 있습니다/);
+  assert.throws(() => C.figureToSvg({ type: "compare", cols: ["등록", "신고"], rows: [["대상", "제조업"]] }), /값 2개/);
+  assert.throws(() => C.figureToSvg({ type: "compare", cols: ["등록", "신고"], rows: [["대상", "제조업", "  "]] }), /비어 있습니다/);
+  assert.throws(() => C.figureToSvg({ type: "timeline", steps: [] }), /비어 있습니다/);
+  assert.throws(() => C.figureToSvg({ type: "timeline", steps: [{ dur: "5일" }] }), /label/);
+  assert.throws(() => C.figureToSvg({ type: "groups", groups: [{ name: "가", items: [] }] }), /items/);
+  assert.throws(() => C.figureToSvg({ type: "tree", root: "", children: ["가"] }), /root/);
+  assert.throws(() => C.figureToSvg({ type: "raw", svg: "<div>그림 아님</div>" }), /raw\.svg/);
+  assert.throws(() => C.figureToSvg(null), /객체가 아닙니다/);
+  assert.throws(() => C.figureToSvg([]), /객체가 아닙니다/);
+  // raw는 예외적으로 그대로 통과시킨다
+  assert.equal(C.figureToSvg({ type: "raw", svg: '<svg viewBox="0 0 360 20"></svg>' }),
+               '<svg viewBox="0 0 360 20"></svg>');
+});
+
+test("figureTexts: 그림에 찍히는 글자를 전부 모은다(카드 back·mnemonic 대조용), raw는 빈 배열", () => {
+  assert.deepEqual(
+    C.figureTexts({ type: "compare", cols: ["등록", "신고"], rows: [["대상", "제조업", "맞춤형"]] }),
+    ["등록", "신고", "대상", "제조업", "맞춤형"]
+  );
+  assert.deepEqual(
+    C.figureTexts({ type: "timeline", steps: [{ label: "회수계획서", dur: "5일" }, { label: "가등급" }] }),
+    ["회수계획서", "5일", "가등급"]
+  );
+  assert.deepEqual(
+    C.figureTexts({ type: "groups", groups: [{ name: "영·목", items: ["영유아용", "목욕용"] }] }),
+    ["영·목", "영유아용", "목욕용"]
+  );
+  assert.deepEqual(
+    C.figureTexts({ type: "tree", root: "화장품", children: [{ name: "기능성화장품", children: ["미백"] }, "맞춤형화장품"] }),
+    ["화장품", "기능성화장품", "미백", "맞춤형화장품"]
+  );
+  assert.deepEqual(C.figureTexts({ type: "raw", svg: "<svg></svg>" }), []);
+  assert.deepEqual(C.figureTexts(null), []);
+});
+
+test("figureToSvg: 카드 글자에 <, &, \" 가 있어도 SVG가 깨지지 않는다(escape)", () => {
+  const svg = C.figureToSvg({ type: "timeline", steps: [{ label: '5 < 10 & "가"', dur: "1년" }] });
+  assert.ok(svg.indexOf("&lt;") !== -1 && svg.indexOf("&amp;") !== -1);
+  assert.ok(svg.indexOf('<text x') !== -1);
+  // 이스케이프 뒤에도 태그 짝이 맞는다
+  assert.equal((svg.match(/<text/g) || []).length, (svg.match(/<\/text>/g) || []).length);
 });

@@ -187,7 +187,7 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
   },
   {
     id: "Q-C2-08", subject: 1, topic: "1.1.5", level: "D",
-    type: "mcq", qtype: "case", points: 18, difficulty: 5, importance: "H", vg: "VG-C2-실증",
+    type: "mcq", qtype: "case", points: 12, difficulty: 3, importance: "H", vg: "VG-C2-실증",
     stem: "화장품책임판매업자 A는 자사 에센스를 인터넷 쇼핑몰 광고에 “피부과 전문의가 추천하는 국내 최고의 미백 에센스”라고 표시·광고했다. 이 제품은 기능성화장품 심사를 받거나 보고서를 제출한 사실이 없다. 식품의약품안전처장은 A에게 이 광고 내용에 대한 실증자료 제출을 요청했으나, A는 요청받은 날부터 15일이 지나도 자료를 제출하지 않은 채 같은 광고를 계속했다. 이 사안에 대한 설명으로 옳은 것은?",
     choices: [
       "실증자료 제출을 요청받은 경우 그 제출기간은 어떠한 사유로도 연장될 수 없다.",
@@ -213,6 +213,6 @@ window.PL_QUESTIONS = (window.PL_QUESTIONS || []).concat([
     cards: ["C-C2-02", "C-C2-03"],
     tags: ["표시·광고", "실증", "중지명령", "벌칙", "사례"],
     verified: true, verified_by: "S2-V", verified_at: "2026-09-07",
-    history: [{ date: "2026-09-07", note: "신규 C2" }]
+    history: [{ date: "2026-09-07", note: "신규 C2" }, { date: "2026-09-07", note: "검증 수정: 과목① 18점 슬롯 없음 → 12점" }]
   }
 ]);

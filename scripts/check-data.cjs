@@ -14,9 +14,13 @@
 //   - topic이 topics.js에 존재하는지 (PLCore.dataCheck의 unknownTopic과 동일 — 중복 방지를 위해 별도 재검사는 생략, 표에만 재노출)
 //   - 문항의 cards 참조가 실제 존재하는 카드 ID인지 (없으면 경고만)
 //   - answer_text가 있는데 type:"mcq"인 모순 (경고)
+//   - 암기카드 그림(figure): figure를 가진 카드 수를 세고,
+//     스펙이 PLCore.figureToSvg를 통과하지 못하면 오류(빈 열/행·알 수 없는 type 포함),
+//     type:"raw"인데 history에 이유("raw")가 없으면 오류,
+//     그림 글자가 그 카드 back+mnemonic 안에 없으면 경고(그림이 새 사실을 만들지 못하게).
 //
-// 종료 코드: 오류(하드 오류: dataCheck.ok===false 또는 첫 줄 형식 위반)가 있으면 1, 없으면 0.
-// 경고(카드 참조 누락·mcq+answer_text 모순)는 허용 — 목록만 출력한다.
+// 종료 코드: 오류(하드 오류: dataCheck.ok===false·첫 줄 형식 위반·figure 스펙 오류)가 있으면 1, 없으면 0.
+// 경고(카드 참조 누락·mcq+answer_text 모순·그림 글자 미확인)는 허용 — 목록만 출력한다.
 //
 // 사용법:
 //   node scripts/check-data.cjs                   # manifest 전체 점검
@@ -78,6 +82,58 @@ function checkCardRefs(questions, cards) {
   return missing;
 }
 
+/* ---------------- 암기카드 그림(figure) 점검 ---------------- */
+
+/** 그림 글자 비교용 정규화: 공백 제거 + 전각 물결/따옴표 통일 */
+function normFigText(s) {
+  return String(s == null ? "" : s).replace(/\s+/g, "").replace(/[“”"']/g, "");
+}
+
+/** 그림 글자 1개가 카드 back+mnemonic 안에 있는지.
+ *  통째로 없으면 "/ ( ) , →" 로 쪼개 조각마다 다시 본다(예: "시설기준 / 책임판매관리자"). */
+function figTextCovered(text, haystack) {
+  const t = normFigText(text);
+  if (!t) return true;
+  if (haystack.indexOf(t) !== -1) return true;
+  const parts = String(text).split(/[/(),→]+/).map(normFigText).filter(Boolean);
+  if (parts.length < 2) return false;
+  return parts.every(function (p) { return haystack.indexOf(p) !== -1; });
+}
+
+/** figure를 가진 카드 수 · 스펙 오류(하드) · 카드에 없는 글자(경고) */
+function checkFigures(cards) {
+  const withFigure = [];
+  const specErrors = [];
+  const textWarnings = [];
+  (Array.isArray(cards) ? cards : []).forEach(function (c) {
+    if (!c || !c.figure) return;
+    withFigure.push(c.id);
+    let svg = null;
+    try {
+      svg = PLCore.figureToSvg(c.figure);
+    } catch (e) {
+      specErrors.push(c.id + ": " + e.message);
+      return;
+    }
+    if (typeof svg !== "string" || svg.indexOf("<svg") !== 0) {
+      specErrors.push(c.id + ": figureToSvg가 <svg 로 시작하는 문자열을 돌려주지 않음");
+      return;
+    }
+    if (c.figure.type === "raw") {
+      const notes = (Array.isArray(c.history) ? c.history : []).map(function (h) { return String(h && h.note || ""); }).join(" ");
+      if (notes.indexOf("raw") === -1) {
+        specErrors.push(c.id + ': type:"raw"를 쓴 이유가 history에 없음(“raw”를 넣어 이유를 적을 것)');
+      }
+      return; // raw는 글자 대조 대상이 아님
+    }
+    const hay = normFigText(String(c.back || "") + " " + String(c.mnemonic || ""));
+    PLCore.figureTexts(c.figure).forEach(function (t) {
+      if (!figTextCovered(t, hay)) textWarnings.push(c.id + ' → "' + t + '"');
+    });
+  });
+  return { withFigure: withFigure, specErrors: specErrors, textWarnings: textWarnings };
+}
+
 /** type:"mcq"인데 answer_text가 채워진 모순(경고) */
 function checkMcqAnswerTextContradiction(questions) {
   return (Array.isArray(questions) ? questions : [])
@@ -102,6 +158,9 @@ function printReport(label, result, extra) {
   });
   console.log("");
   console.log("전체 verified 비율: " + (result.verifiedRatio * 100).toFixed(1) + "%");
+  const fig = extra.figures || { withFigure: [], specErrors: [], textWarnings: [] };
+  console.log("그림(figure) 있는 카드: " + fig.withFigure.length + " / " + result.cards.total +
+              (fig.withFigure.length ? " — " + fig.withFigure.join(", ") : ""));
   console.log("");
 
   const hardChecks = [
@@ -124,6 +183,11 @@ function printReport(label, result, extra) {
       console.log("  [오류] " + name + " (" + list.length + "건): " + list.join(", "));
     }
   });
+  if (fig.specErrors.length) {
+    hardErrorCount += fig.specErrors.length;
+    console.log("  [오류] figure 스펙 오류 (" + fig.specErrors.length + "건):");
+    fig.specErrors.forEach(function (e) { console.log("    " + e); });
+  }
   if (firstLineErrors.length) {
     hardErrorCount += firstLineErrors.length;
     firstLineErrors.forEach(function (e) {
@@ -140,6 +204,10 @@ function printReport(label, result, extra) {
   if (extra.missingCardRefs && extra.missingCardRefs.length) {
     warnCount += extra.missingCardRefs.length;
     console.log("  [경고] cards 참조가 존재하지 않는 카드 ID를 가리킴 (" + extra.missingCardRefs.length + "건): " + extra.missingCardRefs.join(", "));
+  }
+  if (fig.textWarnings.length) {
+    warnCount += fig.textWarnings.length;
+    console.log("  [경고] 그림 글자가 카드 back·mnemonic에 없음 (" + fig.textWarnings.length + "건): " + fig.textWarnings.join(", "));
   }
   if (extra.mcqAnswerTextContradiction && extra.mcqAnswerTextContradiction.length) {
     warnCount += extra.mcqAnswerTextContradiction.length;
@@ -187,7 +255,8 @@ function runManifestMode() {
   const extra = {
     firstLineErrors: firstLineErrors,
     missingCardRefs: checkCardRefs(questions, cards),
-    mcqAnswerTextContradiction: checkMcqAnswerTextContradiction(questions)
+    mcqAnswerTextContradiction: checkMcqAnswerTextContradiction(questions),
+    figures: checkFigures(cards)
   };
   const ok = printReport("manifest (" + manifest.files.length + "개 파일)", result, extra);
   process.exit(ok ? 0 : 1);
@@ -215,7 +284,8 @@ function runFileMode(fileArg) {
   const extra = {
     firstLineErrors: firstLineErrors,
     missingCardRefs: checkCardRefs(questions, cards),
-    mcqAnswerTextContradiction: checkMcqAnswerTextContradiction(questions)
+    mcqAnswerTextContradiction: checkMcqAnswerTextContradiction(questions),
+    figures: checkFigures(cards)
   };
   const ok = printReport("파일 단독: " + path.relative(ROOT, targetPath), result, extra);
   process.exit(ok ? 0 : 1);

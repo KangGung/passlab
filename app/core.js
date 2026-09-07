@@ -1067,14 +1067,15 @@
    * @param {string} presetKey "full|half|mini3"
    * @param {Array} questions 전체 문항(verified:true만 쓴다)
    * @param {object} blueprint
-   * @param {{attemptsByQid?:object, exclude?:string[]}} opts exclude = 직전 모의 qids(가능하면 회피)
+   * @param {{attemptsByQid?:object, exclude?:string[]}} opts
+   *        attemptsByQid = { qid: [attempt…] } (키 이름 이것만 쓴다), exclude = 직전 모의 qids(가능하면 회피)
    * @param {function} rng
    */
   function buildMock(presetKey, questions, blueprint, opts, rng) {
     const o = opts || {};
     const r = typeof rng === "function" ? rng : seededRandom(20260919);
     const plan = mockSlots(presetKey, blueprint);
-    const byQid = o.attemptsByQid || o.attempts_by_qid || {};
+    const byQid = o.attemptsByQid || {};
     const exclude = new Set(Array.isArray(o.exclude) ? o.exclude : []);
     const pool = (Array.isArray(questions) ? questions : []).filter(function (q) {
       return q && q.id && q.verified === true;
@@ -1146,7 +1147,11 @@
     });
     const slots_missing = slots_filled.filter(function (s) { return s.got < s.need; })
       .map(function (s) { return { subject: s.subject, type: s.type, points: s.points, need: s.need, got: s.got }; });
-    const partial = slots_missing.length > 0;
+    // 슬롯 배점과 다른 배점으로 대체한 문항 수
+    let substituted = 0;
+    slots.forEach(function (s) {
+      s.picks.forEach(function (q) { if (Number(q.points) !== s.points) substituted += 1; });
+    });
 
     // 배열 순서 = 시험지 순서: 선다형(과목 1→4, 과목 안은 무작위) → 단답형(과목 1→4)
     const picked = [];
@@ -1165,6 +1170,9 @@
     let total_points = 0;
     ordered.forEach(function (q) { total_points += Number(q.points) || 0; });
 
+    // partial = 시험지가 계획(슬롯표)과 다르다. gradeMock과 같은 정의를 쓴다.
+    const partial = ordered.length < plan.count || total_points !== plan.points;
+
     const warnings = [];
     slots_missing.forEach(function (s) {
       warnings.push("과목 " + s.subject + " " + (s.type === "short" ? "단답" : "선다") + " " +
@@ -1173,8 +1181,12 @@
     if (relaxed > 0) {
       warnings.push("문항이 부족해 같은 세부항목 " + TOPIC_CAP + "문항 상한을 완화했습니다(" + relaxed + "문항)");
     }
-    if (partial) {
+    if (ordered.length < plan.count) {
       warnings.push("축소 편성(" + ordered.length + "/" + plan.count + "문항) — 점수는 환산 점수로 계산합니다");
+    }
+    if (substituted > 0) {
+      warnings.push("배점이 다른 문항으로 대체 " + substituted + "문항 — 총점 " + total_points +
+        "점(계획 " + plan.points + "점), 점수는 환산 점수로 계산합니다");
     }
 
     return {
@@ -1188,6 +1200,7 @@
       }),
       slots_filled: slots_filled,
       slots_missing: slots_missing,
+      substituted: substituted,
       partial: partial,
       total_points: total_points,
       planned_count: plan.count,
@@ -1210,6 +1223,7 @@
    * 모의고사 채점.
    * @param {{qids:string[],partial?:boolean,preset?:string}|string[]} mock
    * @param {Object} answers { qid: { given, conf, sec, flag, self_marked } }
+   *        선다형 given은 0~4 정수여야 한다(문자열 "0"은 오답 처리). 단답형 given은 문자열(복수 빈칸은 배열).
    * @param {Array} questions
    * @param {Object} blueprint
    * @param {Array} [topics] by_topic에 이름을 붙일 때만 필요
@@ -1231,9 +1245,10 @@
     const mcqAgg = { n: 0, correct: 0, points: 0 };
     const shortAgg = { n: 0, correct: 0, points: 0, self_marked: 0 };
     const guessed_correct = [];
+    const missing_questions = [];
     const unanswered = [];
     const secList = [];
-    let raw = 0, max_included = 0, guessed_points = 0, secSum = 0, secN = 0;
+    let raw = 0, max_included = 0, guessed_points = 0, secSum = 0, secN = 0, n_included = 0;
 
     function isBlank(given) {
       if (given == null) return true;
@@ -1246,7 +1261,8 @@
 
     qids.forEach(function (id) {
       const q = byId.get(id);
-      if (!q) return;
+      if (!q) { missing_questions.push(id); return; }   // 문항 데이터가 없으면 채점에서 제외하고 알려준다
+      n_included += 1;
       const pts = Number(q.points) || 0;
       const sid = Number(q.subject);
       const isShort = q.type === "short";
@@ -1272,7 +1288,8 @@
       const bucket = isShort ? shortAgg : mcqAgg;
       bucket.n += 1;
       if (ok) { bucket.correct += 1; bucket.points += pts; }
-      if (isShort && a && a.self_marked === true) shortAgg.self_marked += 1;
+      // 빈 답에 붙은 self_marked는 세지 않는다(자기 판정은 답을 쓴 뒤에만 뜬다)
+      if (isShort && !blank && a.self_marked === true) shortAgg.self_marked += 1;
       if (ok && a && a.conf === 0) { guessed_correct.push(id); guessed_points += pts; }
 
       const tid = q.topic || "(미지정)";
@@ -1286,25 +1303,53 @@
       }
     });
 
-    // 포함 배점이 시험 만점과 다르면(문항 부족·축소 편성) 환산 점수를 쓴다
-    const partial = (mock && !Array.isArray(mock) && mock.partial === true) || max_included !== bpTotal;
-    const factor = (partial && max_included > 0) ? (bpTotal / max_included) : 1;
+    // partial = 시험지가 계획과 다르다(buildMock과 같은 정의). 계획 만점은 mock.planned_points 우선.
+    const meta = (mock && !Array.isArray(mock)) ? mock : {};
+    const plannedPoints = (meta.planned_points != null) ? Number(meta.planned_points) : bpTotal;
+    const plannedCount = (meta.planned_count != null) ? Number(meta.planned_count) : null;
+    const partial = meta.partial === true || max_included !== plannedPoints;
+    // 환산은 계획 만점 기준(full 프리셋은 1000점이라 브리프의 ×1000과 같다)
+    const factor = (partial && max_included > 0) ? (plannedPoints / max_included) : 1;
     const scaled = max_included > 0 ? (partial ? Math.round(raw * factor) : raw) : 0;
     const adj = scaled - Math.round(GUESS_PENALTY * guessed_points * factor);
 
-    const subjectScaled = {};
+    // 환산 이유: 문항이 모자랐나(missing) / 배점이 다른 문항으로 대체됐나(substituted)
+    const substitutedN = Number(meta.substituted) || 0;
+    let shortfall = null;
+    if (Array.isArray(meta.slots_missing)) {
+      shortfall = meta.slots_missing.reduce(function (acc, x) {
+        return acc + ((Number(x.need) || 0) - (Number(x.got) || 0));
+      }, 0);
+    } else if (plannedCount != null) {
+      shortfall = Math.max(0, plannedCount - n_included);
+    }
+    let lacked = (shortfall != null) ? (shortfall > 0) : (max_included !== plannedPoints && !substitutedN);
+    if (partial && !lacked && !substitutedN) lacked = true;      // 설명 못 하는 차이는 부족으로 본다
+    const partial_reason = !partial ? null
+      : ((lacked && substitutedN) ? "both" : (substitutedN ? "substituted" : "missing"));
+
+    // 과목 점수는 언제나 환산한다: raw_s / 포함 배점_s × 과목 만점.
+    // (한 과목만 축소돼도 과락 판정이 흔들리지 않게 하려면 과목별 정규화가 필요하다.)
     const by_subject = subs.map(function (s) {
       const S = subjAgg[s.id] || { raw: 0, max: 0 };
       const sMax = Number(s.points) || 0;
-      const sScaled = S.max > 0 ? (partial ? Math.round(S.raw * sMax / S.max) : S.raw) : 0;
-      subjectScaled[s.id] = sScaled;
+      const included = S.max > 0;
+      const sScaled = included ? Math.round(S.raw * sMax / S.max) : 0;
       return {
         id: s.id, name: s.name, raw: S.raw, max: sMax, max_included: S.max,
         scaled: sScaled, pass_points: s.pass_points,
-        pass: sScaled >= Number(s.pass_points || 0), ratio: sMax > 0 ? sScaled / sMax : 0
+        pass: included ? (sScaled >= Number(s.pass_points || 0)) : null,
+        ratio: (included && sMax > 0) ? sScaled / sMax : 0
       };
     });
-    const jp = judgePass(subjectScaled, bp);
+    const missing_subjects = by_subject.filter(function (x) { return x.max_included === 0; })
+      .map(function (x) { return x.id; });
+    const fail_subjects = by_subject.filter(function (x) { return x.max_included > 0 && x.pass === false; })
+      .map(function (x) { return x.id; });
+    const passTotal = (bp.exam && bp.exam.pass_total != null) ? Number(bp.exam.pass_total) : 600;
+    // 총점 판정은 화면에 보여 주는 값(scaled)으로 한다. 과목이 빠진 프리셋은 판정 불가(null).
+    const pass = missing_subjects.length ? null
+      : (scaled >= passTotal && fail_subjects.length === 0);
 
     const by_topic = Object.keys(topicAgg).map(function (id) {
       const T = topicAgg[id];
@@ -1320,15 +1365,18 @@
     }).slice(0, 5);
 
     return {
-      raw: raw, max_included: max_included, scaled: scaled, adj: adj,
-      pass: jp.pass, fail_subjects: jp.failSubjects, partial: partial,
+      raw: raw, max_included: max_included, max_reference: plannedPoints,
+      scaled: scaled, adj: adj,
+      pass: pass, fail_subjects: fail_subjects, missing_subjects: missing_subjects,
+      partial: partial, partial_reason: partial_reason,
       by_subject: by_subject,
       mcq: mcqAgg, short: shortAgg,
       guessed_correct: guessed_correct, guessed_points: guessed_points,
       by_topic: by_topic,
       avg_sec: secN ? Math.round(secSum / secN) : 0,
       slowest: slowest,
-      unanswered: unanswered
+      unanswered: unanswered,
+      missing_questions: missing_questions
     };
   }
 
@@ -1344,11 +1392,14 @@
       preset: m.preset || "full",
       raw: Number(g.raw) || 0,
       max_included: Number(g.max_included) || 0,
+      max_reference: Number(g.max_reference) || 0,
       scaled: Number(g.scaled) || 0,
       adj: Number(g.adj) || 0,
-      pass: g.pass === true,
+      pass: g.pass === null ? null : g.pass === true,
       fail_subjects: (g.fail_subjects || []).slice(),
+      missing_subjects: (g.missing_subjects || []).slice(),
       partial: g.partial === true,
+      partial_reason: g.partial_reason != null ? g.partial_reason : null,
       subject: (g.by_subject || []).map(function (x) { return x.scaled; }),
       mcq: { n: mcq.n, correct: mcq.correct, points: mcq.points },
       short: { n: short.n, correct: short.correct, points: short.points, self_marked: short.self_marked },
@@ -1839,7 +1890,8 @@
     }).map(function (m) {
       return {
         date: m.date, preset: m.preset || "full",
-        scaled: Number(m.scaled) || 0, adj: Number(m.adj) || 0, pass: m.pass === true
+        scaled: Number(m.scaled) || 0, adj: Number(m.adj) || 0,
+        pass: m.pass === null ? null : m.pass === true
       };
     });
 
@@ -1853,6 +1905,428 @@
 
   PLCore.buildAdaptiveSet = buildAdaptiveSet;
   PLCore.weeklyReport = weeklyReport;
+
+  /* ================================================================
+   * 11. 암기카드 그림(figure) → 인라인 SVG
+   *  - 카드에는 SVG를 직접 쓰지 않고 "스펙"(compare·timeline·groups·tree)만 넣는다.
+   *  - 폭 360 고정, 높이는 내용에 맞춰 계산. 글자 최소 12px.
+   *  - 색은 CSS 변수가 아니라 값으로 직접 쓴다(file:// 로 열어도 안전).
+   *  - 애니메이션 없음. <title>·<desc>로 접근성 확보.
+   *  - 그림에 넣는 글자는 카드 back·mnemonic에 이미 있는 것만 쓴다
+   *    (그 검사는 scripts/check-data.cjs가 figureTexts()로 한다).
+   * ================================================================ */
+  const FIG_W = 360;                 // viewBox 폭(고정)
+  const FIG_PAD = 8;                 // 바깥 여백
+  const FIG_FS = 12;                 // 최소 글자 크기
+  const FIG_LH = 16;                 // 줄 간격
+  const FIG_FONT = "-apple-system, 'Apple SD Gothic Neo', system-ui, sans-serif";
+  const FIGURE_COLORS = {
+    paper: "#F5F0E6", ink: "#1D1B17", green: "#2A6F46", red: "#B9331F", ochre: "#B8821A"
+  };
+  const FIGURE_TYPES = ["compare", "timeline", "groups", "tree", "raw"];
+
+  function figErr(msg) { throw new Error("figure: " + msg); }
+  function r1(n) { return Math.round(Number(n) * 10) / 10; }
+
+  function figEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  /** 한글·한자·전각은 글자폭 1em, 그 외는 약 0.56em으로 잡는다(시스템 글꼴 근사) */
+  function figIsWide(ch) {
+    const c = ch.charCodeAt(0);
+    return (c >= 0x1100 && c <= 0x115F) || (c >= 0x2E80 && c <= 0x303E) ||
+           (c >= 0x3041 && c <= 0x33FF) || (c >= 0x3400 && c <= 0x4DBF) ||
+           (c >= 0x4E00 && c <= 0x9FFF) || (c >= 0xA000 && c <= 0xA4CF) ||
+           (c >= 0xAC00 && c <= 0xD7A3) || (c >= 0xF900 && c <= 0xFAFF) ||
+           (c >= 0xFE30 && c <= 0xFE6F) || (c >= 0xFF00 && c <= 0xFF60) ||
+           (c >= 0xFFE0 && c <= 0xFFE6);
+  }
+
+  function figTextWidth(s, fs) {
+    const str = String(s == null ? "" : s);
+    let w = 0;
+    for (let i = 0; i < str.length; i++) w += figIsWide(str[i]) ? fs : fs * 0.56;
+    return w;
+  }
+
+  /** 줄바꿈 후보 조각으로 자른다. 띄어쓰기 + "/"·"·" 뒤에서도 끊을 수 있게 한다. */
+  function figTokens(str) {
+    const out = [];
+    String(str).split(/\s+/).forEach(function (w, wi) {
+      const parts = w.match(/[^/·]+[/·]?|[/·]/g) || [w];
+      parts.forEach(function (p, pi) { out.push({ t: p, sp: pi === 0 && wi > 0 }); });
+    });
+    return out;
+  }
+
+  /** maxW 안에 들어가도록 줄바꿈. 조각이 한 줄보다 길면 글자 단위로 자른다. */
+  function figWrap(s, maxW, fs) {
+    const str = String(s == null ? "" : s).trim();
+    if (!str) return [""];
+    const lines = [];
+    let cur = "";
+    figTokens(str).forEach(function (tok) {
+      const cand = cur ? cur + (tok.sp ? " " : "") + tok.t : tok.t;
+      if (figTextWidth(cand, fs) <= maxW) { cur = cand; return; }
+      if (cur) { lines.push(cur); cur = ""; }
+      if (figTextWidth(tok.t, fs) <= maxW) { cur = tok.t; return; }
+      let piece = "";
+      for (let i = 0; i < tok.t.length; i++) {
+        const next = piece + tok.t[i];
+        if (piece && figTextWidth(next, fs) > maxW) { lines.push(piece); piece = tok.t[i]; }
+        else piece = next;
+      }
+      cur = piece;
+    });
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [""];
+  }
+
+  function figText(lines, x, y, fs, opt) {
+    const o = opt || {};
+    const anchor = o.anchor || "start";
+    const fill = o.fill || FIGURE_COLORS.ink;
+    const lh = o.lh || FIG_LH;
+    const bold = o.bold ? ' font-weight="700"' : "";
+    let out = "";
+    (Array.isArray(lines) ? lines : [lines]).forEach(function (ln, i) {
+      out += '<text x="' + r1(x) + '" y="' + r1(y + i * lh) + '" font-size="' + fs +
+             '" fill="' + fill + '" text-anchor="' + anchor + '"' + bold + '>' + figEsc(ln) + '</text>';
+    });
+    return out;
+  }
+
+  function figRect(x, y, w, h, opt) {
+    const o = opt || {};
+    return '<rect x="' + r1(x) + '" y="' + r1(y) + '" width="' + r1(w) + '" height="' + r1(h) +
+           '" rx="' + (o.rx == null ? 8 : o.rx) + '" fill="' + (o.fill || "none") +
+           '" stroke="' + (o.stroke || FIGURE_COLORS.ink) + '" stroke-width="' + (o.sw == null ? 1 : o.sw) + '"/>';
+  }
+
+  function figLine(x1, y1, x2, y2, opt) {
+    const o = opt || {};
+    return '<line x1="' + r1(x1) + '" y1="' + r1(y1) + '" x2="' + r1(x2) + '" y2="' + r1(y2) +
+           '" stroke="' + (o.stroke || FIGURE_COLORS.ink) + '" stroke-width="' + (o.sw == null ? 1 : o.sw) + '"/>';
+  }
+
+  function figStr(v, what) {
+    if (typeof v !== "string" || !v.trim()) figErr(what + "이(가) 비어 있습니다");
+    return v.trim();
+  }
+  function figArr(v, what) {
+    if (!Array.isArray(v) || v.length === 0) figErr(what + "이(가) 비어 있습니다");
+    return v;
+  }
+
+  /* ---- compare: 2~3열 비교표 ---- */
+  function figCompare(spec) {
+    const cols = figArr(spec.cols, "compare.cols").map(function (c, i) { return figStr(c, "compare.cols[" + i + "]"); });
+    if (cols.length > 3) figErr("compare.cols는 3열까지만 지원합니다");
+    const rows = figArr(spec.rows, "compare.rows");
+    rows.forEach(function (r, i) {
+      if (!Array.isArray(r) || r.length !== cols.length + 1) {
+        figErr("compare.rows[" + i + "]는 항목 이름 1개 + 값 " + cols.length + "개여야 합니다");
+      }
+      r.forEach(function (cell, j) { figStr(cell, "compare.rows[" + i + "][" + j + "]"); });
+    });
+
+    const headFill = [FIGURE_COLORS.green, FIGURE_COLORS.ochre, FIGURE_COLORS.ink];
+    const tableX = FIG_PAD, tableW = FIG_W - FIG_PAD * 2;
+    const labelW = 88, colW = (tableW - labelW) / cols.length;
+    const cellPad = 6;
+
+    const headLines = cols.map(function (c) { return figWrap(c, colW - cellPad * 2, FIG_FS); });
+    const headH = Math.max.apply(null, headLines.map(function (L) { return L.length; })) * FIG_LH + 10;
+
+    const bodyLines = rows.map(function (r) {
+      return r.map(function (cell, j) {
+        const w = (j === 0 ? labelW : colW) - cellPad * 2;
+        return figWrap(cell, w, FIG_FS);
+      });
+    });
+    const rowH = bodyLines.map(function (L) {
+      return Math.max.apply(null, L.map(function (x) { return x.length; })) * FIG_LH + 10;
+    });
+
+    const tableH = headH + rowH.reduce(function (a, b) { return a + b; }, 0);
+    const H = FIG_PAD * 2 + tableH;
+
+    let s = "";
+    s += figRect(tableX, FIG_PAD, tableW, tableH, { rx: 10, sw: 1.5 });
+    // 머리글 배경
+    s += '<path d="M' + r1(tableX + 10) + ' ' + FIG_PAD + ' H' + r1(tableX + tableW - 10) +
+         ' a10,10 0 0 1 10,10 V' + r1(FIG_PAD + headH) + ' H' + r1(tableX) + ' V' + r1(FIG_PAD + 10) +
+         ' a10,10 0 0 1 10,-10 Z" fill="#EDE6D8"/>';
+    s += figRect(tableX, FIG_PAD, tableW, tableH, { rx: 10, sw: 1.5 });
+
+    cols.forEach(function (c, j) {
+      const cx = tableX + labelW + colW * j + colW / 2;
+      s += figText(headLines[j], cx, FIG_PAD + FIG_LH, FIG_FS,
+                   { anchor: "middle", bold: true, fill: headFill[j] || FIGURE_COLORS.ink });
+    });
+
+    let y = FIG_PAD + headH;
+    s += figLine(tableX, y, tableX + tableW, y, { sw: 1.5 });
+    bodyLines.forEach(function (L, i) {
+      const h = rowH[i];
+      L.forEach(function (lines, j) {
+        const isLabel = j === 0;
+        const x = isLabel ? tableX + cellPad : tableX + labelW + colW * (j - 1) + colW / 2;
+        s += figText(lines, x, y + FIG_LH, FIG_FS,
+                     { anchor: isLabel ? "start" : "middle", bold: isLabel, fill: FIGURE_COLORS.ink });
+      });
+      y += h;
+      if (i < bodyLines.length - 1) s += figLine(tableX, y, tableX + tableW, y, { stroke: "#CFC6B3" });
+    });
+
+    // 세로 구분선(바깥 테두리는 제외)
+    for (let j = 0; j < cols.length; j++) {
+      const x = tableX + labelW + colW * j;
+      s += figLine(x, FIG_PAD, x, FIG_PAD + tableH, { stroke: "#CFC6B3" });
+    }
+    return { h: H, body: s };
+  }
+
+  /* ---- timeline: 좌→우 시간선, 기간은 황토색 칩 ---- */
+  function figTimeline(spec) {
+    const steps = figArr(spec.steps, "timeline.steps").map(function (st, i) {
+      if (!st || typeof st !== "object") figErr("timeline.steps[" + i + "]가 객체가 아닙니다");
+      return { label: figStr(st.label, "timeline.steps[" + i + "].label"), dur: st.dur ? String(st.dur).trim() : "" };
+    });
+    const n = steps.length;
+    const laneW = (FIG_W - FIG_PAD * 2) / n;
+    const chipH = 18, chipTop = FIG_PAD;
+    const axisY = chipTop + chipH + 12;
+    const labelTop = axisY + 18;
+    const labelMaxW = laneW - 6;
+
+    const labelLines = steps.map(function (st) { return figWrap(st.label, labelMaxW, FIG_FS); });
+    const maxLines = Math.max.apply(null, labelLines.map(function (L) { return L.length; }));
+    const H = labelTop + maxLines * FIG_LH - 4 + FIG_PAD;
+    const cx = function (i) { return FIG_PAD + laneW * i + laneW / 2; };
+
+    let s = "";
+    s += figLine(cx(0), axisY, cx(n - 1), axisY, { sw: 1.5 });
+    for (let i = 0; i < n - 1; i++) {
+      const mx = (cx(i) + cx(i + 1)) / 2;
+      s += '<path d="M' + r1(mx - 3) + ' ' + r1(axisY - 4) + ' L' + r1(mx + 4) + ' ' + r1(axisY) +
+           ' L' + r1(mx - 3) + ' ' + r1(axisY + 4) + ' Z" fill="' + FIGURE_COLORS.ink + '"/>';
+    }
+    steps.forEach(function (st, i) {
+      const x = cx(i);
+      if (st.dur) {
+        const w = Math.min(laneW - 2, figTextWidth(st.dur, FIG_FS) + 16);
+        s += '<rect x="' + r1(x - w / 2) + '" y="' + chipTop + '" width="' + r1(w) + '" height="' + chipH +
+             '" rx="9" fill="' + FIGURE_COLORS.ochre + '"/>';
+        s += figText([st.dur], x, chipTop + 13, FIG_FS, { anchor: "middle", bold: true, fill: FIGURE_COLORS.paper });
+        s += figLine(x, chipTop + chipH, x, axisY - 5, { stroke: FIGURE_COLORS.ochre });
+      }
+      s += '<circle cx="' + r1(x) + '" cy="' + r1(axisY) + '" r="5" fill="' + FIGURE_COLORS.paper +
+           '" stroke="' + FIGURE_COLORS.green + '" stroke-width="2.5"/>';
+      s += figText(labelLines[i], x, labelTop, FIG_FS, { anchor: "middle", fill: FIGURE_COLORS.ink });
+    });
+    return { h: H, body: s };
+  }
+
+  /* ---- groups: 암기법이 끊는 위치 그대로 묶음 칸 ---- */
+  function figGroups(spec) {
+    const groups = figArr(spec.groups, "groups.groups").map(function (g, i) {
+      if (!g || typeof g !== "object") figErr("groups.groups[" + i + "]가 객체가 아닙니다");
+      return {
+        name: figStr(g.name, "groups.groups[" + i + "].name"),
+        items: figArr(g.items, "groups.groups[" + i + "].items").map(function (it, j) {
+          return figStr(it, "groups.groups[" + i + "].items[" + j + "]");
+        })
+      };
+    });
+
+    const boxX = FIG_PAD, boxW = FIG_W - FIG_PAD * 2, inX = boxX + 8, inW = boxW - 16;
+    const chipPad = 7, chipGap = 6, rowGap = 6, headH = 18, boxGap = 8;
+
+    // 칩을 줄 단위로 배치
+    const laid = groups.map(function (g) {
+      const rows = [];
+      let row = [], rowW = 0;
+      g.items.forEach(function (it) {
+        const lines = figWrap(it, inW - chipPad * 2, FIG_FS);
+        const w = Math.min(inW, Math.max.apply(null, lines.map(function (l) { return figTextWidth(l, FIG_FS); })) + chipPad * 2);
+        const h = lines.length * FIG_LH + 6;
+        if (row.length && rowW + chipGap + w > inW) { rows.push(row); row = []; rowW = 0; }
+        row.push({ lines: lines, w: w, h: h });
+        rowW += (rowW ? chipGap : 0) + w;
+      });
+      if (row.length) rows.push(row);
+      const rowHs = rows.map(function (r) { return Math.max.apply(null, r.map(function (c) { return c.h; })); });
+      const bodyH = rowHs.reduce(function (a, b) { return a + b; }, 0) + Math.max(0, rows.length - 1) * rowGap;
+      return { name: g.name, rows: rows, rowHs: rowHs, h: 8 + headH + 4 + bodyH + 8 };
+    });
+
+    const H = FIG_PAD * 2 + laid.reduce(function (a, g) { return a + g.h; }, 0) + Math.max(0, laid.length - 1) * boxGap;
+
+    let s = "", y = FIG_PAD;
+    laid.forEach(function (g) {
+      s += figRect(boxX, y, boxW, g.h, { rx: 10, sw: 1.5, stroke: FIGURE_COLORS.ochre });
+      s += figText([g.name], inX, y + 8 + 13, FIG_FS, { bold: true, fill: FIGURE_COLORS.ochre });
+      let cy = y + 8 + headH + 4;
+      g.rows.forEach(function (row, ri) {
+        let cxp = inX;
+        row.forEach(function (c) {
+          s += '<rect x="' + r1(cxp) + '" y="' + r1(cy) + '" width="' + r1(c.w) + '" height="' + r1(c.h) +
+               '" rx="6" fill="' + FIGURE_COLORS.paper + '" stroke="' + FIGURE_COLORS.ink + '" stroke-width="1"/>';
+          s += figText(c.lines, cxp + chipPad, cy + 15, FIG_FS, { fill: FIGURE_COLORS.ink });
+          cxp += c.w + chipGap;
+        });
+        cy += g.rowHs[ri] + rowGap;
+      });
+      y += g.h + boxGap;
+    });
+    return { h: H, body: s };
+  }
+
+  /* ---- tree: 포함 관계 ---- */
+  function figTree(spec) {
+    const rootName = figStr(spec.root, "tree.root");
+    const kids = figArr(spec.children, "tree.children").map(function (c, i) {
+      if (typeof c === "string") return { name: figStr(c, "tree.children[" + i + "]"), children: [] };
+      if (!c || typeof c !== "object") figErr("tree.children[" + i + "]가 문자열도 객체도 아닙니다");
+      return {
+        name: figStr(c.name, "tree.children[" + i + "].name"),
+        children: (Array.isArray(c.children) ? c.children : []).map(function (g, j) {
+          return figStr(typeof g === "string" ? g : (g && g.name), "tree.children[" + i + "].children[" + j + "]");
+        })
+      };
+    });
+    if (kids.length > 3) figErr("tree.children는 3개까지만 지원합니다");
+
+    const n = kids.length;
+    const laneW = (FIG_W - FIG_PAD * 2) / n;
+    const rootFS = 13;
+    const rootLines = figWrap(rootName, FIG_W - FIG_PAD * 2 - 24, rootFS);
+    const rootH = rootLines.length * FIG_LH + 10;
+    const rootW = Math.min(FIG_W - FIG_PAD * 2,
+      Math.max.apply(null, rootLines.map(function (l) { return figTextWidth(l, rootFS); })) + 26);
+    const rootY = FIG_PAD, midX = FIG_W / 2;
+    const busY = rootY + rootH + 10;
+    const kidTop = busY + 10;
+    const kidW = laneW - 10;
+
+    const kidLay = kids.map(function (k) {
+      const nameLines = figWrap(k.name, kidW - 12, FIG_FS);
+      const nameH = nameLines.length * FIG_LH + 8;
+      const leaves = k.children.map(function (g) {
+        const lines = figWrap(g, kidW - 14, FIG_FS);
+        return { lines: lines, h: lines.length * FIG_LH + 6 };
+      });
+      const leafH = leaves.reduce(function (a, l) { return a + l.h; }, 0) + Math.max(0, leaves.length - 1) * 5;
+      return { nameLines: nameLines, nameH: nameH, leaves: leaves, h: nameH + (leaves.length ? 8 + leafH : 0) };
+    });
+    const H = kidTop + Math.max.apply(null, kidLay.map(function (k) { return k.h; })) + FIG_PAD;
+    const cx = function (i) { return FIG_PAD + laneW * i + laneW / 2; };
+
+    let s = "";
+    s += figRect(midX - rootW / 2, rootY, rootW, rootH, { rx: 9, sw: 2, fill: FIGURE_COLORS.paper });
+    s += figText(rootLines, midX, rootY + FIG_LH - 1, rootFS, { anchor: "middle", bold: true });
+    s += figLine(midX, rootY + rootH, midX, busY, { sw: 1.5 });
+    if (n > 1) s += figLine(cx(0), busY, cx(n - 1), busY, { sw: 1.5 });
+    kids.forEach(function (k, i) {
+      const L = kidLay[i], x = cx(i) - kidW / 2;
+      s += figLine(cx(i), busY, cx(i), kidTop, { sw: 1.5 });
+      s += figRect(x, kidTop, kidW, L.nameH, { rx: 8, sw: 1.5, stroke: FIGURE_COLORS.green, fill: FIGURE_COLORS.paper });
+      s += figText(L.nameLines, cx(i), kidTop + FIG_LH - 2, FIG_FS,
+                   { anchor: "middle", bold: true, fill: FIGURE_COLORS.green });
+      let ly = kidTop + L.nameH + 8;
+      L.leaves.forEach(function (lf) {
+        s += '<rect x="' + r1(x + 4) + '" y="' + r1(ly) + '" width="' + r1(kidW - 8) + '" height="' + r1(lf.h) +
+             '" rx="6" fill="none" stroke="' + FIGURE_COLORS.ochre + '" stroke-width="1"/>';
+        s += figText(lf.lines, cx(i), ly + 15, FIG_FS, { anchor: "middle", fill: FIGURE_COLORS.ink });
+        ly += lf.h + 5;
+      });
+    });
+    return { h: H, body: s };
+  }
+
+  /** 스펙에 들어 있는 "보이는 글자" 전부 (검사·접근성 문구용) */
+  function figureTexts(spec) {
+    if (!spec || typeof spec !== "object") return [];
+    const out = [];
+    if (typeof spec.title === "string" && spec.title.trim()) out.push(spec.title.trim());
+    const push = function (v) { if (typeof v === "string" && v.trim()) out.push(v.trim()); };
+    if (spec.type === "compare") {
+      (spec.cols || []).forEach(push);
+      (spec.rows || []).forEach(function (r) { (Array.isArray(r) ? r : []).forEach(push); });
+    } else if (spec.type === "timeline") {
+      (spec.steps || []).forEach(function (st) { if (st) { push(st.label); push(st.dur); } });
+    } else if (spec.type === "groups") {
+      (spec.groups || []).forEach(function (g) { if (g) { push(g.name); (g.items || []).forEach(push); } });
+    } else if (spec.type === "tree") {
+      push(spec.root);
+      (spec.children || []).forEach(function (c) {
+        if (typeof c === "string") { push(c); return; }
+        if (!c) return;
+        push(c.name);
+        (c.children || []).forEach(function (g) { push(typeof g === "string" ? g : (g && g.name)); });
+      });
+    }
+    return out;
+  }
+
+  /** 접근성 문구: 제목 한 줄 + 설명 한 줄 (카드 글자 + 구조 설명어로만 만든다) */
+  function figureAria(spec) {
+    const t = spec.type;
+    if (typeof spec.title === "string" && spec.title.trim()) {
+      return { title: spec.title.trim(), desc: (spec.desc && String(spec.desc).trim()) || figureTexts(spec).join(", ") };
+    }
+    if (t === "compare") {
+      return { title: (spec.cols || []).join(" 대 ") + " 비교표",
+               desc: (spec.rows || []).map(function (r) { return r[0] + ": " + r.slice(1).join(" / "); }).join(" · ") };
+    }
+    if (t === "timeline") {
+      return { title: "시간 순서 그림",
+               desc: (spec.steps || []).map(function (s) { return s.label + (s.dur ? " " + s.dur : ""); }).join(" → ") };
+    }
+    if (t === "groups") {
+      return { title: (spec.groups || []).map(function (g) { return g.name; }).join(" / ") + " 묶음 그림",
+               desc: (spec.groups || []).map(function (g) { return g.name + ": " + (g.items || []).join(", "); }).join(" · ") };
+    }
+    if (t === "tree") {
+      return { title: spec.root + " 포함 관계 그림",
+               desc: (spec.children || []).map(function (c) {
+                 if (typeof c === "string") return c;
+                 return c.name + (c.children && c.children.length ? "(" + c.children.join(", ") + ")" : "");
+               }).join(" · ") };
+    }
+    return { title: "그림", desc: "" };
+  }
+
+  /** 스펙 → 인라인 SVG 문자열. 스펙이 잘못되면 Error를 던진다. */
+  function figureToSvg(spec) {
+    if (!spec || typeof spec !== "object" || Array.isArray(spec)) figErr("스펙이 객체가 아닙니다");
+    if (FIGURE_TYPES.indexOf(spec.type) === -1) figErr('알 수 없는 type "' + spec.type + '"');
+    if (spec.type === "raw") {
+      const raw = spec.svg;
+      if (typeof raw !== "string" || !/^\s*<svg[\s>]/.test(raw)) figErr("raw.svg는 <svg 로 시작하는 문자열이어야 합니다");
+      return raw;
+    }
+    const built = spec.type === "compare" ? figCompare(spec)
+                : spec.type === "timeline" ? figTimeline(spec)
+                : spec.type === "groups" ? figGroups(spec)
+                : figTree(spec);
+    const H = Math.round(built.h);
+    const a = figureAria(spec);
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + FIG_W + ' ' + H +
+           '" width="100%" role="img" aria-label="' + figEsc(a.title) + '" font-family="' + FIG_FONT + '">' +
+           '<title>' + figEsc(a.title) + '</title><desc>' + figEsc(a.desc) + '</desc>' +
+           '<rect x="0" y="0" width="' + FIG_W + '" height="' + H + '" fill="' + FIGURE_COLORS.paper + '"/>' +
+           built.body + '</svg>';
+  }
+
+  PLCore.FIGURE_COLORS = FIGURE_COLORS;
+  PLCore.FIGURE_TYPES = FIGURE_TYPES;
+  PLCore.figureToSvg = figureToSvg;
+  PLCore.figureTexts = figureTexts;
+  PLCore.figureAria = figureAria;
 
   root.PLCore = PLCore;
   if (typeof module !== "undefined") module.exports = PLCore;
