@@ -7,7 +7,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "가용화=투명(미셀·CMC), 유화=유백색(O/W·W/O), 분산=고체가 떠 있음 / 1~3 소포 · 4~6 W/O · 7~9 분산습윤 · 10~18 가용화(수상 가용화 최적 15~18)",
     source: { law: null, guide: "4판 p.86~90", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-01", "Q-C4-03", "Q-C4-04"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -18,7 +18,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "합일→상분리 / 작은 게 큰 데 먹히면 오스트발트 / 붙어 있으면 응집 / 뜨거나 가라앉으면 크리밍 — 전기 잘 통하면 O/W",
     source: { law: null, guide: "4판 p.88", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-02"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -29,7 +29,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "입고→칭량→가온용해→유화·중화→냉각·숙성→충전·포장→품질검사→저장·출하 / 유화 있으면 로션·크림, 혼합기만 있으면 화장수, 분쇄·성형이면 고형 분말",
     source: { law: null, guide: "4판 p.91~93", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-05"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -40,7 +40,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "반제품 → 벌크 제품(충전 직전) → 완제품(표시·포장 끝) → 출하 / 뱃치=균질성 있는 일정 분량",
     source: { law: "우수화장품 제조 및 품질관리기준 제2조", guide: "4판 p.94~95", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-06"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -51,7 +51,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "물이 외상=O/W(산뜻·물로 씻김), 오일이 외상=W/O(내수성·자외선차단) / 클렌징 오일은 헹굴 때 O/W / 외음부 세정제는 3세 이하 금지 / 콜롱은 부향률 적고 짧다",
     source: { law: null, guide: "4판 p.99~104·106~107", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-07", "Q-C4-08"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   },
   {
@@ -62,7 +62,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "기준서 넷 = 제품 · 제조관리 · 품질관리 · 제조위생관리 (기록서 아님!) / 혼합·소분 전엔 품질성적서 먼저",
     source: { law: "우수화장품 제조 및 품질관리기준 제15조 / 화장품법 시행규칙 제12조의2제2호가목", guide: "4판 p.109~114", asof: "2026-09", confidence: "high" },
     related: ["Q-C4-09", "Q-C4-10"],
-    verified: false,
+    verified: true,
     history: [{ date: "2026-09-07", note: "신규 C4 2026-09-07" }]
   }
 ]);
