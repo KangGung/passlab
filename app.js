@@ -126,12 +126,28 @@ function loadState() {
   if (st && typeof st === "object") {
     Object.keys(st).forEach(function (k) { if (st[k] !== undefined) S.settings[k] = st[k]; });
   }
-  S.attempts = Store.get("attempts", []) || [];
-  if (!Array.isArray(S.attempts)) S.attempts = [];
-  S.mistakes = Store.get("mistakes", {}) || {};
-  S.cardState = Store.get("cards", {}) || {};
-  S.mocks = Store.get("mocks", []) || [];
+  // 저장된 값이 기대한 모양(배열/객체)이 아니면 초기값으로 되돌린다
+  var broken = [];
+  function takeArr(key) {
+    var v = Store.get(key, null);
+    if (v == null) return [];
+    if (Array.isArray(v)) return v;
+    broken.push(key);
+    return [];
+  }
+  function takeObj(key) {
+    var v = Store.get(key, null);
+    if (v == null) return {};
+    if (typeof v === "object" && !Array.isArray(v)) return v;
+    broken.push(key);
+    return {};
+  }
+  S.attempts = takeArr("attempts");
+  S.mistakes = takeObj("mistakes");
+  S.cardState = takeObj("cards");
+  S.mocks = takeArr("mocks");
   rebuildAttIndex();
+  if (broken.length) toast("저장 데이터 일부가 손상되어 초기값으로 대체했습니다.");
 }
 function rebuildAttIndex() {
   var map = {};
@@ -467,7 +483,8 @@ function viewHome() {
   var ld = st.last_diagnostic;
   if (ld && ld.bySubject) {
     h += '<div class="card"><h2>최근 진단 결과 · ' + esc(ld.date || "") + '</h2>' +
-         '<p class="small">' + ld.correct + '/' + ld.total + ' 정답 · 예상 ' + ld.est_total + '점 / 1000점</p>' +
+         '<p class="small">' + esc(String(ld.correct)) + '/' + esc(String(ld.total)) +
+         ' 정답 · 예상 ' + esc(String(ld.est_total)) + '점 / 1000점</p>' +
          '<p class="tiny muted">' + esc(ld.est_note || "초기 추정") + '</p><div class="row mt">';
     ld.bySubject.forEach(function (b) {
       var r = RISK[b.risk] || RISK.unmeasured;
@@ -1543,9 +1560,38 @@ function onChange(e) {
     return;
   }
   if (t.hasAttribute && t.hasAttribute("data-s")) {
+    // 검증 먼저, 저장은 그다음 — 잘못된 값이 S.settings에 들어가면
+    // 다음 saveAll()/markBackedUp()이 그대로 저장해 버린다.
     var k = t.getAttribute("data-s");
-    S.settings[k] = (k === "daily_minutes") ? Number(t.value) : t.value;
-    if (k === "exam_date" && !C.parseDate(t.value)) { toast("날짜를 확인해 주세요."); return; }
+    var raw = t.value;
+    var val;
+    if (k === "exam_date") {
+      var d = C.parseDate(raw);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(raw)) || !d || C.today(d) !== String(raw)) {
+        t.value = S.settings.exam_date || "";       // 화면을 지금 설정값으로 되돌린다
+        toast("날짜를 확인해 주세요.");
+        return;
+      }
+      val = String(raw);
+    } else if (k === "daily_minutes") {
+      var mins = Number(raw);
+      if (!isFinite(mins) || mins <= 0) {
+        t.value = String(S.settings.daily_minutes);
+        toast("하루 공부 시간을 확인해 주세요.");
+        return;
+      }
+      val = mins;
+    } else if (k === "device") {
+      if (raw !== "mac" && raw !== "iphone") {
+        t.value = String(S.settings.device);
+        toast("쓰는 기기를 확인해 주세요.");
+        return;
+      }
+      val = raw;
+    } else {
+      val = raw;
+    }
+    S.settings[k] = val;
     saveSettings();
     toast("설정을 저장했습니다.");
     render();
