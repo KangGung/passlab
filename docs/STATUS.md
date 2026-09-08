@@ -165,3 +165,13 @@ Node에서 `manifest.js` 목록대로 데이터를 읽어 실제로 세 프리�
 - **오늘 저녁**: 모의 탭에서 **하프 모의고사(50문항·60분)** 를 봅니다. 끝나면 결과 화면의 **취약 세부항목**을 확인하고, 마치기 전에 **백업 내보내기**를 눌러 주세요.
 
 - **[2026-09-08 배포]** 사용자 승인으로 https://kanggung.github.io/passlab/ 재배포(gh-pages 695c8e0 = app@45f9e50: 문항 200·카드 102·figure 28·모의고사·예상점수·데이터 20260908a). main = s3-mock = 45f9e50. 이후 카드 figure 추가분은 다음 배포에 포함.
+
+## 2026-09-08 추가 — 암기카드 "설명하는 그림"(figure) 2단계 완료
+
+- **결과**: 카드 102장 중 **92장에 figure**(groups 59 · compare 20 · timeline 8 · tree 4 · raw 1). 제외 10장 = 합격코치 시드 카드(C-CCE-*, 상위 카드와 중복·짧은 정의). 카드 본문(front/back/mnemonic/source) 변경 0건(102장 전수 기계 대조).
+- **절차**: 읽기 전용 검수(`figure-audit-report.md`: 기존 28장 중 FIX 4, 다른 세션 배치4 WIP 완성 확인 후 커밋) → 파일 단위 4 에이전트 병렬 생성(F1~F4, 64장) → 의미 리뷰(`figure-review-report.md`: OK 61 / FIX 8) → 수정(`figure-fix-report.md`). 원장: `.superpowers/sdd/2026-09-07-s3-mock-plan/progress.md`.
+- **검사**: `check-data.cjs` 오류 0 · 그림 글자 경고 0(A5 옛 카드 ID 경고 25건은 기존분) · `node --test` 144/144 · 렌더 92/92 viewBox 360, 최대 높이 420(C-C7-05·C-C3-08).
+- **규칙 보완(3단계 후보)**: ① core.js `figWrap`이 공백 없는 긴 토큰을 글자 단위로 자름 → 라벨 8자 이하 또는 `·`/`/`로 분절 권고, 엔진에 최소 2글자 줄 보장 검토 ② `groups[].tone` 색 옵션(사용금지·불검출 빨강) ③ compare 3열·tree 3children 한계로 4분류 카드는 groups로 우회함.
+- **manifest**: version `20260908b`. **배포**: 재배포 대기(사용자 확인 후 push).
+- **다음**: S4 암기카드 학습 화면(Leitner 5박스·오늘 만기·내 메모리 노트, 카드 탭 활성화) — figure는 카드 뒷면 위에 이미 표시되는 구조 재사용.
+
