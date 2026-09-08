@@ -62,7 +62,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     mnemonic: "맞춤형도 법의 울타리 안. 물리적으로 뽑고ㆍ덮고ㆍ잠깐 물들이면 기능성 아님, 여드름은 인체세정용만.",
     figure: {
       type: "tree",
-      root: "맞춤형화장품의 효과",
+      root: "「화장품법」에 근거한 유형 및 효과의 범위",
       children: [
         { name: "화장품의 유형", children: ["13가지"] },
         { name: "기능성화장품", children: ["가~마 5개 목", "시행규칙 제2조 제1~11호", "단서가 붙은 4곳"] }
@@ -71,7 +71,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     source: { law: "화장품법 제2조제2호, 화장품법 시행규칙 제2조", guide: "4판 p.287~288", asof: "2026-09", confidence: "high" },
     related: ["Q-C8-05", "Q-C8-06"],
     verified: true,
-    history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }, { date: "2026-09-08", note: "figure(tree) 추가 — '법의 울타리를 벗어날 수 없다'는 포함 관계를 유형 13가지와 기능성(효능 5개 목·범위 11호·단서 4곳) 두 갈래로. 글자는 back·mnemonic에 있는 것만 사용" }]
+    history: [{ date: "2026-09-07", note: "신규 C8 2026-09-07" }, { date: "2026-09-08", note: "figure(tree) 추가 — '법의 울타리를 벗어날 수 없다'는 포함 관계를 유형 13가지와 기능성(효능 5개 목·범위 11호·단서 4곳) 두 갈래로. 글자는 back·mnemonic에 있는 것만 사용" }, { date: "2026-09-08", note: "figure 수정 — 뿌리 `맞춤형화장품의 효과` 아래에 `화장품의 유형`이 달려 '유형은 효과의 한 종류'라는 거짓 포함 관계가 됐다 — 뿌리를 back 원문 `「화장품법」에 근거한 유형 및 효과의 범위`로 바꿔 두 갈래가 진짜 하위 항목이 되게 했다(높이 170 유지)" }]
   },
   {
     id: "C-C8-05", subject: 4, topic: "4.4.2", category: "부작용 종류ㆍ현상ㆍ보고", kind: "compare",

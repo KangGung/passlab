@@ -65,8 +65,8 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     figure: {
       type: "groups",
       groups: [
-        { name: "제조·칭량", items: ["방진복", "위생모", "안전화", "마스크 및 보호안경"] },
-        { name: "생산-충전", items: ["방진복", "위생모", "작업화", "마스크"] },
+        { name: "제조·칭량", items: ["방진복", "위생모", "안전화", "필요시 마스크 및 보호안경"] },
+        { name: "생산-충전", items: ["방진복", "위생모", "작업화", "필요시 마스크"] },
         { name: "생산-포장", items: ["지급된 작업복", "위생모", "작업화"] },
         { name: "관리", items: ["1인 2벌 지급", "주 2회 세탁", "매일 작업 전"] }
       ]
@@ -74,7 +74,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     source: { law: null, guide: "4판 p.201~202", asof: "2026-09", confidence: "high" },
     related: ["Q-C6-05"],
     verified: true,
-    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }, { date: "2026-09-08", note: "figure(groups) 추가 — mnemonic이 가르는 안전화(제조·칭량) 대 작업화(충전·포장)를 구분별 묶음으로 세우고 관리 숫자를 마지막 묶음에. 글자는 back·mnemonic에 있는 것만 사용" }]
+    history: [{ date: "2026-09-07", note: "신규 C6 2026-09-07" }, { date: "2026-09-08", note: "figure(groups) 추가 — mnemonic이 가르는 안전화(제조·칭량) 대 작업화(충전·포장)를 구분별 묶음으로 세우고 관리 숫자를 마지막 묶음에. 글자는 back·mnemonic에 있는 것만 사용" }, { date: "2026-09-08", note: "figure 수정 — back은 `필요시 마스크 및 보호안경`·`필요시 마스크`인데 그림이 조건을 떼어 필수 착용처럼 보였다 — back 표현 그대로 `필요시`를 칩에 되살렸다(높이 280→308)" }]
   },
   {
     id: "C-C6-05", subject: 3, topic: "3.3.1", category: "설비·기구 숫자와 재질", kind: "number",
