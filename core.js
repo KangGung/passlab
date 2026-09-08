@@ -2476,6 +2476,9 @@
    * 문항을 틀렸을 때(또는 찍어서 맞혔을 때) 연결 카드를 "내 메모리 노트"로 편입.
    * 부르는 쪽이 오답·찍음 여부를 판단한다(이 함수는 시도를 보지 않는다).
    * 이미 상태가 있으면 박스①·오늘 만기로 내리고 lapses는 올리지 않는다(카드를 틀린 게 아니다).
+   * **편입은 벌점이 아니다**(판정 S4-3): `last`를 null로 비워 questionMasteryWithCards의 −10이
+   * 붙지 않게 한다. 오답 자체는 이미 mastery에 반영되므로 이중 계상이 된다.
+   * 카드를 실제로 풀면 reviewCard가 last를 다시 채우고, 그때 "모름"이면 −10이 붙는다.
    * @returns {{states:object, enrolled:string[]}} states는 새 객체(원본 불변)
    */
   function enrollCardsForMistake(q, cards, states, todayStr) {
@@ -2492,7 +2495,7 @@
       if (known && !known[cid]) return;
       const prev = out[cid];
       out[cid] = Object.assign(cardStateDefault(), (prev && typeof prev === "object") ? prev : null,
-        { box: 1, due: t, streak: 0, auto: true });
+        { box: 1, due: t, streak: 0, auto: true, last: null });
       enrolled.push(cid);
     });
     return { states: out, enrolled: enrolled };
@@ -2622,6 +2625,7 @@
   /**
    * 취약 우선순위 P (CLAUDE.md 「적응형 출제」).
    * buildAdaptiveSet 안의 adaptiveP와 같은 공식이다(그쪽은 세트 구성용 캐시를 따로 쓴다).
+   * 여러 문항을 훑는 루프에서는 ctx.cache를 재사용한다(같은 객체를 계속 넘기면 토픽·숙달 계산을 아낀다).
    * @param {object} q
    * @param {{topics?:Array, attemptsByQid?:object, mistakes?:object, todayStr?:string, cache?:object}} ctx
    */
@@ -2939,10 +2943,21 @@
   const NOTE_BOX_MAX = 3;        // 박스③ 이하 = 아직 안 외운 것
   const NOTE_LAW_LEN = 40;
 
-  function subjectLabel(sid) {
+  /** 과목 이름은 블루프린트(있으면)를 먼저 쓰고, 없으면 상수를 쓴다 */
+  function subjectNameMap(blueprint) {
+    const out = {};
+    const subs = (blueprint && Array.isArray(blueprint.subjects)) ? blueprint.subjects : [];
+    subs.forEach(function (s) {
+      if (!s || s.id == null) return;
+      const nm = oneLine(s.name);
+      if (nm) out[Number(s.id)] = nm;
+    });
+    return out;
+  }
+  function subjectLabel(sid, names) {
     const n = Number(sid);
     const mark = SUBJ_MARK[n - 1] || "";
-    const name = SUBJECT_NAMES[n];
+    const name = (names && names[n]) || SUBJECT_NAMES[n];
     if (!name) return "기타 과목";
     return (mark ? mark + " " : "") + name;
   }
@@ -2958,7 +2973,8 @@
    * 담는 것: auto(내 메모리 노트) 카드 + 박스③ 이하 카드 + 미졸업 오답의 memory_sentence.
    * @param {Array} cards 카드 은행 / @param {object} states pl.v1.cards
    * @param {Array} questions 문항 은행 / @param {object} mistakes pl.v1.mistakes
-   * @param {{maxCards?:number, maxSentences?:number, todayStr?:string, examDate?:string}} opts
+   * @param {{maxCards?:number, maxSentences?:number, todayStr?:string, examDate?:string, blueprint?:object}} opts
+   *        blueprint를 주면 과목 이름을 blueprint.subjects[].name에서 읽는다(없으면 SUBJECT_NAMES)
    */
   function memoryNoteText(cards, states, questions, mistakes, opts) {
     const o = opts || {};
@@ -2967,6 +2983,7 @@
     const mist = mistakes || {};
     const maxCards = o.maxCards == null ? NOTE_MAX_CARDS : Math.max(0, Math.floor(Number(o.maxCards) || 0));
     const maxSent = o.maxSentences == null ? NOTE_MAX_SENTENCES : Math.max(0, Math.floor(Number(o.maxSentences) || 0));
+    const subjNames = subjectNameMap(o.blueprint);
 
     const picked = cardsArray(cards).filter(function (c) {
       const s = st[c.id];
@@ -3016,7 +3033,7 @@
     subjKeys.forEach(function (key) {
       const g = groups[key];
       out.push("");
-      out.push("## " + subjectLabel(key));
+      out.push("## " + subjectLabel(key, subjNames));
       g.order.forEach(function (cat) {
         out.push("");
         out.push("### " + cat);
@@ -3048,7 +3065,7 @@
       sk.sort(function (a, b) { return Number(a) - Number(b); });
       sk.forEach(function (key) {
         out.push("");
-        out.push("### " + subjectLabel(key));
+        out.push("### " + subjectLabel(key, subjNames));
         sg[key].forEach(function (q) {
           out.push("- " + oneLine(q.memory_sentence) + " (" + q.id + ")");
         });
