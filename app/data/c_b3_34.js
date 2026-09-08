@@ -33,7 +33,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       type: "groups",
       groups: [
         { name: "500 개/g(mL) 이하", items: ["영·유아용 제품류", "눈화장용 제품류"] },
-        { name: "100 개/g(mL) 이하", items: ["물휴지", "세균 및 진균 수 각각"] },
+        { name: "세균 및 진균 수 각각 100 개/g(mL) 이하", items: ["물휴지"] },
         { name: "1,000 개/g(mL) 이하", items: ["기타 화장품"] },
         { name: "불검출", items: ["대장균", "녹농균", "황색포도상구균"] }
       ]
@@ -41,7 +41,7 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.231", asof: "2026-09", confidence: "high" },
     related: ["Q-B3-03", "Q-B3-04", "Q-B3-12"],
     verified: true,
-    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-07", note: "figure(groups) 추가 — 미생물한도를 한도 값(500 / 100 / 1,000 / 불검출)별 묶음으로. 글자는 back·mnemonic에 있는 것만 사용" }]
+    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-07", note: "figure(groups) 추가 — 미생물한도를 한도 값(500 / 100 / 1,000 / 불검출)별 묶음으로. 글자는 back·mnemonic에 있는 것만 사용" }, { date: "2026-09-08", note: "figure 수정 — '100 개/g(mL) 이하' 묶음의 칩이 '물휴지'와 '세균 및 진균 수 각각' 둘로 갈려 동등한 두 대상처럼 읽혔다. 조건을 묶음 이름으로 올리고 대상(물휴지)만 칩으로 남김" }]
   },
   {
     id: "C-B3-03", subject: 3, topic: "3.4.2", category: "내용량 판정 절차", kind: "procedure",
@@ -53,14 +53,14 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
       type: "timeline",
       steps: [
         { label: "제품 3개를 시험", dur: "97 %" },
-        { label: "벗어나면 6개를 더 취해", dur: "6개" },
+        { label: "벗어나면 6개를 더 취해" },
         { label: "총 9개의 평균", dur: "97 %" }
       ]
     },
     source: { law: "화장품 안전기준 등에 관한 규정 제6조", guide: "4판 p.231", asof: "2026-09", confidence: "high" },
     related: ["Q-B3-02", "Q-B3-05"],
     verified: true,
-    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-07", note: "figure(timeline) 추가 — 내용량 판정 한 절차(3개 → 6개 더 → 9개 평균 97 %)만 좌→우로. 글자는 back·mnemonic에 있는 것만 사용" }]
+    history: [{ date: "2026-09-05", note: "신규 B3" }, { date: "2026-09-07", note: "figure(timeline) 추가 — 내용량 판정 한 절차(3개 → 6개 더 → 9개 평균 97 %)만 좌→우로. 글자는 back·mnemonic에 있는 것만 사용" }, { date: "2026-09-08", note: "figure 수정 — 두 번째 칩 '6개'가 바로 아래 라벨 '6개를 더 취해'와 중복이라 삭제(감사 §C 참고 1)" }]
   },
   {
     id: "C-B3-04", subject: 3, topic: "3.4.2", category: "액상제품 pH 3.0∼9.0", kind: "compare",
