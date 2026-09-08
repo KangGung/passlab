@@ -125,6 +125,7 @@ var S = {
   mockResult: null,       // 채점 결과 {grade, rec, order, answers, name, date}
   mockExplain: false,     // 결과 화면 해설 목록 열림
   mockExplainQid: null,   // 해설을 펼친 문항
+  mockAskDiscard: false,  // 버리기 확인창 열림
   mockCheck: null         // 설정 · 모의고사 가능 여부
 };
 
@@ -1027,9 +1028,10 @@ function viewRecentMocks() {
     var verdict = (pk === "full" && (m.pass === true || m.pass === false))
       ? '<span class="chip ' + (m.pass ? "green" : "red") + '">' + (m.pass ? "PASS" : "FAIL") + '</span>'
       : '<span class="chip gray">과목만</span>';
+    var ref = Number(m.max_reference) || 1000;      // 하프·미니는 만점이 1000점이 아니다
     h += '<tr><td>' + esc(String(m.date || "-")) + '</td>' +
          '<td class="l">' + esc(nm) + (m.partial ? ' <span class="chip gray">환산</span>' : "") + '</td>' +
-         '<td>' + (Number(m.scaled) || 0) + '</td><td>' + (Number(m.adj) || 0) + '</td>' +
+         '<td>' + (Number(m.scaled) || 0) + '/' + ref + '</td><td>' + (Number(m.adj) || 0) + '</td>' +
          '<td>' + verdict + '</td></tr>';
   });
   h += '</tbody></table></div></div>';
@@ -1070,7 +1072,15 @@ function viewMockSetup() {
   var hasMock = sess && sess.mode === "mock" && Array.isArray(sess.qids) && sess.qids.length;
   if (hasMock) {
     h += resumeBannerHTML(sess, "");
-    h += '<div class="row"><button class="btn sm ghost" data-act="mock-discard">이 모의고사 버리기</button></div>';
+    if (S.mockAskDiscard) {
+      var nAns = countAnswered(sess.qids, sess.answers);
+      h += '<div class="banner red"><span><b>정말 버릴까요?</b> 답 ' + nAns + '개가 사라지고 ' +
+           '되돌릴 수 없습니다. 채점도 하지 않습니다.</span></div>' +
+           '<div class="acts"><button class="btn danger primary" data-act="mock-discard-ok">네, 버립니다</button>' +
+           '<button class="btn ghost" data-act="mock-discard-cancel">취소</button></div>';
+    } else {
+      h += '<div class="row"><button class="btn sm ghost" data-act="mock-discard">이 모의고사 버리기</button></div>';
+    }
   }
 
   h += '<div class="card"><h2>모의고사</h2>' +
@@ -1360,20 +1370,24 @@ function viewMockResult() {
   var inMock = {};
   order.forEach(function (o) { inMock[o.subject] = (inMock[o.subject] || 0) + 1; });
   // core 계약: half·mini3는 pass가 null(판정 불가). 필드가 아직 없을 수도 있어 프리셋으로도 막는다.
-  var canJudge = (R.preset === "full") && (g.pass === true || g.pass === false);
   var missSubs = Array.isArray(g.missing_subjects) ? g.missing_subjects.map(Number) : null;
+  // 판정은 core의 pass가 true/false일 때만. 빠진 과목이 있으면(=pass null) 절대 판정하지 않는다.
+  var canJudge = (g.pass === true || g.pass === false) && !(missSubs && missSubs.length);
+  var refMax = Number(g.max_reference) || 1000;   // 이 시험지의 기준 만점(하프 504 · 미니 250 …)
+  var passTotal = (BP.exam && BP.exam.pass_total) || 600;
   var h = '<h2 style="font-size:22px;margin:14px 0 2px">' + esc(R.name) + ' 결과</h2>' +
           '<p class="small muted">' + esc(R.date) + ' · ' + total + '문항 · 걸린 시간 ' + esc(fmtDur(R.sec)) + '</p>';
 
-  h += '<div class="bigscore"><b>' + g.scaled + '</b><span>/ 1000점 · 합격선 600점</span></div>';
+  h += '<div class="bigscore"><b>' + g.scaled + '</b><span>/ ' + refMax + '점' +
+       (canJudge ? ' · 합격선 ' + passTotal + '점' : '') + '</span></div>';
 
   if (canJudge) {
     h += '<div class="verdict' + (g.pass ? " ok" : "") + '"><b>' + (g.pass ? "✓ PASS" : "✕ FAIL") + '</b>' +
-         '<p>' + (g.pass ? "총점 600점 이상, 과락 과목 없음."
+         '<p>' + (g.pass ? "총점 " + passTotal + "점 이상, 과락 과목 없음."
                         : (g.fail_subjects && g.fail_subjects.length
                             ? "과락 과목: " + esc(g.fail_subjects.map(function (id) {
                                 return (MARK[Number(id) - 1] || id) + " " + subjectOf(id).short_name; }).join(", "))
-                            : "총점이 합격선 600점에 못 미칩니다.")) + '</p></div>';
+                            : "총점이 합격선 " + passTotal + "점에 못 미칩니다.")) + '</p></div>';
   } else {
     var skipped = (missSubs && missSubs.length)
       ? missSubs.map(function (id) { return (MARK[id - 1] || id) + " " + subjectOf(id).short_name; }).join(", ")
@@ -1389,7 +1403,8 @@ function viewMockResult() {
             : (reason === "both" ? total + "문항 축소 + 일부 배점 대체 · <b>환산 점수</b>"
                                  : "문항 부족으로 " + total + "문항 축소 · <b>환산 점수</b>");
     h += '<div class="banner"><span>' + why + '입니다. ' +
-         '푼 문항 만점 ' + g.max_included + '점에서 얻은 ' + g.raw + '점을 1000점 기준으로 환산했습니다.</span></div>';
+         '푼 문항 만점 ' + g.max_included + '점에서 얻은 ' + g.raw + '점을 ' +
+         refMax + '점 기준으로 환산했습니다.</span></div>';
   }
   // 계약 4: 세션을 저장한 뒤 데이터 파일이 바뀌어 사라진 문항
   if (Array.isArray(g.missing_questions) && g.missing_questions.length) {
@@ -1480,11 +1495,13 @@ function viewMockResult() {
 
 /* 제출 뒤에만 열리는 읽기 전용 해설 */
 function viewMockExplain(R, noOf) {
-  var h = '<div class="card"><h2>문항별 해설 · 번호를 누르세요</h2><div class="numlist">';
+  var blank = {};
+  ((R.grade && R.grade.unanswered) || []).forEach(function (qid) { blank[qid] = true; });
+  var h = '<div class="card"><h2>문항별 해설 · 번호를 누르세요 (· = 미답)</h2><div class="numlist">';
   R.order.forEach(function (o) {
-    var ok = R.correct[o.qid] === true;
+    var mark = blank[o.qid] ? " ·" : (R.correct[o.qid] === true ? " ✓" : " ✕");
     h += '<button type="button" class="btn sm' + (S.mockExplainQid === o.qid ? " on" : "") +
-         '" data-act="mock-expl-q" data-qid="' + esc(o.qid) + '">' + o.no + (ok ? " ✓" : " ✕") + '</button>';
+         '" data-act="mock-expl-q" data-qid="' + esc(o.qid) + '">' + o.no + mark + '</button>';
   });
   h += '</div>';
 
@@ -1514,7 +1531,8 @@ function viewMockExplain(R, noOf) {
     });
     h += '</div>';
   }
-  h += '<div class="verdict' + (ok ? " ok" : "") + '"><b>' + (ok ? "✓ 맞음" : "✕ 틀림") + '</b></div>' +
+  h += '<div class="verdict' + (ok ? " ok" : (blank[qid] ? " warn" : "")) + '"><b>' +
+       (ok ? "✓ 맞음" : (blank[qid] ? "· 미답 (0점 · 시도로 기록하지 않음)" : "✕ 틀림")) + '</b></div>' +
        '<div class="ansbox"><div class="mine' + (ok ? " okmine" : "") + '"><small>내 답</small>' +
        esc(givenText(q, a.given)) + '</div>' +
        '<div class="real"><small>정답</small>' + esc(answerText(q)) + '</div></div>' +
@@ -1536,7 +1554,11 @@ function startMock(key) {
     sid: newSid(), mode: "mock",
     preset: {
       kind: "mock", key: m.preset, name: m.name, partial: m.partial === true,
-      planned_count: m.planned_count, minutes: m.minutes, warnings: m.warnings
+      // 채점에 반드시 필요한 편성 계획 — 없으면 core가 만점을 1000점으로 넘겨짚어
+      // 하프·미니 점수가 부풀고 환산 이유도 틀린다. 이어하기에서도 살아남아야 한다.
+      planned_count: m.planned_count, planned_points: m.planned_points,
+      slots_missing: m.slots_missing, substituted: m.substituted,
+      minutes: m.minutes, warnings: m.warnings
     },
     qids: m.qids.slice(), idx: 0, answers: {},
     startedAt: nowISO(), deadlineAt: new Date(Date.now() + m.minutes * 60 * 1000).toISOString(),
@@ -1629,7 +1651,12 @@ function finishMock(auto) {
   var meta = Q.preset || {};
   var mockObj = {
     preset: meta.key || "full", name: meta.name || "모의고사",
-    qids: Q.qids.slice(), partial: meta.partial === true
+    qids: Q.qids.slice(), partial: meta.partial === true,
+    // core는 이 값들로 환산 기준 만점(max_reference)과 환산 이유를 정한다
+    planned_count: meta.planned_count,
+    planned_points: meta.planned_points,
+    slots_missing: meta.slots_missing,
+    substituted: meta.substituted
   };
   var g = C.gradeMock(mockObj, Q.answers, S.questions, BP, TOPICS);
 
@@ -1640,6 +1667,9 @@ function finishMock(auto) {
     var q = S.byQid[qid];
     if (!q) return;
     var a = Q.answers[qid] || {};
+    // 미답은 시도로 기록하지 않는다(미답 ≠ 찍음·오답 — 숙달도·오답노트를 더럽히지 않는다).
+    // 점수에는 이미 0점으로 들어갔고 결과 화면 '미답 목록'이 따로 알려 준다.
+    if (!hasAnswerFor(q, a)) { correctMap[qid] = false; return; }
     var correct, nearMiss = false, r;
     if (q.type === "mcq") correct = C.gradeMcq(q, a.given);
     else { r = C.gradeShort(q, a.given); correct = r.correct === true; nearMiss = !!r.nearMiss; }
@@ -1696,8 +1726,13 @@ function mockReportText() {
   var mk = w.mocks.length
     ? w.mocks.map(function (m) {
         var nm = (C.MOCK_PRESETS[m.preset] && C.MOCK_PRESETS[m.preset].name) || m.preset;
-        return m.date + " " + nm + " " + m.scaled + "점(보정 " + m.adj + ")" +
-               (m.preset === "full" ? (m.pass ? " PASS" : " FAIL") : " 과목만");
+        var judged = (m.pass === true || m.pass === false);
+        var orig = S.mocks.filter(function (x) {
+          return x.date === m.date && (x.preset || "full") === m.preset && Number(x.scaled) === m.scaled;
+        })[0];
+        var ref = (orig && Number(orig.max_reference)) || 1000;
+        return m.date + " " + nm + " " + m.scaled + "/" + ref + "점(보정 " + m.adj + ")" +
+               (judged ? (m.pass ? " PASS" : " FAIL") : " 판정 없음");
       }).join(" / ")
     : "지난 7일 기록 없음";
 
@@ -2279,6 +2314,7 @@ var ACTIONS = {
     if (id === "mock" && S.quiz && S.quiz.mode === "mock") { S.screen = "mockexam"; render({ top: true }); return; }
     S.screen = map[id] || "home";
     S.mockAskStart = null;
+    S.mockAskDiscard = false;
     S.claudeText = null;
     render({ top: true });
   },
@@ -2390,10 +2426,13 @@ var ACTIONS = {
   "mock-cancel": function () { S.mockAskStart = null; render(); },
   "mock-go": function (t) { startMock(t.getAttribute("data-preset")); },
   "mock-resume": function () { resumeMock(); },
-  "mock-discard": function () {
+  "mock-discard": function () { S.mockAskDiscard = true; render(); },
+  "mock-discard-cancel": function () { S.mockAskDiscard = false; render(); },
+  "mock-discard-ok": function () {
     clearSession();
     S.quiz = null;
     S.mockPlans = null;
+    S.mockAskDiscard = false;
     stopMockTimer();
     toast("진행 중이던 모의고사를 버렸습니다.");
     render();
