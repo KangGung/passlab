@@ -2262,3 +2262,622 @@ test("figureToSvg: 카드 글자에 <, &, \" 가 있어도 SVG가 깨지지 않�
   // 이스케이프 뒤에도 태그 짝이 맞는다
   assert.equal((svg.match(/<text/g) || []).length, (svg.match(/<\/text>/g) || []).length);
 });
+
+/* ================================================================== *
+ * 15. 암기카드 — Leitner 스케줄 (S4 Task 1)
+ * ================================================================== */
+/** 카드 픽스처 */
+function card(over) {
+  return Object.assign({
+    id: "C-T-01", subject: 1, topic: "1.1.1", category: "정의", kind: "definition",
+    importance: "M", short_prone: false,
+    front: "화장품의 정의는?", back: "인체를 청결·미화하는 물품", mnemonic: "청결·미화",
+    source: { law: "화장품법 제2조", guide: "4판 p.3", asof: "2026-09", confidence: "high" },
+    related: ["Q-T-001"], verified: true, history: []
+  }, over || {});
+}
+/** 카드 상태 픽스처 */
+function cstate(over) { return Object.assign(C.cardStateDefault(), over || {}); }
+
+test("CARD_INTERVALS: 스프린트 0·1·2·4·7 / 일반 1·3·7·14·30", () => {
+  assert.deepEqual(C.CARD_INTERVALS.sprint, [0, 1, 2, 4, 7]);
+  assert.deepEqual(C.CARD_INTERVALS.regular, [1, 3, 7, 14, 30]);
+});
+
+test("cardStateDefault: 안 본 카드는 due null · 매번 새 객체", () => {
+  assert.deepEqual(C.cardStateDefault(), { box: 1, due: null, streak: 0, lapses: 0, auto: false, last: null });
+  const a = C.cardStateDefault();
+  a.box = 5;
+  assert.equal(C.cardStateDefault().box, 1);
+});
+
+test("reviewCard(알아요): 박스 +1 · due = 오늘 + 새 박스 간격 · 원본 불변", () => {
+  const ctx = { track: "sprint", examDate: "2026-12-01" };
+  const s = C.cardStateDefault();
+  const r1 = C.reviewCard(s, "good", "2026-09-08", ctx);
+  assert.equal(r1.box, 2);
+  assert.equal(r1.due, "2026-09-09");          // 박스2 = 1일
+  assert.equal(r1.streak, 1);
+  assert.equal(r1.lapses, 0);
+  assert.equal(r1.last, "2026-09-08");
+  assert.equal(s.box, 1);                       // 원본 불변
+  assert.equal(s.due, null);
+  const r2 = C.reviewCard(r1, "good", "2026-09-09", ctx);
+  assert.equal(r2.box, 3);
+  assert.equal(r2.due, "2026-09-11");          // 박스3 = 2일
+  const r3 = C.reviewCard(r2, "good", "2026-09-11", ctx);
+  assert.equal(r3.box, 4);
+  assert.equal(r3.due, "2026-09-15");          // 박스4 = 4일
+  assert.equal(r3.streak, 3);
+});
+
+test("reviewCard(알아요): 박스는 5에서 멈추고 5는 +7일", () => {
+  const s = { box: 5, due: "2026-08-01", streak: 9, lapses: 1, auto: false, last: "2026-08-01" };
+  const r = C.reviewCard(s, "good", "2026-08-05", { examDate: "2026-12-01" });
+  assert.equal(r.box, 5);
+  assert.equal(r.due, "2026-08-12");
+  assert.equal(r.streak, 10);
+});
+
+test("reviewCard(모름): 박스① · lapses+1 · streak 0 · 스프린트는 같은 날 재노출", () => {
+  const s = { box: 4, due: "2026-09-08", streak: 3, lapses: 1, auto: true, last: "2026-09-04" };
+  const r = C.reviewCard(s, "again", "2026-09-08", { examDate: "2026-12-01" });
+  assert.equal(r.box, 1);
+  assert.equal(r.lapses, 2);
+  assert.equal(r.streak, 0);
+  assert.equal(r.due, "2026-09-08");           // 간격 0일 = 오늘(같은 세션 끝 재노출)
+  assert.equal(r.auto, true);                   // auto는 유지
+  assert.equal(r.last, "2026-09-08");
+  const g = C.reviewCard(s, "again", "2026-09-08", { track: "regular", examDate: "2026-12-01" });
+  assert.equal(g.due, "2026-09-09");           // 일반 트랙 ①은 1일
+});
+
+test("reviewCard(애매): 박스 유지 · streak 0 · 내일", () => {
+  const s = { box: 3, due: "2026-09-08", streak: 2, lapses: 0, auto: false, last: "2026-09-06" };
+  const r = C.reviewCard(s, "hard", "2026-09-08", { examDate: "2026-12-01" });
+  assert.equal(r.box, 3);
+  assert.equal(r.streak, 0);
+  assert.equal(r.lapses, 0);
+  assert.equal(r.due, "2026-09-09");
+});
+
+test("reviewCard: D-3부터 다음 만기는 내일까지, D-1·시험 당일은 오늘", () => {
+  const ctx = { examDate: "2026-09-19" };
+  const s = { box: 4, due: "2026-09-16", streak: 3, lapses: 0, auto: false, last: "2026-09-14" };
+  assert.equal(C.reviewCard(s, "good", "2026-09-15", ctx).due, "2026-09-22");  // D-4: 상한 없음(박스5 +7)
+  assert.equal(C.reviewCard(s, "good", "2026-09-16", ctx).due, "2026-09-17");  // D-3: 내일까지
+  assert.equal(C.reviewCard(s, "good", "2026-09-17", ctx).due, "2026-09-18");  // D-2
+  assert.equal(C.reviewCard(s, "good", "2026-09-18", ctx).due, "2026-09-18");  // D-1: 오늘
+  assert.equal(C.reviewCard(s, "good", "2026-09-19", ctx).due, "2026-09-19");  // 당일
+  assert.equal(C.reviewCard(s, "hard", "2026-09-18", ctx).due, "2026-09-18");  // 애매도 D-1엔 오늘
+  assert.equal(C.reviewCard(s, "good", "2026-09-16", {}).due, "2026-09-23");   // examDate 없으면 상한 없음
+});
+
+test("reviewCard: 상태가 없거나 망가져도 기본값에서 시작한다 · 잘못된 rating은 Error", () => {
+  const r = C.reviewCard(null, "good", "2026-09-08", { examDate: "2026-12-01" });
+  assert.equal(r.box, 2);
+  assert.equal(r.due, "2026-09-09");
+  const bad = C.reviewCard({ box: 99, streak: "x", lapses: null }, "again", "2026-09-08", { examDate: "2026-12-01" });
+  assert.equal(bad.box, 1);
+  assert.equal(bad.lapses, 1);
+  assert.equal(bad.streak, 0);
+  assert.throws(() => C.reviewCard(C.cardStateDefault(), "ok", "2026-09-08", {}), /rating/);
+});
+
+/* ================================================================== *
+ * 16. 암기카드 — 오늘 낼 카드 · 자동 편입 · 박스 분포
+ * ================================================================== */
+const CARDS_A = [
+  card({ id: "C-A1", subject: 1, topic: "1.1.1", category: "정의", kind: "definition", importance: "L" }),
+  card({ id: "C-A2", subject: 2, topic: "2.1.1", category: "숫자", kind: "number", importance: "H" }),
+  card({ id: "C-A3", subject: 3, topic: "3.1.1", category: "숫자", kind: "number", importance: "M" }),
+  card({ id: "C-A4", subject: 4, topic: "4.1.1", category: "절차", kind: "procedure", importance: "H" }),
+  card({ id: "C-A5", subject: 1, topic: "1.1.2", category: "목록", kind: "list", importance: "H" }),
+  card({ id: "C-A6", subject: 2, topic: "2.2.1", category: "목록", kind: "list", importance: "M" })
+];
+const STATES_A = {
+  "C-A1": cstate({ box: 3, due: "2026-09-07", last: "2026-09-04" }),
+  "C-A2": cstate({ box: 1, due: "2026-09-08", last: "2026-09-08", auto: true }),
+  "C-A3": cstate({ box: 1, due: "2026-09-05", last: "2026-09-05", auto: true }),
+  "C-A4": cstate({ box: 2, due: "2026-09-20", last: "2026-09-06" }),
+  "C-A5": cstate({ due: null }),
+  "C-GONE": cstate({ box: 1, due: "2026-09-01" })
+};
+
+test("dueCards: 만기는 박스 낮은 순 → due 오래된 순 / 새 카드는 중요도 H→M→L·과목 순", () => {
+  const r = C.dueCards(CARDS_A, STATES_A, "2026-09-08");
+  assert.deepEqual(r.due, ["C-A3", "C-A2", "C-A1"]);   // 박스1(09-05) → 박스1(09-08) → 박스3
+  assert.deepEqual(r.fresh, ["C-A5", "C-A6"]);          // due null도 "안 본 카드"
+  assert.deepEqual(r.todayNew, ["C-A5", "C-A6"]);       // 상한 없으면 새 카드 전부
+  assert.deepEqual(r.queue, ["C-A3", "C-A2", "C-A1", "C-A5", "C-A6"]);
+  assert.equal(r.limit, null);
+});
+
+test("dueCards: 은행에 없는 카드의 남은 상태는 무시한다", () => {
+  const r = C.dueCards(CARDS_A, STATES_A, "2026-09-08");
+  assert.equal(r.due.indexOf("C-GONE"), -1);
+  assert.equal(r.queue.indexOf("C-GONE"), -1);
+});
+
+test("dueCards: 필터(과목·카테고리·kind·내 메모리 노트만)", () => {
+  const f = (filter) => C.dueCards(CARDS_A, STATES_A, "2026-09-08", { filter: filter });
+  assert.deepEqual(f({ subject: 2 }).due, ["C-A2"]);
+  assert.deepEqual(f({ subject: 2 }).fresh, ["C-A6"]);
+  assert.deepEqual(f({ subject: "2" }).due, ["C-A2"]);       // 문자열도 같게 본다
+  assert.deepEqual(f({ kind: "number" }).due, ["C-A3", "C-A2"]);
+  assert.deepEqual(f({ kind: "number" }).fresh, []);
+  assert.deepEqual(f({ category: "숫자" }).due, ["C-A3", "C-A2"]);
+  assert.deepEqual(f({ onlyAuto: true }).due, ["C-A3", "C-A2"]);
+  assert.deepEqual(f({ onlyAuto: true }).fresh, []);          // 상태 없는 카드는 auto 아님
+  assert.deepEqual(f({ subject: 4 }).due, []);                // 만기 아님
+  assert.deepEqual(f({ subject: 4 }).fresh, []);              // 상태는 있고 due도 있으니 새 카드 아님
+});
+
+test("dueCards: 하루 상한은 만기부터 채우고 남으면 새 카드", () => {
+  const g = (limit) => C.dueCards(CARDS_A, STATES_A, "2026-09-08", { limit: limit });
+  assert.deepEqual(g(2).queue, ["C-A3", "C-A2"]);
+  assert.deepEqual(g(2).todayNew, []);
+  assert.deepEqual(g(4).queue, ["C-A3", "C-A2", "C-A1", "C-A5"]);
+  assert.deepEqual(g(4).todayNew, ["C-A5"]);
+  assert.deepEqual(g(0).queue, []);
+  assert.deepEqual(g(99).queue, ["C-A3", "C-A2", "C-A1", "C-A5", "C-A6"]);
+  assert.deepEqual(g(2).due, ["C-A3", "C-A2", "C-A1"]);      // due·fresh 자체는 자르지 않는다
+  assert.equal(g(2).limit, 2);
+});
+
+test("dueCards: 빈 입력에도 세 목록을 준다", () => {
+  const r = C.dueCards(null, null, "2026-09-08");
+  assert.deepEqual(r, { due: [], fresh: [], todayNew: [], queue: [], limit: null });
+});
+
+test("enrollCardsForMistake: 새 카드는 박스①·auto·오늘 만기로 담긴다", () => {
+  const q = mcq({ id: "Q-E-1", cards: ["C-A6", "C-A4"] });
+  const out = C.enrollCardsForMistake(q, CARDS_A, {}, "2026-09-08");
+  assert.deepEqual(out.enrolled, ["C-A6", "C-A4"]);          // q.cards 순서 그대로
+  assert.deepEqual(out.states["C-A6"], { box: 1, due: "2026-09-08", streak: 0, lapses: 0, auto: true, last: null });
+  assert.equal(out.states["C-A4"].box, 1);
+});
+
+test("enrollCardsForMistake: 기존 상태는 박스①로 내리고 lapses는 올리지 않는다", () => {
+  const states = { "C-A1": cstate({ box: 4, due: "2026-09-20", streak: 3, lapses: 2, auto: false, last: "2026-09-06" }) };
+  const out = C.enrollCardsForMistake(mcq({ cards: ["C-A1"] }), CARDS_A, states, "2026-09-08");
+  const s = out.states["C-A1"];
+  assert.equal(s.box, 1);
+  assert.equal(s.lapses, 2);          // 카드를 틀린 게 아니므로 안 올린다
+  assert.equal(s.streak, 0);
+  assert.equal(s.due, "2026-09-08");
+  assert.equal(s.auto, true);         // 내 메모리 노트에 담긴 표시
+  assert.equal(s.last, "2026-09-06"); // 마지막으로 본 날은 그대로
+  assert.equal(states["C-A1"].box, 4);          // 원본 불변
+  assert.notEqual(out.states, states);          // 새 객체
+  assert.equal(out.states["C-A1"] === states["C-A1"], false);
+});
+
+test("enrollCardsForMistake: 연결 카드 없음·은행에 없는 카드·중복은 넘어간다", () => {
+  assert.deepEqual(C.enrollCardsForMistake(mcq({ cards: [] }), CARDS_A, {}, "2026-09-08").enrolled, []);
+  assert.deepEqual(C.enrollCardsForMistake(mcq({ cards: null }), CARDS_A, {}, "2026-09-08").enrolled, []);
+  assert.deepEqual(C.enrollCardsForMistake(null, CARDS_A, {}, "2026-09-08").enrolled, []);
+  const out = C.enrollCardsForMistake(mcq({ cards: ["C-A1", "C-A1", "C-NOPE"] }), CARDS_A, {}, "2026-09-08");
+  assert.deepEqual(out.enrolled, ["C-A1"]);
+  assert.deepEqual(Object.keys(out.states), ["C-A1"]);
+});
+
+test("cardBoxSummary: 박스 분포 · 안 본 카드 · 오늘 만기 · 내 메모리 노트 수", () => {
+  const s = C.cardBoxSummary(STATES_A, CARDS_A, "2026-09-08");
+  assert.deepEqual(s.boxes, { 1: 2, 2: 1, 3: 1, 4: 0, 5: 0 });
+  assert.equal(s.unseen, 2);        // C-A5(due null) + C-A6(상태 없음)
+  assert.equal(s.dueToday, 3);
+  assert.equal(s.autoCount, 2);
+  assert.equal(s.total, 6);
+  const sum = s.boxes[1] + s.boxes[2] + s.boxes[3] + s.boxes[4] + s.boxes[5] + s.unseen;
+  assert.equal(sum, CARDS_A.length);   // 박스 합 + 안 본 카드 = 전체
+  const empty = C.cardBoxSummary(null, null, "2026-09-08");
+  assert.deepEqual(empty.boxes, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+  assert.equal(empty.total, 0);
+});
+
+/* ================================================================== *
+ * 17. 카드 연동 숙달도 (…WithCards)
+ * ================================================================== */
+const TPM = [
+  { id: "7.1", subject: 7, name: "주요항목", kind: "major" },
+  { id: "7.1.1", subject: 7, parent: "7.1", name: "가", kind: "sub", exp_q: 3 },
+  { id: "7.1.2", subject: 7, parent: "7.1", name: "나", kind: "sub", exp_q: 1 }
+];
+const QM = [
+  mcq({ id: "Q-M-1", subject: 7, topic: "7.1.1", cards: ["C-A1", "C-A2", "C-A3"] }),
+  mcq({ id: "Q-M-2", subject: 7, topic: "7.1.2", cards: [] })
+];
+const BYQ_M = { "Q-M-1": [att({ qid: "Q-M-1", at: "2026-09-08T10:00:00", correct: true, conf: 2 })] };
+const ST_M = {
+  "C-A1": cstate({ box: 1, due: "2026-09-08", last: "2026-09-08" }),   // 오늘 모름 → −10
+  "C-A2": cstate({ box: 1, due: "2026-09-04", last: "2026-09-04" }),   // 4일 전 → 제외
+  "C-A3": cstate({ box: 3, due: "2026-09-10", last: "2026-09-08" })    // 박스③ → 제외
+};
+
+test("questionMasteryWithCards: 3일 안에 본 박스① 카드 1장마다 −10", () => {
+  const q = QM[0], atts = BYQ_M["Q-M-1"];
+  assert.equal(C.questionMastery(atts, q, "2026-09-08"), 70);          // 시도 1회 상한 70
+  assert.equal(C.questionMasteryWithCards(atts, q, "2026-09-08", ST_M), 60);
+  assert.equal(C.questionMasteryWithCards(atts, q, "2026-09-08", null), 70);
+  assert.equal(C.questionMasteryWithCards(atts, q, "2026-09-08", {}), 70);
+  assert.equal(C.questionMasteryWithCards([], q, "2026-09-08", ST_M), null);   // 시도 없으면 null 그대로
+  // 안 본 카드(last null)는 벌점 없음
+  assert.equal(C.questionMasteryWithCards(atts, q, "2026-09-08", { "C-A1": cstate({ box: 1, due: "2026-09-08" }) }), 70);
+});
+
+test("questionMasteryWithCards: 하한 0", () => {
+  const q = mcq({ id: "Q-M-3", cards: ["C-A1", "C-A2", "C-A3", "C-A4", "C-A5", "C-A6", "C-A7", "C-A8"] });
+  const states = {};
+  ["C-A1", "C-A2", "C-A3", "C-A4", "C-A5", "C-A6", "C-A7", "C-A8"]
+    .forEach((id) => { states[id] = cstate({ box: 1, due: "2026-09-08", last: "2026-09-08" }); });
+  const atts = [att({ qid: "Q-M-3", at: "2026-09-08T10:00:00", correct: true, conf: 2 })];
+  assert.equal(C.questionMasteryWithCards(atts, q, "2026-09-08", states), 0);   // 70 − 80 → 0
+});
+
+test("topicMasteryWithCards: topicMastery와 같은 모양, states 없으면 같은 값", () => {
+  const plain = C.topicMastery("7.1.1", QM, BYQ_M, "2026-09-08");
+  const withC = C.topicMasteryWithCards("7.1.1", QM, BYQ_M, "2026-09-08", ST_M);
+  assert.deepEqual(Object.keys(withC).sort(), ["measuring", "n", "value"]);
+  assert.equal(withC.n, 1);
+  assert.equal(withC.measuring, true);
+  close(plain.value, 17.5);                       // 70 × 1/4
+  close(withC.value, 15);                         // 60 × 1/4
+  assert.deepEqual(C.topicMasteryWithCards("7.1.1", QM, BYQ_M, "2026-09-08", null), plain);
+  assert.deepEqual(C.topicMastery("7.1.1", QM, BYQ_M, "2026-09-08"), plain);   // 기존 함수 불변
+  assert.deepEqual(C.topicMasteryWithCards("7.9.9", QM, BYQ_M, "2026-09-08", ST_M), { value: null, n: 0, measuring: true });
+});
+
+test("subjectMasteryWithCards / subjectMasteryDetailWithCards: 미시도 토픽 20 · exp_q 가중", () => {
+  close(C.subjectMastery(7, TPM, QM, BYQ_M, "2026-09-08"), 18.125);            // (17.5×3 + 20×1)/4
+  close(C.subjectMasteryWithCards(7, TPM, QM, BYQ_M, "2026-09-08", ST_M), 16.25); // (15×3 + 20×1)/4
+  const d = C.subjectMasteryDetailWithCards(7, TPM, QM, BYQ_M, "2026-09-08", ST_M);
+  assert.deepEqual(Object.keys(d).sort(), ["attemptedTopics", "byTopic", "measuring", "totalTopics", "value"]);
+  assert.equal(d.byTopic.length, 2);
+  assert.equal(d.attemptedTopics, 1);
+  assert.equal(d.totalTopics, 2);
+  assert.equal(d.measuring, false);
+  close(d.byTopic[0].value, 15);
+  assert.equal(d.byTopic[1].value, null);
+  assert.equal(d.byTopic[1].used, 20);
+  // states 없으면 기존 상세와 같다
+  assert.deepEqual(C.subjectMasteryDetailWithCards(7, TPM, QM, BYQ_M, "2026-09-08", null),
+                   C.subjectMasteryDetail(7, TPM, QM, BYQ_M, "2026-09-08"));
+});
+
+/* ================================================================== *
+ * 18. 프리셋 3종 — questionPriority · buildPreset
+ * ================================================================== */
+const TPB = [
+  { id: "1.1", subject: 1, name: "화장품법", kind: "major" },
+  { id: "1.1.1", subject: 1, parent: "1.1", name: "정의·유형", kind: "sub", exp_q: 3 },
+  { id: "1.1.2", subject: 1, parent: "1.1", name: "영업의 종류", kind: "sub", exp_q: 2 },
+  { id: "2.1.1", subject: 2, parent: "2.1", name: "원료", kind: "sub", exp_q: 2 },
+  { id: "2.1.2", subject: 2, parent: "2.1", name: "제조", kind: "sub", exp_q: 1 },
+  { id: "3.1.1", subject: 3, parent: "3.1", name: "안전관리", kind: "sub", exp_q: 1 }
+];
+const PQ = [
+  mcq({ id: "Q-P-11a", subject: 1, topic: "1.1.1", cards: ["C-P-W01"] }),
+  mcq({ id: "Q-P-11b", subject: 1, topic: "1.1.1", cards: [] }),
+  mcq({ id: "Q-P-11c", subject: 1, topic: "1.1.1", cards: [] }),
+  mcq({ id: "Q-P-21a", subject: 2, topic: "2.1.1", qtype: "limit_number", tags: ["숫자"], cards: [] }),
+  mcq({ id: "Q-P-21b", subject: 2, topic: "2.1.1", qtype: "calc", cards: [] }),
+  mcq({ id: "Q-P-31a", subject: 3, topic: "3.1.1", cards: [] }),
+  mcq({ id: "Q-P-31b", subject: 3, topic: "3.1.1", tags: ["표시 기한"], cards: [] }),
+  mcq({ id: "Q-P-12a", subject: 1, topic: "1.1.2", cards: [] }),
+  mcq({ id: "Q-P-22a", subject: 2, topic: "2.1.2", qtype: "table", cards: [] })
+];
+const BYQ_P = {
+  "Q-P-11a": [att({ qid: "Q-P-11a", at: "2026-09-08T09:00:00", correct: false, conf: 1, given: 1 })],
+  "Q-P-11b": [att({ qid: "Q-P-11b", at: "2026-09-08T09:01:00", correct: false, conf: 1, given: 1 })],
+  "Q-P-21a": [att({ qid: "Q-P-21a", at: "2026-09-08T09:02:00", correct: false, conf: 0, given: 1 })],
+  "Q-P-31a": [att({ qid: "Q-P-31a", at: "2026-09-08T09:03:00", correct: true, conf: 0 })],
+  "Q-P-12a": [
+    att({ qid: "Q-P-12a", at: "2026-09-06T09:00:00" }),
+    att({ qid: "Q-P-12a", at: "2026-09-07T09:00:00" }),
+    att({ qid: "Q-P-12a", at: "2026-09-08T09:00:00" })
+  ]
+};
+const MIST_P = {
+  "Q-P-11a": { count: 2, last: "2026-09-06", stage: "reviewing", streak: 0, next: "2026-09-07", interval: 1, lastWrong: "2026-09-06", guessed: 0, relapse: false, memo: "" },
+  "Q-P-21a": { count: 1, last: "2026-09-07", stage: "new", streak: 0, next: "2026-09-08", interval: 1, lastWrong: "2026-09-07", guessed: 1, relapse: false, memo: "" },
+  "Q-P-31a": { count: 1, last: "2026-09-08", stage: "new", streak: 0, next: "2026-09-20", interval: 1, lastWrong: "2026-09-08", guessed: 1, relapse: false, memo: "" },
+  "Q-P-12a": { count: 1, last: "2026-09-08", stage: "graduated", streak: 2, next: null, interval: 6, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" },
+  "Q-GONE": { count: 1, last: "2026-09-01", stage: "new", streak: 0, next: "2026-09-01", interval: 1, lastWrong: "2026-09-01", guessed: 0, relapse: false, memo: "" }
+};
+const CARDS_P = [];
+for (let i = 1; i <= 12; i++) {
+  const sub = i % 3 === 0 ? 3 : (i % 3 === 2 ? 2 : 1);
+  CARDS_P.push(card({
+    id: "C-P-W" + String(i).padStart(2, "0"),
+    subject: sub, topic: sub === 3 ? "3.1.1" : (sub === 2 ? "2.1.1" : "1.1.1"),
+    kind: i % 4 === 0 ? "number" : "list",
+    importance: i <= 4 ? "H" : "M", category: "약점 카드"
+  }));
+}
+CARDS_P.push(card({ id: "C-P-N1", subject: 2, topic: "2.1.2", kind: "number", importance: "H", category: "숫자" }));
+CARDS_P.push(card({ id: "C-P-X1", subject: 1, topic: "1.1.2", kind: "definition", importance: "L", category: "정의" }));
+const STATES_P = {
+  "C-P-W01": cstate({ box: 1, due: "2026-09-06", last: "2026-09-06", auto: true }),
+  "C-P-W02": cstate({ box: 2, due: "2026-09-08", last: "2026-09-05" }),
+  "C-P-N1": cstate({ box: 1, due: "2026-09-07", last: "2026-09-07" }),
+  "C-P-X1": cstate({ box: 4, due: "2026-09-30", last: "2026-09-01" })
+};
+function pctx(over) {
+  return Object.assign({
+    questions: PQ, cards: CARDS_P, topics: TPB, attemptsByQid: BYQ_P, mistakes: MIST_P,
+    cardStates: STATES_P, todayStr: "2026-09-08", rng: C.seededRandom(7)
+  }, over || {});
+}
+
+test("questionPriority: CLAUDE.md P 공식 그대로", () => {
+  const ctx = { questions: PQ, topics: TPB, attemptsByQid: BYQ_P, mistakes: {}, todayStr: "2026-09-08" };
+  // Q-P-11a 오늘 오답·애매: 3(숙달0) + 2(3일 내 오답) + 0.5(연속1) + 1(애매) + 0.75(중요도M) + 1(exp 3/3)
+  close(C.questionPriority(PQ[0], ctx), 8.25, 1e-9);
+  // Q-P-11c 미출제: 3 + 0.75 + 1
+  close(C.questionPriority(PQ[2], ctx), 4.75, 1e-9);
+  // Q-P-22a 미출제, 토픽 exp 1/3
+  close(C.questionPriority(PQ[8], ctx), 3 + 0.75 + 1 / 3, 1e-9);
+  // 오답노트의 lastWrong으로도 "3일 내 오답"을 본다
+  const ctx2 = Object.assign({}, ctx, { attemptsByQid: {}, mistakes: MIST_P });
+  close(C.questionPriority(PQ[0], ctx2), 3 + 2 + 0.75 + 1, 1e-9);
+});
+
+test("PRESETS: 3종 이름·기본 개수", () => {
+  assert.deepEqual(Object.keys(C.PRESETS).sort(), ["lawnum", "today", "weakness"]);
+  assert.equal(C.PRESETS.weakness.name, "WEAKNESS ATTACK");
+  assert.equal(C.PRESETS.lawnum.name, "LAW & NUMBERS");
+  assert.equal(C.PRESETS.today.name, "TODAY'S REVIEW");
+  assert.equal(C.PRESETS.weakness.n, 15);
+  assert.equal(C.PRESETS.weakness.cards, 10);
+});
+
+test("buildPreset(weakness): 숙달 하위 3개 토픽의 문항만 + 그 토픽 카드 10장", () => {
+  const r = C.buildPreset("weakness", pctx({ n: 5 }));
+  assert.deepEqual(r.topics.slice().sort(), ["1.1.1", "2.1.1", "3.1.1"]);
+  assert.equal(r.qids.length, 5);
+  assert.equal(new Set(r.qids).size, 5);                        // 중복 없음
+  const byId = {};
+  PQ.forEach((q) => { byId[q.id] = q; });
+  r.qids.forEach((id) => { assert.ok(r.topics.indexOf(byId[id].topic) !== -1, id + " 토픽 밖"); });
+  assert.equal(r.cids.length, 10);                              // 카드 상한 10
+  assert.equal(new Set(r.cids).size, 10);
+  assert.equal(r.cids[0], "C-P-W01");                           // 만기 카드 먼저(박스① 09-06)
+  assert.equal(r.cids[1], "C-P-W02");
+  const cById = {};
+  CARDS_P.forEach((c) => { cById[c.id] = c; });
+  r.cids.forEach((id) => { assert.ok(r.topics.indexOf(cById[id].topic) !== -1, id + " 카드 토픽 밖"); });
+  assert.equal(r.name, "weakness");
+  assert.equal(r.label, "WEAKNESS ATTACK");
+  // n이 후보보다 크면 후보 전부(7문항)
+  assert.equal(C.buildPreset("weakness", pctx({ n: 99 })).qids.length, 7);
+  // 기본 n = 15
+  assert.equal(C.buildPreset("weakness", pctx()).qids.length, 7);
+});
+
+test("buildPreset(lawnum): 숫자·기한 문항 + kind number 카드, 미출제 먼저", () => {
+  const r = C.buildPreset("lawnum", pctx({ n: 3 }));
+  assert.equal(r.qids.length, 3);
+  assert.deepEqual(r.qids.slice().sort(), ["Q-P-21b", "Q-P-22a", "Q-P-31b"]);   // 미출제 3개 먼저
+  const all = C.buildPreset("lawnum", pctx({ n: 10 }));
+  assert.deepEqual(all.qids.slice().sort(), ["Q-P-21a", "Q-P-21b", "Q-P-22a", "Q-P-31b"]);
+  assert.equal(all.qids[all.qids.length - 1], "Q-P-21a");        // 이미 푼 문항은 뒤로
+  const cById = {};
+  CARDS_P.forEach((c) => { cById[c.id] = c; });
+  assert.ok(r.cids.length > 0);
+  r.cids.forEach((id) => { assert.equal(cById[id].kind, "number"); });
+  assert.equal(r.cids[0], "C-P-N1");                             // 만기 숫자 카드 먼저
+  assert.deepEqual(r.topics, []);
+  assert.equal(r.label, "LAW & NUMBERS");
+});
+
+test("buildPreset(today): 만기 오답 전부(상한 n) + 만기 카드만", () => {
+  const r = C.buildPreset("today", pctx());
+  assert.deepEqual(r.qids, ["Q-P-11a", "Q-P-21a"]);               // 만기일 순, 은행에 없는 Q-GONE 제외
+  assert.deepEqual(r.cids, ["C-P-W01", "C-P-N1", "C-P-W02"]);     // 새 카드는 넣지 않는다
+  assert.deepEqual(C.buildPreset("today", pctx({ n: 1 })).qids, ["Q-P-11a"]);
+  assert.deepEqual(C.buildPreset("today", pctx({ cardLimit: 2 })).cids, ["C-P-W01", "C-P-N1"]);
+  assert.equal(r.label, "TODAY'S REVIEW");
+});
+
+test("buildPreset: 빈 기록·빈 은행에도 견딘다 / 모르는 프리셋은 Error", () => {
+  const empty = { questions: PQ, cards: CARDS_P, topics: TPB, attemptsByQid: {}, mistakes: {}, cardStates: {}, todayStr: "2026-09-08" };
+  ["weakness", "lawnum", "today"].forEach((k) => {
+    const r = C.buildPreset(k, empty);
+    assert.ok(Array.isArray(r.qids) && Array.isArray(r.cids) && Array.isArray(r.topics), k);
+    assert.equal(new Set(r.qids).size, r.qids.length);
+    assert.equal(new Set(r.cids).size, r.cids.length);
+  });
+  const none = C.buildPreset("weakness", { todayStr: "2026-09-08" });
+  assert.deepEqual(none.qids, []);
+  assert.deepEqual(none.cids, []);
+  assert.throws(() => C.buildPreset("nope", pctx()), /프리셋/);
+});
+
+/* ================================================================== *
+ * 19. 백업 병합 — mergeBackup
+ * ================================================================== */
+const LOCAL_BK = {
+  settings: { exam_date: "2026-09-19", track: "sprint", daily_minutes: 120, device: "iphone",
+              last_backup: "2026-09-07T10:00:00", user_accepted: { intro: true, note: false }, schema: 1 },
+  attempts: [att({ qid: "Q-1", at: "2026-09-06T10:00:00" }), att({ qid: "Q-2", at: "2026-09-07T10:00:00" })],
+  mistakes: {
+    "Q-1": { count: 1, last: "2026-09-07", next: "2026-09-08", stage: "new" },
+    "Q-3": { count: 2, last: "2026-09-05", next: "2026-09-06", stage: "reviewing" },
+    "Q-5": { count: 1, next: "2026-09-04", stage: "new" }
+  },
+  cards: {
+    "C-1": { box: 2, due: "2026-09-09", streak: 1, lapses: 0, auto: false, last: "2026-09-08" },
+    "C-2": { box: 1, due: "2026-09-08", streak: 0, lapses: 1, auto: true, last: "2026-09-06" },
+    "C-3": { box: 1, due: "2026-09-05", streak: 0, lapses: 0, auto: true, last: null }
+  },
+  session: { sid: "s-local", mode: "study", idx: 3 },
+  mocks: [{ sid: "m1", date: "2026-09-06", raw: 600 }]
+};
+const IN_BK = {
+  settings: { exam_date: "2026-09-19", track: "regular", device: "mac",
+              last_backup: "2026-09-08T09:00:00", user_accepted: { note: true, extra: true }, schema: 1 },
+  attempts: [att({ qid: "Q-1", at: "2026-09-06T10:00:00" }), att({ qid: "Q-9", at: "2026-09-05T10:00:00" })],
+  mistakes: {
+    "Q-1": { count: 3, last: "2026-09-08", next: "2026-09-09", stage: "reviewing" },
+    "Q-3": { count: 1, last: "2026-09-01", next: "2026-09-02", stage: "new" },
+    "Q-5": { count: 4, next: "2026-09-09", stage: "reviewing" },
+    "Q-7": { count: 1, last: "2026-09-08", next: "2026-09-09", stage: "new" }
+  },
+  cards: {
+    "C-1": { box: 5, due: "2026-09-20", streak: 4, lapses: 0, auto: false, last: "2026-09-07" },
+    "C-2": { box: 3, due: "2026-09-11", streak: 2, lapses: 1, auto: true, last: "2026-09-09" },
+    "C-3": { box: 4, due: "2026-09-12", streak: 2, lapses: 0, auto: false, last: null },
+    "C-9": { box: 1, due: "2026-09-08", streak: 0, lapses: 0, auto: true, last: null }
+  },
+  session: { sid: "s-incoming", mode: "mock", idx: 10 },
+  mocks: [{ sid: "m1", date: "2026-09-06", raw: 600 }, { sid: "m2", date: "2026-09-08", raw: 700 }]
+};
+
+test("mergeBackup(attempts): (qid,at) 합집합을 시간 순으로", () => {
+  const r = C.mergeBackup(LOCAL_BK, IN_BK);
+  assert.deepEqual(r.merged.attempts.map((a) => a.qid), ["Q-9", "Q-1", "Q-2"]);
+  assert.equal(r.stats.attemptsAdded, 1);           // 같은 (qid,at)은 한 번만
+});
+
+test("mergeBackup(mistakes·cards): 항목별 last(없으면 next·due) 더 최근 쪽", () => {
+  const r = C.mergeBackup(LOCAL_BK, IN_BK).merged;
+  assert.equal(r.mistakes["Q-1"].count, 3);         // incoming이 더 최근(09-08)
+  assert.equal(r.mistakes["Q-3"].count, 2);         // local이 더 최근(09-05)
+  assert.equal(r.mistakes["Q-5"].count, 4);         // last 없음 → next로 비교(09-09 > 09-04)
+  assert.equal(r.mistakes["Q-7"].count, 1);         // 새 항목
+  assert.equal(r.cards["C-1"].box, 2);              // local last 09-08 > incoming 09-07
+  assert.equal(r.cards["C-2"].box, 3);              // incoming last 09-09
+  assert.equal(r.cards["C-3"].box, 4);              // last 없음 → due로 비교(09-12 > 09-05)
+  assert.equal(r.cards["C-9"].box, 1);              // 새 항목
+  const st = C.mergeBackup(LOCAL_BK, IN_BK).stats;
+  assert.equal(st.mistakesUpdated, 3);              // Q-1·Q-5 교체 + Q-7 추가
+  assert.equal(st.cardsUpdated, 3);                 // C-2·C-3 교체 + C-9 추가
+});
+
+test("mergeBackup(mocks·settings·session)", () => {
+  const r = C.mergeBackup(LOCAL_BK, IN_BK);
+  assert.deepEqual(r.merged.mocks.map((m) => m.sid), ["m1", "m2"]);
+  assert.equal(r.stats.mocksAdded, 1);
+  assert.equal(r.merged.settings.track, "sprint");            // 나머지는 local 유지
+  assert.equal(r.merged.settings.device, "iphone");
+  assert.equal(r.merged.settings.last_backup, "2026-09-08T09:00:00");   // 더 최근 쪽
+  assert.deepEqual(r.merged.settings.user_accepted, { intro: true, note: true, extra: true });
+  assert.equal(r.merged.session.sid, "s-local");              // 진행 중인 세션은 지키지 않는다 = 안 건드린다
+  const noLocal = C.mergeBackup(Object.assign({}, LOCAL_BK, { session: null }), IN_BK);
+  assert.equal(noLocal.merged.session.sid, "s-incoming");      // local이 없을 때만 incoming
+});
+
+test("mergeBackup: 원본 불변 · 빠진 키도 견딘다", () => {
+  const before = JSON.stringify(LOCAL_BK);
+  const r = C.mergeBackup(LOCAL_BK, IN_BK);
+  assert.equal(JSON.stringify(LOCAL_BK), before);
+  assert.equal(r.merged.mistakes["Q-1"] === IN_BK.mistakes["Q-1"], false);   // 복사본
+  const empty = C.mergeBackup({}, {});
+  assert.deepEqual(empty.merged, { settings: null, attempts: [], mistakes: {}, cards: {}, session: null, mocks: [] });
+  assert.deepEqual(empty.stats, { attemptsAdded: 0, mistakesUpdated: 0, cardsUpdated: 0, mocksAdded: 0 });
+  const onlyIn = C.mergeBackup(null, IN_BK);
+  assert.equal(onlyIn.merged.attempts.length, 2);
+  assert.equal(onlyIn.stats.attemptsAdded, 2);
+  assert.equal(onlyIn.merged.settings.track, "regular");
+  // pl.v1. 접두사가 붙은 백업 파일도 그대로 읽는다
+  const prefixed = C.mergeBackup(LOCAL_BK, { "pl.v1.attempts": IN_BK.attempts, "pl.v1.cards": IN_BK.cards });
+  assert.equal(prefixed.stats.attemptsAdded, 1);
+  assert.equal(prefixed.merged.cards["C-9"].box, 1);
+});
+
+/* ================================================================== *
+ * 20. 암기노트 내보내기 — memoryNoteText
+ * ================================================================== */
+test("memoryNoteText: auto 카드 + 박스③ 이하 카드 + 미졸업 오답 한 줄 암기", () => {
+  const cards = [
+    card({ id: "C-N1", subject: 1, category: "정의", importance: "H",
+           front: "화장품 정의는?", back: "인체를 청결·미화하는 물품", mnemonic: "청결·미화",
+           source: { law: "화장품법 제2조", guide: "4판 p.3", asof: "2026-09", confidence: "high" } }),
+    card({ id: "C-N2", subject: 2, category: "숫자", front: "납 한도는?", back: "20㎍/g 이하", mnemonic: "납 20" }),
+    card({ id: "C-N3", subject: 2, category: "숫자", front: "노트에 안 나오는 카드", back: "박스⑤" }),
+    card({ id: "C-N4", subject: 3, category: "절차", front: "회수 기한은?", back: "15일" }),
+    card({ id: "C-N5", subject: 4, category: "혼합", front: "아직 안 본 카드", back: "상태 없음" })
+  ];
+  const states = {
+    "C-N1": cstate({ box: 1, due: "2026-09-08", last: "2026-09-08", auto: true }),
+    "C-N2": cstate({ box: 3, due: "2026-09-10", last: "2026-09-07" }),
+    "C-N3": cstate({ box: 5, due: "2026-09-20", last: "2026-09-01" }),
+    "C-N4": cstate({ box: 4, due: "2026-09-15", last: "2026-09-02", auto: true })
+  };
+  const questions = [
+    mcq({ id: "Q-N1", subject: 1, memory_sentence: "등록은 제조·책판, 신고는 맞춤형" }),
+    mcq({ id: "Q-N2", subject: 2, memory_sentence: "졸업한 문항은 빠진다" }),
+    mcq({ id: "Q-N3", subject: 2, memory_sentence: "" })
+  ];
+  const mistakes = {
+    "Q-N1": { count: 2, stage: "reviewing", next: "2026-09-09", last: "2026-09-08" },
+    "Q-N2": { count: 1, stage: "graduated", next: null, last: "2026-09-08" },
+    "Q-N3": { count: 1, stage: "new", next: "2026-09-09", last: "2026-09-08" }
+  };
+  const md = C.memoryNoteText(cards, states, questions, mistakes, { todayStr: "2026-09-08", examDate: "2026-09-19" });
+  assert.match(md, /^# PASS LAB 암기노트 — 2026-09-08/);
+  assert.ok(md.indexOf("D-11") !== -1);
+  assert.ok(md.indexOf("화장품 정의는?") !== -1);          // auto·박스①
+  assert.ok(md.indexOf("20㎍/g 이하") !== -1);              // 박스③
+  assert.ok(md.indexOf("회수 기한은?") !== -1);            // 박스④지만 auto
+  assert.equal(md.indexOf("노트에 안 나오는 카드"), -1);   // 박스⑤ · auto 아님
+  assert.equal(md.indexOf("아직 안 본 카드"), -1);         // 상태 없음
+  assert.ok(md.indexOf("등록은 제조·책판, 신고는 맞춤형") !== -1);
+  assert.equal(md.indexOf("졸업한 문항은 빠진다"), -1);    // 졸업 오답 제외
+  assert.ok(md.indexOf("화장품법 제2조") !== -1);          // 근거 조문
+  assert.ok(md.indexOf("청결·미화") !== -1);               // 암기법
+  assert.ok(md.indexOf("① 화장품법의 이해") !== -1);       // 과목별
+  assert.ok(md.indexOf("### 숫자") !== -1);                // 카테고리별
+});
+
+test("memoryNoteText: maxCards 상한 · 박스 낮은 카드부터 · 빈 입력도 문자열", () => {
+  const cards = [], states = {};
+  for (let i = 1; i <= 30; i++) {
+    const id = "C-X" + String(i).padStart(2, "0");
+    cards.push(card({ id: id, subject: (i % 4) + 1, category: "묶음" + (i % 3), front: "앞" + i, back: "뒤" + i }));
+    states[id] = cstate({ box: (i % 3) + 1, due: "2026-09-08", last: "2026-09-08" });
+  }
+  const md = C.memoryNoteText(cards, states, [], {}, { maxCards: 5, todayStr: "2026-09-08" });
+  const lines = md.split("\n").filter((l) => l.indexOf("- ") === 0 && l.indexOf("**") !== -1);
+  assert.equal(lines.length, 5);
+  assert.ok(md.indexOf("카드 5장") !== -1);
+  lines.forEach((l) => { assert.ok(l.indexOf("①") !== -1, "박스① 카드부터: " + l); });
+  const all = C.memoryNoteText(cards, states, [], {}, { todayStr: "2026-09-08" });
+  assert.equal(all.split("\n").filter((l) => l.indexOf("- ") === 0 && l.indexOf("**") !== -1).length, 30);
+  assert.equal(typeof C.memoryNoteText(null, null, null, null, null), "string");
+  assert.ok(C.memoryNoteText([], {}, [], {}, { todayStr: "2026-09-08" }).indexOf("카드 0장") !== -1);
+});
+
+/* 실제 카드 은행(읽기 전용) — 엔진이 통째로 도는지만 본다 --------- */
+let REALC = null;
+function realCards() {
+  if (REALC) return REALC;
+  globalThis.window = globalThis;
+  const dir = nodePath.join(__dirname, "..", "app", "data");
+  nodeFs.readdirSync(dir).filter((f) => /^c_.*\.js$/.test(f)).sort()
+    .forEach((f) => require(nodePath.join(dir, f)));
+  REALC = (globalThis.window.PL_CARDS || []).slice();
+  return REALC;
+}
+
+test("실제 카드 은행: 카드 엔진이 전부 돈다(데이터는 읽기만)", () => {
+  const cards = realCards();
+  assert.ok(cards.length > 0, "카드 은행이 비었다");
+  const t = "2026-09-08", ctx = { track: "sprint", examDate: "2026-09-19" };
+  const first = C.dueCards(cards, {}, t);
+  assert.equal(first.due.length, 0);
+  assert.equal(first.fresh.length, cards.length);          // 상태가 없으면 전부 새 카드
+  assert.equal(C.cardBoxSummary({}, cards, t).unseen, cards.length);
+  const states = {};
+  cards.forEach((c, i) => {
+    const rating = ["again", "hard", "good"][i % 3];
+    states[c.id] = C.reviewCard(states[c.id], rating, t, ctx);
+    assert.ok(states[c.id].box >= 1 && states[c.id].box <= 5, c.id);
+    assert.match(states[c.id].due, /^\d{4}-\d{2}-\d{2}$/);
+  });
+  const sum = C.cardBoxSummary(states, cards, t);
+  assert.equal(sum.boxes[1] + sum.boxes[2] + sum.boxes[3] + sum.boxes[4] + sum.boxes[5] + sum.unseen, cards.length);
+  assert.equal(sum.total, cards.length);
+  assert.equal(typeof C.memoryNoteText(cards, states, [], {}, { todayStr: t, examDate: "2026-09-19" }), "string");
+});
