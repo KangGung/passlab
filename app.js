@@ -113,6 +113,11 @@ var S = {
   study: { subject: "", topic: "", type: "all", mode: "new", n: 10 },
   mfilter: { stage: "all", subject: "", shortOnly: false },
   openMistake: null,
+  // 암기카드
+  cardFilter: { subject: "", category: "", onlyAuto: false },
+  cardRun: null,                  // 진행 중 카드 세션(카드 상태는 매장 즉시 pl.v1.cards에 저장)
+  cardListOpen: false,            // 카드 홈 · 내 메모리 노트 목록 펼침
+  importMode: "overwrite",        // 가져오기 방식 — 덮어쓰기 | 병합
   importPreview: null, importStage: 0,
   resetStage: 0,
   dataCheck: null,
@@ -170,6 +175,7 @@ function rebuildAttIndex() {
 function saveSettings() { Store.set("settings", S.settings); }
 function saveAttempts() { Store.set("attempts", S.attempts); }
 function saveMistakes() { Store.set("mistakes", S.mistakes); }
+function saveCards() { Store.set("cards", S.cardState); }
 function saveSession() {
   var Q = S.quiz;
   if (!Q) return;
@@ -325,7 +331,8 @@ function render(opts) {
     case "mock": html = viewMockSetup(); break;
     case "mockexam": html = viewMockExam(); break;
     case "mockresult": html = viewMockResult(); break;
-    case "cards": html = viewLocked("암기카드", "암기카드는 9/8부터 열립니다."); break;
+    case "cards": html = viewCardsHome(); break;
+    case "cardrun": html = viewCardRun(); break;
     case "settings": html = viewSettings(); break;
     default: html = viewHome();
   }
@@ -374,23 +381,30 @@ var TABS = [
   { id: "study", screens: ["study", "quiz", "summary"] },
   { id: "mock", screens: ["mock", "mockexam", "mockresult"] },
   { id: "mistakes", screens: ["mistakes"] },
-  { id: "cards", screens: ["cards"] },
+  { id: "cards", screens: ["cards", "cardrun"] },
   { id: "settings", screens: ["settings"] }
 ];
 function renderTabs() {
-  var due = C.dueMistakes(S.mistakes, todayStr()).length;
+  var t = todayStr();
+  // 만기가 있는 탭에만 빨간 점 — 오답·카드
+  var dots = {
+    mistakes: C.dueMistakes(S.mistakes, t).length,
+    cards: S.cards.length ? C.dueCards(S.cards, S.cardState, t, { limit: false }).due.length : 0
+  };
   var btns = el("tabbar").querySelectorAll("button[data-tab]");
   for (var i = 0; i < btns.length; i++) {
     var id = btns[i].getAttribute("data-tab");
     var tab = TABS.filter(function (x) { return x.id === id; })[0];
     var on = tab && tab.screens.indexOf(S.screen) !== -1;
     btns[i].classList.toggle("on", !!on);
-    if (id === "mistakes") {
+    if (dots[id] !== undefined) {
+      var n = dots[id];
       var dot = btns[i].querySelector(".dot");
-      if (due > 0 && !dot) {
+      if (n > 0 && !dot) {
         dot = document.createElement("span"); dot.className = "dot";
-        dot.setAttribute("title", "만기 " + due + "개"); btns[i].appendChild(dot);
-      } else if (due === 0 && dot) { dot.parentNode.removeChild(dot); }
+        btns[i].appendChild(dot);
+      } else if (n === 0 && dot) { dot.parentNode.removeChild(dot); dot = null; }
+      if (dot) dot.setAttribute("title", "만기 " + n + "개");
     }
   }
 }
@@ -434,14 +448,17 @@ function viewHome() {
   // 예상 점수 · READINESS
   h += viewExpectedCard();
 
-  // 오늘 할 일
+  // 오늘 할 일 (카드 칸은 실제 만기·상한 — 누르면 카드 홈)
+  var hc = cardPlan(plan.cards, null);
   h += '<div class="card"><h2>오늘 할 일 · 하루 ' + esc(String(st.daily_minutes)) + '분</h2>' +
        '<div class="todo">' +
        '<div class="t"><b>' + plan.newQ + '</b><span>새 문제</span></div>' +
        '<div class="t"><b>' + plan.review + '</b><span>복습 만기</span></div>' +
-       '<div class="t"><em>9/8부터</em><span>암기카드</span></div>' +
+       '<button type="button" class="t" data-act="goto" data-screen="cards"><b>' + hc.queue.length +
+       '</b><span>암기카드 →</span></button>' +
        '</div>' +
-       '<p class="small muted mt">만기 오답 ' + due.length + '개 · 학습 국면 ' + esc(plan.phase) + '</p>' +
+       '<p class="small muted mt">만기 오답 ' + due.length + '개 · 카드 만기 ' + hc.due.length + '장 · 안 본 카드 ' +
+       hc.fresh.length + '장 · 오늘 카드 상한 ' + plan.cards + '장 · 학습 국면 ' + esc(plan.phase) + '</p>' +
        '<hr class="rule"><p class="small muted">짧게 치고 빠지기 — 약한 곳·복습 만기·새 문항을 섞어 냅니다(해설 바로 나옴)</p>' +
        '<div class="acts"><button class="btn" data-act="quick" data-n="10">QUICK 10</button>' +
        '<button class="btn" data-act="quick" data-n="20">QUICK 20</button></div>' +
@@ -463,10 +480,10 @@ function viewHome() {
   // 최근 모의고사
   h += viewRecentMocks();
 
-  // 과목 숙달도
-  h += '<div class="card"><h2>과목별 숙달도 · 빨간 선 = 과락 40%</h2>';
+  // 과목 숙달도 (암기카드 '모름'을 반영한 값 — …WithCards)
+  h += '<div class="card"><h2>과목별 숙달도 · 빨간 선 = 과락 40% · 카드 모름 반영</h2>';
   (BP.subjects || []).forEach(function (s) {
-    var d = C.subjectMasteryDetail(s.id, TOPICS, S.questions, S.attByQid, t);
+    var d = C.subjectMasteryDetailWithCards(s.id, TOPICS, S.questions, S.attByQid, t, S.cardState);
     var v = d.value == null ? 0 : d.value;
     var cls = d.measuring ? "est" : (v >= 60 ? "good" : (v >= 40 ? "warn" : "bad"));
     h += '<div class="subj"><div class="top">' +
@@ -481,7 +498,7 @@ function viewHome() {
 
   // 약한 세부항목 3개
   var weak = S.subs.map(function (tp) {
-    var tm = C.topicMastery(tp.id, S.questions, S.attByQid, t);
+    var tm = C.topicMasteryWithCards(tp.id, S.questions, S.attByQid, t, S.cardState);
     return { id: tp.id, name: tp.name, subject: tp.subject, v: tm.value, n: tm.n };
   }).filter(function (x) { return x.n >= 1; })
     .sort(function (a, b) { return a.v - b.v; })
@@ -780,6 +797,15 @@ function viewStudySetup() {
   var h = "";
   h += resumeBannerHTML(Store.get("session", null), " 새로 시작하면 지워집니다.");
 
+  // 프리셋 3종 — 문항을 먼저 풀고, 끝나면 연결 암기카드로 이어진다
+  h += '<div class="card"><h2>프리셋 · 누르면 바로 시작</h2><div class="presets">';
+  ["weakness", "lawnum", "today"].forEach(function (k) {
+    var p = C.PRESETS[k];
+    h += '<button type="button" class="btn" data-act="preset" data-p="' + k + '">' +
+         '<b>' + esc(p.name) + '</b><span>' + esc(p.ko + " · " + p.desc) + '</span></button>';
+  });
+  h += '</div><p class="small muted mt">문항을 먼저 풀고, 끝나면 연결 암기카드로 이어집니다.</p></div>';
+
   h += '<div class="card"><h2>무엇을 풀까요?</h2><div class="fields">';
   h += '<div class="field"><label for="f-sub">과목</label><select id="f-sub" data-f="subject">' +
        '<option value=""' + (st.subject === "" ? " selected" : "") + '>전체</option>';
@@ -825,16 +851,29 @@ function opt(v, label, cur) {
 function viewSummary() {
   var m = S.summary;
   if (!m) { S.screen = "study"; return viewStudySetup(); }
+  var pr = m.preset || {};
   var h = '<h2 style="font-size:22px;margin:14px 0 8px">' + (m.mode === "diag" ? "진단" : "학습") + ' 끝</h2>';
-  h += '<div class="card"><div class="todo">' +
+  h += '<div class="card">' +
+       (pr.kind === "preset"
+          ? '<p class="small mb">프리셋 — <b>' + esc(pr.label) + '</b> ' + esc(pr.ko) +
+            ((pr.topics && pr.topics.length)
+               ? '<br><span class="muted">집중 세부항목 ' + esc(pr.topics.map(topicLabel).join(" · ")) + '</span>' : "") + '</p>'
+          : "") +
+       '<div class="todo">' +
        '<div class="t"><b>' + m.n + '</b><span>푼 문항</span></div>' +
        '<div class="t"><b>' + m.correct + '</b><span>정답</span></div>' +
        '<div class="t"><b>' + m.added + '</b><span>오답노트 편입</span></div>' +
        '</div><p class="small muted mt">걸린 시간 ' + esc(fmtDur(m.sec)) +
-       ' · 정답률 ' + (m.n ? Math.round(m.correct * 100 / m.n) : 0) + '%</p>' +
+       ' · 정답률 ' + (m.n ? Math.round(m.correct * 100 / m.n) : 0) + '%' +
+       (m.cards ? ' · 연결 암기카드 ' + m.cards + '장이 내 메모리 노트에 담겼습니다' : "") + '</p>' +
        mixText(m.preset) + '</div>';
+  if (pr.kind === "preset" && pr.cids && pr.cids.length) {
+    h += '<button class="btn primary big" data-act="preset-cards">이어서 암기카드 ' + pr.cids.length + '장 보기</button>' +
+         '<p class="small muted center mt">프리셋은 문항 → 카드 순서입니다.</p>';
+  }
   h += '<div class="acts">' +
-       '<button class="btn primary" data-act="study-more">계속 10문항</button>' +
+       '<button class="btn' + (pr.kind === "preset" && pr.cids && pr.cids.length ? "" : " primary") +
+       '" data-act="study-more">계속 10문항</button>' +
        '<button class="btn" data-act="goto" data-screen="mistakes">오답노트</button>' +
        '<button class="btn ghost" data-act="go-home">홈</button></div>';
   return h;
@@ -906,6 +945,17 @@ function viewMistakes() {
            esc(last ? givenText(q, last.given) : "기록 없음") + '</div>' +
            '<div class="real"><small>정답</small>' + esc(answerText(q)) + '</div></div>';
       if (q.memory_sentence) h += '<div class="ex memory"><h4>한 줄 암기</h4><p>' + esc(q.memory_sentence) + '</p></div>';
+      // 연결된 암기카드의 지금 상태(박스·내 메모리 노트)
+      var lcs = (q.cards || []).map(function (cid) { return S.byCid[cid]; }).filter(Boolean);
+      if (lcs.length) {
+        h += '<div class="ex flash"><h4>연결된 암기카드 ' + lcs.length + '장</h4><ul class="list">';
+        lcs.forEach(function (c) {
+          h += '<li><span class="l">' + esc(oneLine(c.front, 54)) + '</span>' +
+               '<span class="r">' + cardChips(c.id) + '</span></li>';
+        });
+        h += '</ul><div class="acts"><button class="btn sm" data-act="card-of-q" data-qid="' + esc(r.qid) +
+             '">이 카드들 바로 보기</button></div></div>';
+      }
       // 연결 카드에 그림이 있으면 그림만 보여준다(그림 없는 카드는 지금까지와 동일하게 아무것도 안 나온다)
       var figs = (q.cards || []).map(function (cid) { return S.byCid[cid]; })
                   .filter(Boolean).map(function (c) { return figureBox(c); }).filter(Boolean);
@@ -1334,9 +1384,27 @@ function figureBox(c, label) {
          '<div class="fig">' + svg + '</div></details>';
 }
 
-/* 연결 카드 한 장: 앞면 → (그림) → 뒷면 → 암기법 */
+/* 카드 한 장의 지금 상태 칩 — 박스 / 내 메모리 노트 */
+var BOXM = ["①", "②", "③", "④", "⑤"];
+function cardBoxLabel(s) {
+  return BOXM[clamp(Math.round(Number(s.box) || 1), 1, 5) - 1];
+}
+function cardChips(cid) {
+  var s = S.cardState[cid];
+  var out = "";
+  if (s && s.auto === true) {
+    out += '<span class="chip amber" title="틀린 문항(또는 찍어서 맞힌 문항)에 연결돼 담긴 카드">내 메모리 노트에 담김</span>';
+  }
+  out += (s && s.due)
+    ? '<span class="chip">박스 ' + cardBoxLabel(s) + '</span>'
+    : '<span class="chip gray">안 본 카드</span>';
+  return out;
+}
+
+/* 연결 카드 한 장: 앞면 → 상태 칩 → (그림) → 뒷면 → 암기법 */
 function cardBlock(c) {
   return '<p class="f">' + esc(c.front) + '</p>' +
+         '<div class="row mb">' + cardChips(c.id) + '</div>' +
          figureBox(c) +
          '<p class="b">→ ' + esc(c.back) + '</p>' +
          (c.mnemonic ? '<p class="small muted">' + esc(c.mnemonic) + '</p>' : "");
@@ -1682,6 +1750,7 @@ function finishMock(auto) {
     S.attempts.push(att);
     var m = C.applyAttemptToMistake(S.mistakes[qid] || null, att, q, mctx());
     if (m) S.mistakes[qid] = m;               // null이면 바꾸지 않는다
+    if (!correct || att.conf === 0) enrollCards(q);       // 연결 카드 자동 편입
   });
   saveAttempts(); saveMistakes(); rebuildAttIndex();
 
@@ -1768,12 +1837,411 @@ function autoSubmitExpiredMock() {
   return true;
 }
 
-/* ---------------- 잠금 화면 ---------------- */
-function viewLocked(title, msg) {
-  return '<div class="locked"><div class="lk">준비 중</div><h3>' + esc(title) + '</h3>' +
-         '<p>' + esc(msg) + '</p>' +
-         '<p class="small">지금은 홈·학습·오답노트로 공부해 주세요.</p>' +
-         '<div class="acts" style="justify-content:center"><button class="btn narrow" data-act="go-home">홈으로</button></div></div>';
+/* ================================================================
+ * 5-C. 암기카드 — 카드 홈 · 카드 세션
+ *   박스·만기·하루 상한·자동 편입 계산은 전부 core.js가 한다.
+ *   여기서는 화면과 pl.v1.cards 저장, 그리고 "모름 카드 세션 끝 재노출"만 맡는다.
+ * ================================================================ */
+var CARD_RATES = [["again", "모름"], ["hard", "애매"], ["good", "알아요"]];
+var NOTE_MAX_CARDS = 60;          // memoryNoteText 기본값과 같게 — 화면 문구에 쓴다
+var NOTE_MAX_SENTS = 40;
+
+/* 오늘 할 일 배분(문항·오답·카드) — 카드 화면에서 하루 상한을 구할 때 쓴다 */
+function todayPlan() {
+  var t = todayStr();
+  return C.dailyPlan(S.settings.daily_minutes, C.dday(S.settings.exam_date, t),
+                     C.dueMistakes(S.mistakes, t).length);
+}
+/* 화면 필터 → core가 아는 filter 객체 */
+function cardFilterObj() {
+  var f = S.cardFilter;
+  return {
+    subject: f.subject === "" ? null : Number(f.subject),
+    category: f.category === "" ? null : f.category,
+    onlyAuto: f.onlyAuto === true
+  };
+}
+function cardFilterOn() {
+  var f = S.cardFilter;
+  return f.subject !== "" || f.category !== "" || f.onlyAuto === true;
+}
+/* 오늘 낼 카드 — 순서·상한은 core.dueCards가 정한다(여기서 다시 계산하지 않는다).
+   limit 생략 = 하루 상한, filter 생략 = 화면 필터, null = 필터 없음 */
+function cardPlan(limit, filter) {
+  return C.dueCards(S.cards, S.cardState, todayStr(), {
+    filter: (filter === undefined) ? cardFilterObj() : filter,
+    limit: (limit === undefined) ? todayPlan().cards : limit
+  });
+}
+/* 화면에 보여줄 카드만 골라낸다(표시용 — 과목·카테고리·내 메모리 노트만) */
+function cardsForScreen() {
+  var f = cardFilterObj();
+  return S.cards.filter(function (c) {
+    if (f.subject != null && Number(c.subject) !== f.subject) return false;
+    if (f.category != null && String(c.category || "") !== f.category) return false;
+    if (f.onlyAuto) { var s = S.cardState[c.id]; if (!(s && s.auto === true)) return false; }
+    return true;
+  });
+}
+/* 오늘 이미 본 카드 수 — 하루 상한을 넘기지 않으려고 센다(새 저장 키 없이 last로 판단) */
+function cardsSeenToday() {
+  var t = todayStr(), n = 0;
+  Object.keys(S.cardState).forEach(function (cid) {
+    var s = S.cardState[cid];
+    if (s && s.last === t) n += 1;
+  });
+  return n;
+}
+function memoryNote() {
+  return C.memoryNoteText(S.cards, S.cardState, S.questions, S.mistakes, {
+    todayStr: todayStr(), examDate: S.settings.exam_date, blueprint: BP,
+    maxCards: NOTE_MAX_CARDS, maxSentences: NOTE_MAX_SENTS
+  });
+}
+
+/* ---------------- 카드 홈 ---------------- */
+function viewCardsHome() {
+  var t = todayStr();
+  var dd = C.dday(S.settings.exam_date, t);
+  var plan = todayPlan();
+  var limit = plan.cards;
+  var list = cardsForScreen();
+  var sum = C.cardBoxSummary(S.cardState, list, t);
+  var dc = cardPlan(limit);
+  var n = dc.queue.length;
+  var h = "";
+
+  if (!S.cards.length) {
+    return '<div class="card"><h2>암기카드</h2>' +
+           '<p class="small">카드 데이터를 읽지 못했습니다. app/data 폴더와 manifest.js를 확인해 주세요.</p></div>';
+  }
+
+  // D-3부터 마무리 규칙
+  if (dd != null && dd <= 3) {
+    h += '<div class="banner red"><span><b>' + esc(ddayText(dd)) + ' 마무리 규칙</b> — 매일 박스 ①~③ 전부 보고, ' +
+         '박스 ④⑤는 D-1에 한 번만 봅니다.</span></div>';
+  }
+
+  // 오늘 요약
+  h += '<div class="card"><h2>오늘 암기카드</h2><div class="todo">' +
+       '<div class="t"><b>' + dc.due.length + '</b><span>오늘 만기</span></div>' +
+       '<div class="t"><b>' + dc.fresh.length + '</b><span>새 카드</span></div>' +
+       '<div class="t"><b>' + sum.autoCount + '</b><span>내 메모리 노트</span></div>' +
+       '</div>' +
+       '<p class="small muted mt">오늘 상한 ' + limit + '장 (하루 ' + esc(String(S.settings.daily_minutes)) +
+       '분 · 국면 ' + esc(plan.phase) + ') · 오늘 본 카드 ' + cardsSeenToday() + '장' +
+       (cardFilterOn() ? ' · 아래 숫자는 고른 조건 기준입니다' : "") + '</p></div>';
+
+  // 박스 분포
+  var mx = 1;
+  [1, 2, 3, 4, 5].forEach(function (i) { if (sum.boxes[i] > mx) mx = sum.boxes[i]; });
+  h += '<div class="card"><h2>박스 분포 · ①이 가장 약한 카드</h2><div class="boxdist">';
+  [1, 2, 3, 4, 5].forEach(function (i) {
+    var v = sum.boxes[i];
+    h += '<div class="bx"><b>' + v + '</b>' +
+         '<div class="col"><i style="height:' + (v ? Math.max(8, Math.round(v * 100 / mx)) : 0) + '%"></i></div>' +
+         '<span>' + BOXM[i - 1] + '</span></div>';
+  });
+  var iv = C.CARD_INTERVALS[S.settings.track] || C.CARD_INTERVALS.sprint;
+  h += '</div><p class="small muted mt">안 본 카드 ' + sum.unseen + '장 · 카드 ' + sum.total + '장' +
+       (cardFilterOn() ? ' (전체 ' + S.cards.length + '장 중)' : "") + '</p>' +
+       '<p class="tiny muted">알아요를 누르면 다음에 볼 때까지 — ' +
+       iv.map(function (d, i) { return BOXM[i] + " " + d + "일"; }).join(" · ") + '</p></div>';
+
+  // 필터
+  var cats = {};
+  S.cards.forEach(function (c) {
+    if (S.cardFilter.subject !== "" && String(c.subject) !== String(S.cardFilter.subject)) return;
+    var k = String(c.category || "");
+    if (k) cats[k] = (cats[k] || 0) + 1;
+  });
+  h += '<div class="card"><h2>골라 보기</h2><div class="fields">' +
+       '<div class="field"><label for="c-sub">과목</label><select id="c-sub" data-cf="subject">' +
+       '<option value=""' + (S.cardFilter.subject === "" ? " selected" : "") + '>전체</option>';
+  (BP.subjects || []).forEach(function (s) {
+    h += '<option value="' + s.id + '"' + (String(S.cardFilter.subject) === String(s.id) ? " selected" : "") + '>' +
+         esc(s.id + ". " + s.short_name) + '</option>';
+  });
+  h += '</select></div>' +
+       '<div class="field"><label for="c-cat">카테고리</label><select id="c-cat" data-cf="category">' +
+       '<option value=""' + (S.cardFilter.category === "" ? " selected" : "") + '>전체</option>';
+  Object.keys(cats).sort().forEach(function (k) {
+    h += '<option value="' + esc(k) + '"' + (S.cardFilter.category === k ? " selected" : "") + '>' +
+         esc(oneLine(k, 28)) + ' (' + cats[k] + ')</option>';
+  });
+  h += '</select></div>' +
+       '<div class="field"><label class="check"><input type="checkbox" data-cf="onlyAuto"' +
+       (S.cardFilter.onlyAuto ? " checked" : "") + '> 내 메모리 노트만</label></div>' +
+       '</div></div>';
+
+  // 시작 버튼
+  h += '<button class="btn primary big" data-act="card-start"' + (n ? "" : " disabled") + '>' +
+       '오늘 카드 시작 (' + n + '장)</button>';
+  h += n
+    ? '<p class="small muted center mt">만기 카드를 먼저 내고, 남으면 새 카드를 채웁니다.</p>'
+    : '<p class="small muted center mt">지금 낼 카드가 없습니다. 조건을 바꾸거나 내일 다시 오세요.</p>';
+
+  h += '<div class="acts">' +
+       '<button class="btn' + (S.cardListOpen ? " on" : "") + '" data-act="card-list">내 메모리 노트 보기 (' +
+       sum.autoCount + ')</button>' +
+       '<button class="btn" data-act="note-export">암기노트 한 장 내보내기</button>' +
+       '<button class="btn ghost narrow" data-act="note-copy">복사</button></div>' +
+       '<p class="small muted">암기노트 = 약한 카드(박스 ①~③·내 메모리 노트) 최대 ' + NOTE_MAX_CARDS +
+       '장 + 아직 졸업 못 한 오답의 한 줄 암기 최대 ' + NOTE_MAX_SENTS + '개를 마크다운 한 장으로 묶습니다.</p>';
+
+  // 내 메모리 노트 목록
+  if (S.cardListOpen) {
+    var autos = list.filter(function (c) {
+      var s = S.cardState[c.id];
+      return s && s.auto === true;
+    });
+    var af = cardFilterObj();
+    af.onlyAuto = true;
+    var aq = C.dueCards(S.cards, S.cardState, t, { filter: af, limit: limit });
+    h += '<div class="card"><h2>내 메모리 노트 · 틀린 문항(찍어서 맞힌 문항)에 연결돼 담긴 카드</h2>';
+    if (!autos.length) {
+      h += '<p class="small muted">아직 담긴 카드가 없습니다. 문제를 틀리거나 찍어서 맞히면 그 문항에 연결된 ' +
+           '카드가 자동으로 여기 들어옵니다.</p>';
+    } else {
+      h += '<button class="btn" data-act="card-start-auto"' + (aq.queue.length ? "" : " disabled") + '>' +
+           '이 카드들로 시작 (' + aq.queue.length + '장)</button><ul class="list mt">';
+      autos.slice(0, 50).forEach(function (c) {
+        var s = S.cardState[c.id] || {};
+        h += '<li><span class="l">' + esc(oneLine(c.front, 58)) +
+             '<br><span class="tiny muted">' + esc(subjectOf(c.subject).short_name) +
+             (c.category ? ' · ' + esc(oneLine(c.category, 22)) : "") + '</span></span>' +
+             '<span class="r">' + (s.due ? '<span class="chip">박스 ' + cardBoxLabel(s) + '</span>' : "") +
+             ' <span class="tiny muted">만기 ' + esc(s.due === t ? "오늘" : (s.due || "-")) + '</span></span></li>';
+      });
+      h += '</ul>';
+      if (autos.length > 50) h += '<p class="tiny muted">외 ' + (autos.length - 50) + '장</p>';
+    }
+    h += '</div>';
+  }
+
+  // 복사가 막힌 브라우저용 — 직접 복사할 글
+  if (S.claudeText) {
+    h += '<div class="card"><h2>복사가 막혔습니다 — 아래 글을 직접 복사하세요</h2>' +
+         '<textarea style="min-height:200px" readonly>' + esc(S.claudeText) + '</textarea></div>';
+  }
+  return h;
+}
+
+/* ---------------- 카드 세션 ---------------- */
+function viewCardRun() {
+  var R = S.cardRun;
+  if (!R || !R.cids.length) { S.screen = "cards"; return viewCardsHome(); }
+  if (R.done) return viewCardEnd(R);
+
+  var total = R.cids.length;
+  var cid = R.cids[R.idx];
+  var c = S.byCid[cid];
+  var h = '<div class="qhead">' +
+          '<span class="chip ink">' + esc(R.label) + '</span>' +
+          (R.idx >= R.baseN ? '<span class="chip amber">다시 보기 · 모름 카드</span>' : "") +
+          '<span class="qcount">' + (R.idx + 1) + '/' + total + '</span></div>' +
+          '<div class="prog"><i style="width:' + ((R.idx + (R.flipped ? 1 : 0.5)) * 100 / total).toFixed(1) + '%"></i></div>';
+
+  if (!c) {
+    return h + '<div class="card"><p>카드 ' + esc(cid) + '을(를) 찾지 못했습니다(데이터가 바뀐 것 같습니다).</p>' +
+           '<div class="acts"><button class="btn" data-act="card-skip">다음 카드</button>' +
+           '<button class="btn ghost narrow" data-act="card-quit">그만하기</button></div></div>';
+  }
+
+  h += '<div class="cardface' + (R.flipped ? " open" : "") + '" data-act="card-flip" role="button" tabindex="0"' +
+       ' aria-label="카드 뒤집기">' +
+       '<div class="row">' +
+       '<span class="chip">' + esc(subjectOf(c.subject).short_name) + '</span>' +
+       (c.category ? '<span class="chip gray">' + esc(oneLine(c.category, 20)) + '</span>' : "") +
+       cardChips(c.id) +
+       '</div>' +
+       '<p class="f">' + esc(c.front) + '</p>' +
+       (R.flipped ? "" : '<p class="small muted mt">카드를 눌러 뒤집기</p>') +
+       '</div>';
+
+  if (R.flipped) {
+    h += '<div class="card cback">' +
+         figureBox(c) +
+         '<p class="b">' + esc(c.back) + '</p>' +
+         (c.mnemonic ? '<div class="ex memory mt"><h4>암기법</h4><p>' + esc(c.mnemonic) + '</p></div>' : "") +
+         '<p class="tiny muted">근거 ' + esc(sourceText(c)) + '</p>' +
+         '</div>';
+  }
+
+  h += '<button class="btn big' + (R.flipped ? " ghost" : " primary") + '" data-act="card-flip">' +
+       (R.flipped ? "앞면만 보기" : "뒤집기") + '</button>';
+  h += '<div class="confrow mt">';
+  CARD_RATES.forEach(function (r) {
+    h += '<button type="button" class="btn ' + r[0] + '" data-act="card-rate" data-r="' + r[0] + '"' +
+         (R.flipped ? "" : " disabled") + '>' + r[1] + '</button>';
+  });
+  h += '</div>';
+  h += R.flipped
+    ? '<p class="tiny muted center mt">모름 = 박스①로 내려가고 이 세션 끝에 한 번 더 · 애매 = 박스 유지, 내일 · 알아요 = 다음 박스</p>'
+    : '<p class="small muted center mt">먼저 뒤집어서 답을 확인하세요. 답을 본 뒤에만 고를 수 있습니다.</p>';
+  h += '<div class="acts"><button class="btn ghost narrow" data-act="card-quit">그만하기</button></div>' +
+       '<p class="tiny muted center">고른 결과는 카드마다 바로 저장됩니다.</p>';
+  return h;
+}
+
+/* 세션 끝 요약 */
+function viewCardEnd(R) {
+  var t = todayStr();
+  var seen = Object.keys(R.seen);
+  var dues = [];
+  seen.forEach(function (cid) {
+    var s = S.cardState[cid];
+    if (s && s.due) dues.push(s.due);
+  });
+  dues.sort();
+  var nextDue = dues.length ? dues[0] : null;
+  var nextN = nextDue ? dues.filter(function (d) { return d === nextDue; }).length : 0;
+  var left = Math.max(0, todayPlan().cards - cardsSeenToday());
+  var more = nextCardBatch(Math.min(10, left), R.seen);
+  var h = '<h2 style="font-size:22px;margin:14px 0 8px">암기카드 끝 · ' + esc(R.label) + '</h2>';
+
+  h += '<div class="card"><div class="todo">' +
+       '<div class="t"><b>' + R.counts.again + '</b><span>모름</span></div>' +
+       '<div class="t"><b>' + R.counts.hard + '</b><span>애매</span></div>' +
+       '<div class="t"><b>' + R.counts.good + '</b><span>알아요</span></div>' +
+       '</div>' +
+       '<p class="small muted mt">본 카드 ' + seen.length + '장 · 걸린 시간 ' +
+       esc(fmtDur(((R.endedAt || Date.now()) - R.startedAt) / 1000)) +
+       (nextDue ? ' · 다음 만기 ' + esc(nextDue === t ? "오늘" : nextDue) + ' ' + nextN + '장' : "") + '</p>' +
+       (R.counts.again ? '<p class="small">모름 ' + R.counts.again +
+          '장은 박스①로 내려갔습니다. 오늘 안에 한 번 더 보면 좋습니다.</p>' : "") +
+       '</div>';
+
+  h += '<div class="acts">' +
+       '<button class="btn primary" data-act="card-more"' + (more.length ? "" : " disabled") + '>계속 ' +
+       (more.length ? more.length + "장" : "10장") + '</button>' +
+       '<button class="btn" data-act="goto" data-screen="cards">카드 홈</button>' +
+       '<button class="btn ghost" data-act="go-home">홈</button></div>';
+  if (!more.length) {
+    h += '<p class="small muted center mt">' +
+         (left ? "지금 더 낼 카드가 없습니다." : "오늘 카드 상한 " + todayPlan().cards + "장을 다 채웠습니다.") + '</p>';
+  }
+  return h;
+}
+
+/* 다음 묶음 — 순서는 core가 준 queue를 그대로 쓰고, 이번에 본 카드만 뺀다 */
+function nextCardBatch(n, exclude) {
+  if (n <= 0) return [];
+  var out = [];
+  cardPlan(false).queue.forEach(function (cid) {
+    if (out.length >= n) return;
+    if (exclude && exclude[cid]) return;
+    out.push(cid);
+  });
+  return out;
+}
+
+function startCardRun(cids, label) {
+  var seen = {};
+  var list = (cids || []).filter(function (cid) {
+    if (!cid || seen[cid] || !S.byCid[cid]) return false;
+    seen[cid] = true;
+    return true;
+  });
+  if (!list.length) { toast("낼 카드가 없습니다."); return false; }
+  S.cardRun = {
+    cids: list, baseN: list.length, idx: 0, flipped: false, done: false,
+    counts: { again: 0, hard: 0, good: 0 }, retried: {}, seen: {},
+    label: label || "오늘 카드", startedAt: Date.now(), endedAt: null
+  };
+  S.claudeText = null;
+  S.screen = "cardrun";
+  render({ top: true });
+  return true;
+}
+
+function advanceCard() {
+  var R = S.cardRun;
+  if (!R) return;
+  R.idx += 1;
+  R.flipped = false;
+  if (R.idx >= R.cids.length) { R.done = true; R.endedAt = Date.now(); }
+  render({ top: true });
+}
+
+/* 카드 채점 — 새 상태는 core.reviewCard가 만들고, 저장은 pl.v1.cards 한 곳 */
+function rateCard(rating) {
+  var R = S.cardRun;
+  if (!R || R.done || !R.flipped) return;
+  var cid = R.cids[R.idx];
+  if (!S.byCid[cid]) { advanceCard(); return; }
+  var next;
+  try { next = C.reviewCard(S.cardState[cid] || null, rating, todayStr(), mctx()); }
+  catch (e) { toast("카드를 채점하지 못했습니다."); return; }
+  S.cardState[cid] = next;
+  saveCards();
+  R.counts[rating] = (R.counts[rating] || 0) + 1;
+  R.seen[cid] = true;
+  // 모름 카드는 이 세션 끝에 한 번 더(스프린트 박스① 간격 0일) — 두 번은 붙이지 않는다
+  if (rating === "again" && !R.retried[cid]) { R.retried[cid] = true; R.cids.push(cid); }
+  advanceCard();
+}
+
+/* 오답·찍음 정답이면 연결 카드를 내 메모리 노트로 편입한다.
+   오답 판정은 부르는 쪽(채점 직후)이 한다 — core는 시도를 보지 않는다. */
+function enrollCards(q) {
+  if (!q) return 0;
+  var before = S.cardState;
+  var r = C.enrollCardsForMistake(q, S.cards, before, todayStr());
+  if (!r.enrolled.length) return 0;
+  // 화면에 셀 때는 "이번에 새로 담긴 카드"만 센다(이미 담겨 있던 카드는 두 번 세지 않는다)
+  var fresh = r.enrolled.filter(function (cid) {
+    var s = before[cid];
+    return !(s && s.auto === true);
+  }).length;
+  S.cardState = r.states;
+  saveCards();
+  return fresh;
+}
+
+/* ---------------- 프리셋 3종 ---------------- */
+function startPreset(name) {
+  if (!C.PRESETS[name]) { toast("모르는 프리셋입니다."); return; }
+  var t = todayStr();
+  var plan = todayPlan();
+  var meta = C.PRESETS[name];
+  var cardLimit = (meta.cards == null) ? plan.cards : Math.min(plan.cards, meta.cards);
+  var p;
+  try {
+    p = C.buildPreset(name, {
+      questions: S.questions, cards: S.cards, topics: TOPICS,
+      attemptsByQid: S.attByQid, mistakes: S.mistakes, cardStates: S.cardState,
+      todayStr: t, rng: C.seededRandom(Date.now() >>> 0),
+      // 프리셋 기본 개수(15)를 넘지 않고, 오늘 배분이 더 적으면 그만큼만
+      n: Math.max(1, Math.min((name === "today") ? plan.review : plan.newQ, meta.n)),
+      cardLimit: cardLimit
+    });
+  } catch (e) { toast("프리셋을 만들지 못했습니다."); return; }
+
+  var preset = {
+    kind: "preset", name: p.name, label: p.label, ko: p.ko,
+    cids: p.cids, topics: p.topics, mode: "mixed"
+  };
+  if (!p.qids.length && !p.cids.length) {
+    toast(p.label + " — 지금 낼 문항도 카드도 없습니다.");
+    return;
+  }
+  if (!p.qids.length) {                       // 문항이 없으면 카드부터
+    toast(p.label + " — 문항이 없어 카드만 봅니다.");
+    startCardRun(p.cids, p.ko);
+    return;
+  }
+  if (startQuiz("drill", p.qids, preset)) {
+    toast(p.label + " " + p.qids.length + "문항" + (p.cids.length ? " · 이어서 카드 " + p.cids.length + "장" : ""));
+  }
+}
+
+/* ---------------- 암기노트 한 장 ---------------- */
+function exportMemoryNote() {
+  var text = memoryNote();
+  var name = "passlab-암기노트-" + todayStr() + ".md";
+  downloadBlob(new Blob([text], { type: "text/markdown;charset=utf-8" }), name);
+  toast("암기노트를 내려받았습니다: " + name);
 }
 
 /* ---------------- 설정 ---------------- */
@@ -1797,14 +2265,29 @@ function viewSettings() {
        '<button class="btn" data-act="import-pick">가져오기</button></div>' +
        '<input type="file" id="importFile" accept="application/json,.json" class="hidden">' +
        '<p class="small muted mt">파일 이름은 passlab-진행-' + esc(todayStr()) + '-' + esc(st.device) + '.json 입니다.' +
-       (st.device === "iphone" ? " 아이폰에서는 공유 시트로 파일 앱에 저장하세요." : "") + '</p>';
+       (st.device === "iphone" ? " 아이폰에서는 공유 시트로 파일 앱에 저장하세요." : "") + '</p>' +
+       '<hr class="rule"><p class="small muted">가져오기 방식</p><div class="row">' +
+       '<button class="btn sm' + (S.importMode === "merge" ? "" : " on") + '" data-act="import-mode" data-m="overwrite">덮어쓰기</button>' +
+       '<button class="btn sm' + (S.importMode === "merge" ? " on" : "") + '" data-act="import-mode" data-m="merge">병합</button>' +
+       '</div><p class="small muted">' +
+       (S.importMode === "merge"
+          ? '병합 — 두 기기의 기록을 합칩니다. 지금 기록을 지우지 않고, 같은 항목은 더 최근 것만 남깁니다.'
+          : '덮어쓰기 — 지금 이 기기의 기록을 모두 지우고 백업 파일로 바꿉니다.') + '</p>';
 
   if (S.importPreview) {
     var p = S.importPreview;
     h += '<hr class="rule"><div class="banner"><span><b>가져올 파일:</b> ' + esc(p.name) + '<br>' +
          '내보낸 시각 ' + esc(p.exported_at ? fmtDT(p.exported_at) : "알 수 없음") + ' · ' +
-         '푼 기록 ' + p.attempts + '개 · 오답 ' + p.mistakes + '개</span></div>';
-    if (S.importStage === 1) {
+         '푼 기록 ' + p.attempts + '개 · 오답 ' + p.mistakes + '개 · 방식 ' +
+         (p.mode === "merge" ? "병합" : "덮어쓰기") + '</span></div>';
+    if (p.mode === "merge") {
+      var ms = p.stats || { attemptsAdded: 0, mistakesUpdated: 0, cardsUpdated: 0, mocksAdded: 0 };
+      h += '<div class="banner blue"><span><b>병합하면 이렇게 됩니다</b><br>기록 ' + ms.attemptsAdded +
+           '건 추가 · 오답 ' + ms.mistakesUpdated + '개 갱신 · 카드 ' + ms.cardsUpdated + '장 갱신 · 모의 ' +
+           ms.mocksAdded + '회 추가</span></div>' +
+           '<div class="acts"><button class="btn primary" data-act="merge-confirm">네, 병합합니다</button>' +
+           '<button class="btn ghost" data-act="import-cancel">취소</button></div>';
+    } else if (S.importStage === 1) {
       h += '<div class="acts"><button class="btn danger" data-act="import-confirm1">이 백업으로 덮어쓰기</button>' +
            '<button class="btn ghost" data-act="import-cancel">취소</button></div>';
     } else {
@@ -2055,6 +2538,8 @@ function commitAttempt(correct, selfMarked, nearMiss) {
   if (m) S.mistakes[qid] = m;               // null이면 바꾸지 않는다
   if (!hadMistake && S.mistakes[qid]) Q.stats.added += 1;
   if (correct) Q.stats.correct += 1;
+  // 오답·찍음 정답이면 연결 암기카드를 내 메모리 노트로(박스①·오늘 만기)
+  if (!correct || att.conf === 0) Q.stats.cards = (Q.stats.cards || 0) + enrollCards(q);
   Q.done[qid] = true;                       // 이 문항은 기록 끝 — 이어하기에서 다시 채점하지 않는다
   saveAttempts(); saveMistakes(); rebuildAttIndex(); saveSession();
 }
@@ -2108,6 +2593,7 @@ function finishStudy() {
   var Q = S.quiz;
   S.summary = {
     mode: "study", n: Q.qids.length, correct: Q.stats.correct, added: Q.stats.added,
+    cards: Q.stats.cards || 0,
     sec: Math.round((Date.now() - new Date(Q.startedAt).getTime()) / 1000),
     preset: Q.preset
   };
@@ -2138,6 +2624,7 @@ function finishDiagnostic() {
     S.attempts.push(att);
     var m = C.applyAttemptToMistake(S.mistakes[qid] || null, att, q, mctx());
     if (m) S.mistakes[qid] = m;
+    if (!correct || att.conf === 0) enrollCards(q);       // 연결 카드 자동 편입
     answers[qid] = { correct: !!correct, conf: att.conf };
   });
   saveAttempts(); saveMistakes(); rebuildAttIndex();
@@ -2178,7 +2665,8 @@ function claudeTemplate() {
     " / [내가 고른 이유] " + ((att && whyLabel(att.why)) || "(미선택)") + "\n" +
     "[앱 해설] " + (q.explanation || "");
 }
-function copyText(text) {
+function copyText(text, okMsg) {
+  var done = okMsg || "복사했습니다. 클로드에 붙여넣으세요.";
   function fallback() {
     var ta = document.createElement("textarea");
     ta.value = text;
@@ -2187,13 +2675,13 @@ function copyText(text) {
     var ok = false;
     try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
     document.body.removeChild(ta);
-    if (ok) toast("복사했습니다. 클로드에 붙여넣으세요.");
+    if (ok) toast(done);
     else { S.claudeText = text; toast("복사가 막혔습니다. 아래 글을 직접 복사하세요."); render(); }
   }
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text)
-        .then(function () { toast("복사했습니다. 클로드에 붙여넣으세요."); })
+        .then(function () { toast(done); })
         .catch(fallback);
       return;
     }
@@ -2271,8 +2759,17 @@ function readImportFile(file) {
     S.importPreview = {
       name: file.name, data: d, exported_at: obj.exported_at || null,
       attempts: Array.isArray(d.attempts) ? d.attempts.length : 0,
-      mistakes: d.mistakes ? Object.keys(d.mistakes).length : 0
+      mistakes: d.mistakes ? Object.keys(d.mistakes).length : 0,
+      mode: S.importMode === "merge" ? "merge" : "overwrite",
+      merged: null, stats: null
     };
+    if (S.importPreview.mode === "merge") {
+      var local = {};
+      C.BACKUP_KEYS.forEach(function (k) { local[k] = Store.get(k, null); });
+      var mg = C.mergeBackup(local, d);          // 합치기 규칙은 전부 core.js
+      S.importPreview.merged = mg.merged;
+      S.importPreview.stats = mg.stats;
+    }
     S.importStage = 1;
     render();
   };
@@ -2286,9 +2783,25 @@ function applyImport() {
     else Store.set(k, d[k]);
   });
   loadState();
-  S.quiz = null; S.diagResult = null; S.summary = null;
+  S.quiz = null; S.diagResult = null; S.summary = null; S.cardRun = null;
   S.importPreview = null; S.importStage = 0;
   toast("가져오기를 마쳤습니다.");
+  S.screen = "home";
+  render({ top: true });
+}
+/* 병합 — 합치기는 core.mergeBackup이 하고, 여기서는 값이 있는 키만 저장한다(지우지 않는다) */
+function applyMerge() {
+  var p = S.importPreview;
+  if (!p || !p.merged) { toast("병합할 내용이 없습니다."); return; }
+  C.BACKUP_KEYS.forEach(function (k) {
+    var v = p.merged[k];
+    if (v === null || v === undefined) return;
+    Store.set(k, v);
+  });
+  loadState();
+  S.quiz = null; S.diagResult = null; S.summary = null; S.cardRun = null;
+  S.importPreview = null; S.importStage = 0;
+  toast("병합을 마쳤습니다. 기록 " + p.stats.attemptsAdded + "건 추가 · 카드 " + p.stats.cardsUpdated + "장 갱신");
   S.screen = "home";
   render({ top: true });
 }
@@ -2312,6 +2825,8 @@ var ACTIONS = {
     // 시험 화면을 떠날 때는 쓰던 답을 먼저 저장한다(세션은 남는다)
     if (S.screen === "mockexam") { storeMockShort(); mockAddSec(); saveSession(); }
     if (id === "mock" && S.quiz && S.quiz.mode === "mock") { S.screen = "mockexam"; render({ top: true }); return; }
+    // 보던 카드 세션이 있으면 카드 탭은 그 자리로 돌아간다
+    if (id === "cards" && S.cardRun && !S.cardRun.done) { S.screen = "cardrun"; render({ top: true }); return; }
     S.screen = map[id] || "home";
     S.mockAskStart = null;
     S.mockAskDiscard = false;
@@ -2398,6 +2913,14 @@ var ACTIONS = {
   "import-confirm1": function () { S.importStage = 2; render(); },
   "import-confirm2": function () { applyImport(); },
   "import-cancel": function () { S.importPreview = null; S.importStage = 0; render(); },
+  "import-mode": function (t) {
+    var m = t.getAttribute("data-m") === "merge" ? "merge" : "overwrite";
+    if (S.importMode === m) return;
+    S.importMode = m;
+    S.importPreview = null; S.importStage = 0;    // 방식이 바뀌면 미리보기를 다시 만든다
+    render();
+  },
+  "merge-confirm": function () { applyMerge(); },
   "reset-start": function () { doExport(true); S.resetStage = 1; toast("백업 파일을 먼저 내려받았습니다."); render(); },
   "reset-confirm": function () {
     var w = el("resetWord");
@@ -2420,6 +2943,47 @@ var ACTIONS = {
 
   /* ---------- QUICK ---------- */
   quick: function (t) { startQuick(Number(t.getAttribute("data-n")) || 10); },
+
+  /* ---------- 암기카드 ---------- */
+  "card-start": function () { startCardRun(cardPlan().queue, "오늘 카드"); },
+  "card-start-auto": function () {
+    var f = cardFilterObj();
+    f.onlyAuto = true;
+    startCardRun(C.dueCards(S.cards, S.cardState, todayStr(), { filter: f, limit: todayPlan().cards }).queue,
+                 "내 메모리 노트");
+  },
+  "card-of-q": function (t) {
+    var q = S.byQid[t.getAttribute("data-qid")];
+    if (!q) { toast("문항 데이터가 없습니다."); return; }
+    startCardRun(q.cards || [], "오답 연결 카드");
+  },
+  "card-list": function () { S.cardListOpen = !S.cardListOpen; S.claudeText = null; render(); },
+  "card-flip": function () {
+    var R = S.cardRun;
+    if (!R || R.done) return;
+    R.flipped = !R.flipped;
+    render();
+  },
+  "card-rate": function (t) { rateCard(t.getAttribute("data-r")); },
+  "card-skip": function () { advanceCard(); },
+  "card-quit": function () { S.cardRun = null; S.screen = "cards"; render({ top: true }); },
+  "card-more": function () {
+    var R = S.cardRun;
+    var left = Math.max(0, todayPlan().cards - cardsSeenToday());
+    var more = nextCardBatch(Math.min(10, left), R && R.seen);
+    if (!more.length) { toast("지금 더 낼 카드가 없습니다."); return; }
+    startCardRun(more, (R && R.label) || "오늘 카드");
+  },
+  "note-export": function () { exportMemoryNote(); },
+  "note-copy": function () { copyText(memoryNote(), "암기노트를 복사했습니다. 메모 앱에 붙여넣으세요."); },
+
+  /* ---------- 프리셋 ---------- */
+  preset: function (t) { startPreset(t.getAttribute("data-p")); },
+  "preset-cards": function () {
+    var p = (S.summary && S.summary.preset) || {};
+    if (!p.cids || !p.cids.length) { toast("이어 볼 카드가 없습니다."); return; }
+    startCardRun(p.cids, p.ko || "프리셋 카드");
+  },
 
   /* ---------- 모의고사 ---------- */
   "mock-ask": function (t) { S.mockAskStart = t.getAttribute("data-preset"); render(); },
@@ -2500,6 +3064,13 @@ function onChange(e) {
     var f = t.getAttribute("data-f");
     S.study[f] = (f === "n") ? Number(t.value) : t.value;
     if (f === "subject") S.study.topic = "";
+    render();
+    return;
+  }
+  if (t.hasAttribute && t.hasAttribute("data-cf")) {
+    var cf = t.getAttribute("data-cf");
+    S.cardFilter[cf] = (t.type === "checkbox") ? t.checked : t.value;
+    if (cf === "subject") S.cardFilter.category = "";   // 과목이 바뀌면 카테고리 목록도 바뀐다
     render();
     return;
   }
@@ -2607,6 +3178,7 @@ function saveAll() {
   saveSettings();
   saveAttempts();
   saveMistakes();
+  saveCards();
   if (S.quiz) {
     if (S.quiz.mode === "mock") { storeMockShort(); mockAddSec(); }
     else if (S.quiz.graded === null) storeShortAnswer();

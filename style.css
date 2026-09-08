@@ -116,6 +116,7 @@ hr.rule{border:0;border-top:1px dashed var(--rule);margin:12px 0}
 
 .todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .todo .t{border:1px solid var(--rule);border-radius:10px;padding:10px 6px;text-align:center;background:var(--paper);min-width:0}
+.todo button.t{width:100%;min-height:66px;cursor:pointer}
 .todo .t b{display:block;font-size:24px;font-weight:700;line-height:1.2}
 .todo .t em{display:block;font-size:15px;font-style:normal;font-weight:700;line-height:1.6;color:var(--ink-3)}
 .todo .t span{display:block;font-size:11px;color:var(--ink-3);margin-top:2px}
@@ -256,11 +257,37 @@ td.l,th.l{white-space:normal;overflow-wrap:anywhere}
 .wn > .body{padding:2px 12px 12px;border-top:1px dashed var(--rule)}
 .wn.open > .head{background:var(--paper-2)}
 
-/* ---------- 잠금 화면 ---------- */
-.locked{text-align:center;padding:48px 16px;color:var(--ink-3)}
-.locked .lk{display:inline-block;border:1.5px dashed var(--rule);border-radius:999px;
-  padding:5px 16px;font-size:12px;letter-spacing:.1em;color:var(--ink-3)}
-.locked h3{margin:12px 0 6px;font-size:18px;color:var(--ink)}
+/* ---------- 암기카드 ---------- */
+/* 박스 분포 — 5칸(숫자 + 세로 막대 + 박스 번호) */
+.boxdist{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.boxdist .bx{min-width:0;text-align:center}
+.boxdist .bx b{display:block;font-size:17px;font-weight:700;line-height:1.2}
+.boxdist .bx .col{height:46px;display:flex;align-items:flex-end;justify-content:center;
+  border-bottom:1px solid var(--rule)}
+.boxdist .bx .col i{display:block;width:58%;background:var(--ink);border-radius:4px 4px 0 0}
+.boxdist .bx:first-child .col i{background:var(--red)}
+.boxdist .bx:last-child .col i{background:var(--green)}
+.boxdist .bx span{display:block;font-size:14px;color:var(--ink-3);margin-top:3px}
+
+/* 카드 앞면(누르면 뒤집힘) */
+.cardface{
+  border:1.5px solid var(--ink);border-radius:12px;background:var(--card);
+  padding:14px;margin:10px 0;min-height:132px;cursor:pointer;
+}
+.cardface .f{font-size:19px;font-weight:600;line-height:1.55;margin:10px 0 0;
+  overflow-wrap:anywhere;white-space:pre-wrap}
+.cardface.open{border-style:dashed}
+.cardface.open .f{font-size:16.5px}
+.cback .b{font-size:15.5px;line-height:1.62;margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.confrow .btn.again{border-color:var(--red);color:var(--red)}
+.confrow .btn.hard{border-color:var(--amber);color:var(--amber)}
+.confrow .btn.good{border-color:var(--green);color:var(--green)}
+
+/* 프리셋 버튼 */
+.presets{display:grid;grid-template-columns:1fr;gap:8px}
+.presets .btn{flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:10px 12px}
+.presets .btn b{font-size:13px;letter-spacing:.06em}
+.presets .btn span{font-size:12px;font-weight:400;color:var(--ink-3);overflow-wrap:anywhere}
 
 /* ---------- 결과 ---------- */
 .resub{border:1px solid var(--rule);border-radius:12px;padding:12px;background:var(--paper);margin-bottom:10px}
@@ -375,6 +402,7 @@ td.l,th.l{white-space:normal;overflow-wrap:anywhere}
   .dday b{font-size:64px}
   .ansbox{grid-template-columns:1fr 1fr}
   .fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .presets{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (min-width:520px) and (max-width:899px){
   .ansbox{grid-template-columns:1fr 1fr}
