@@ -2447,7 +2447,7 @@ test("enrollCardsForMistake: 기존 상태는 박스①로 내리고 lapses는 �
   assert.equal(s.streak, 0);
   assert.equal(s.due, "2026-09-08");
   assert.equal(s.auto, true);         // 내 메모리 노트에 담긴 표시
-  assert.equal(s.last, "2026-09-06"); // 마지막으로 본 날은 그대로
+  assert.equal(s.last, null);         // 판정 S4-3: 편입은 벌점이 아니다 → 본 날 기록을 비운다
   assert.equal(states["C-A1"].box, 4);          // 원본 불변
   assert.notEqual(out.states, states);          // 새 객체
   assert.equal(out.states["C-A1"] === states["C-A1"], false);
@@ -2880,4 +2880,42 @@ test("실제 카드 은행: 카드 엔진이 전부 돈다(데이터는 읽기�
   assert.equal(sum.boxes[1] + sum.boxes[2] + sum.boxes[3] + sum.boxes[4] + sum.boxes[5] + sum.unseen, cards.length);
   assert.equal(sum.total, cards.length);
   assert.equal(typeof C.memoryNoteText(cards, states, [], {}, { todayStr: t, examDate: "2026-09-19" }), "string");
+});
+
+test("enrollCardsForMistake: 편입만으로는 숙달 벌점(−10)이 붙지 않는다(판정 S4-3)", () => {
+  const t = "2026-09-08";
+  const q = mcq({ id: "Q-EN-1", cards: ["C-A1"] });
+  const atts = [
+    att({ qid: "Q-EN-1", at: "2026-09-06T10:00:00", correct: true, conf: 1 }),
+    att({ qid: "Q-EN-1", at: "2026-09-08T10:00:00", correct: false, conf: 1, given: 1 })
+  ];
+  // 이틀 전에 "알아요"로 본 박스④ 카드 — 최근에 봤지만 모른 게 아니다
+  const before = { "C-A1": cstate({ box: 4, due: "2026-09-12", streak: 3, lapses: 0, last: "2026-09-06" }) };
+  const plain = C.questionMastery(atts, q, t);
+  assert.equal(C.questionMasteryWithCards(atts, q, t, before), plain);       // 편입 전 벌점 없음
+  const out = C.enrollCardsForMistake(q, CARDS_A, before, t);
+  assert.equal(out.states["C-A1"].box, 1);
+  assert.equal(out.states["C-A1"].last, null);                              // 본 날 기록을 비운다
+  assert.equal(C.questionMasteryWithCards(atts, q, t, out.states), plain);   // 편입해도 그대로(이중 계상 금지)
+  // 카드를 실제로 풀어 "모름"이면 그때 −10
+  const after = Object.assign({}, out.states, {
+    "C-A1": C.reviewCard(out.states["C-A1"], "again", t, { examDate: "2026-09-19" })
+  });
+  assert.equal(after["C-A1"].last, t);
+  close(C.questionMasteryWithCards(atts, q, t, after), Math.max(0, plain - 10));
+});
+
+test("memoryNoteText: opts.blueprint가 있으면 과목 이름을 거기서 읽는다", () => {
+  const cards = [card({ id: "C-BP1", subject: 1, category: "정의", front: "앞", back: "뒤" })];
+  const states = { "C-BP1": cstate({ box: 1, due: "2026-09-08", last: "2026-09-08", auto: true }) };
+  const o = { todayStr: "2026-09-08" };
+  assert.ok(C.memoryNoteText(cards, states, [], {}, Object.assign({ blueprint: BP }, o))
+    .indexOf("## ① 화장품법의 이해") !== -1);
+  assert.ok(C.memoryNoteText(cards, states, [], {}, Object.assign({ blueprint: { subjects: [{ id: 1, name: "화장품법의 이해(개정)" }] } }, o))
+    .indexOf("## ① 화장품법의 이해(개정)") !== -1);
+  // 블루프린트가 없거나 그 과목이 빠져 있으면 상수로 되돌아간다
+  assert.ok(C.memoryNoteText(cards, states, [], {}, Object.assign({ blueprint: { subjects: [{ id: 4, name: "다른 과목" }] } }, o))
+    .indexOf("## ① 화장품법의 이해") !== -1);
+  assert.ok(C.memoryNoteText(cards, states, [], {}, o).indexOf("## ① 화장품법의 이해") !== -1);
+  assert.equal(C.SUBJECT_NAMES[1], "화장품법의 이해");
 });
