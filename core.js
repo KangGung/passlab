@@ -2328,6 +2328,739 @@
   PLCore.figureTexts = figureTexts;
   PLCore.figureAria = figureAria;
 
+  /* ================================================================
+   * 15. 암기카드 — Leitner 5박스 스케줄 (CLAUDE.md 「학습 알고리즘 상수」)
+   * ================================================================ */
+  // 박스 ①~⑤ → 인덱스 0~4. 스프린트(시험 임박)는 ① 0일(같은 세션 끝 재노출)부터 ⑤ 7일까지.
+  const CARD_INTERVALS = { sprint: [0, 1, 2, 4, 7], regular: [1, 3, 7, 14, 30] };
+  const CARD_RATINGS = ["again", "hard", "good"];   // 모름 · 애매 · 알아요
+  const CARD_BOX_MAX = 5;
+
+  /** 아직 한 번도 안 본 카드의 기본 상태(due null = 늘 "새 카드") */
+  function cardStateDefault() {
+    return { box: 1, due: null, streak: 0, lapses: 0, auto: false, last: null };
+  }
+
+  function cardBox(v) {
+    const n = Math.round(Number(v));
+    if (!isFinite(n)) return 1;
+    return Math.min(CARD_BOX_MAX, Math.max(1, n));
+  }
+  function nonNegInt(v) {
+    const n = Math.round(Number(v));
+    return isFinite(n) && n > 0 ? n : 0;
+  }
+  function cardIntervals(track) {
+    return CARD_INTERVALS[track] || CARD_INTERVALS.sprint;
+  }
+
+  /** D-3 규칙: 시험 3일 전부터 다음 만기는 내일까지, D-1·시험 당일은 오늘 */
+  function capCardDue(due, todayStr, examDate) {
+    if (!due || !examDate) return due;
+    const dd = dday(examDate, todayStr);
+    if (dd == null || dd > 3) return due;
+    const limit = dd <= 1 ? todayStr : addDays(todayStr, 1);
+    return due > limit ? limit : due;
+  }
+
+  /**
+   * 카드 한 장 채점 → **새 상태**(원본 불변).
+   * @param {object|null} state  기존 pl.v1.cards[cid] (없으면 기본 상태)
+   * @param {"again"|"hard"|"good"} rating  모름 · 애매 · 알아요
+   * @param {string} todayStr
+   * @param {{track?:string, examDate?:string}} ctx
+   */
+  function reviewCard(state, rating, todayStr, ctx) {
+    if (CARD_RATINGS.indexOf(rating) === -1) {
+      throw new Error('reviewCard: 알 수 없는 rating "' + rating + '" (again|hard|good)');
+    }
+    const c = ctx || {};
+    const t = todayStr || today();
+    const iv = cardIntervals(c.track);
+    const base = Object.assign(cardStateDefault(), (state && typeof state === "object") ? state : null);
+    const box = cardBox(base.box);
+    let next;
+    if (rating === "again") {          // 모름 → 박스①로 떨어뜨리고 다시 센다
+      next = { box: 1, streak: 0, lapses: nonNegInt(base.lapses) + 1, due: addDays(t, iv[0]) };
+    } else if (rating === "hard") {    // 애매 → 박스 유지, 내일 다시
+      next = { box: box, streak: 0, lapses: nonNegInt(base.lapses), due: addDays(t, 1) };
+    } else {                           // 알아요 → 박스 +1(상한 5), 새 박스 간격만큼 쉼
+      const nb = Math.min(CARD_BOX_MAX, box + 1);
+      next = { box: nb, streak: nonNegInt(base.streak) + 1, lapses: nonNegInt(base.lapses), due: addDays(t, iv[nb - 1]) };
+    }
+    next.due = capCardDue(next.due, t, c.examDate);
+    next.last = t;
+    next.auto = base.auto === true;
+    return Object.assign({}, base, next);
+  }
+
+  PLCore.CARD_INTERVALS = CARD_INTERVALS;
+  PLCore.cardStateDefault = cardStateDefault;
+  PLCore.reviewCard = reviewCard;
+
+  /* 오늘 낼 카드 · 자동 편입 · 박스 분포 ----------------------------- */
+  const CARD_IMPORTANCE_RANK = { H: 0, M: 1, L: 2 };
+
+  function cardsArray(cards) {
+    return Array.isArray(cards) ? cards.filter(function (c) { return c && c.id; }) : [];
+  }
+  function impRank(v) {
+    const r = CARD_IMPORTANCE_RANK[v];
+    return r == null ? 3 : r;
+  }
+  function cmpStr(a, b) {
+    const x = String(a == null ? "" : a), y = String(b == null ? "" : b);
+    return x < y ? -1 : (x > y ? 1 : 0);
+  }
+  /** opts.filter = { subject, category, kind, onlyAuto, topic, topics } (빈 값은 "전체") */
+  function matchCardFilter(c, s, f) {
+    if (!f) return true;
+    if (f.subject != null && f.subject !== "" && Number(c.subject) !== Number(f.subject)) return false;
+    if (f.category != null && f.category !== "" && String(c.category || "") !== String(f.category)) return false;
+    if (f.kind != null && f.kind !== "" && String(c.kind || "") !== String(f.kind)) return false;
+    if (f.topic != null && f.topic !== "" && String(c.topic || "") !== String(f.topic)) return false;
+    if (Array.isArray(f.topics) && f.topics.length && f.topics.indexOf(c.topic) === -1) return false;
+    if (f.onlyAuto === true && !(s && s.auto === true)) return false;
+    return true;
+  }
+
+  /**
+   * 오늘 낼 카드.
+   * due   = 상태가 있고 만기가 오늘 이하(박스 낮은 순 → 만기 오래된 순 → id)
+   * fresh = 아직 안 본 카드(상태 없음 또는 due null. 중요도 H→M→L → 과목 → 토픽 → id)
+   * queue = 하루 상한(opts.limit)을 만기부터 채우고 남으면 새 카드로 채운 **오늘의 출제 순서**
+   * todayNew = 그중 새 카드 몫. due·fresh 자체는 상한으로 자르지 않는다(화면 숫자용).
+   */
+  function dueCards(cards, states, todayStr, opts) {
+    const t = todayStr || today();
+    const o = opts || {};
+    const st = states || {};
+    const list = cardsArray(cards).filter(function (c) { return matchCardFilter(c, st[c.id], o.filter); });
+    const due = [], fresh = [];
+    list.forEach(function (c) {
+      const s = st[c.id];
+      if (s && s.due) { if (s.due <= t) due.push(c); }
+      else fresh.push(c);
+    });
+    due.sort(function (a, b) {
+      const sa = st[a.id], sb = st[b.id];
+      const ba = cardBox(sa.box), bb = cardBox(sb.box);
+      if (ba !== bb) return ba - bb;
+      if (sa.due !== sb.due) return sa.due < sb.due ? -1 : 1;
+      return cmpStr(a.id, b.id);
+    });
+    fresh.sort(function (a, b) {
+      const ia = impRank(a.importance), ib = impRank(b.importance);
+      if (ia !== ib) return ia - ib;
+      const na = Number(a.subject) || 0, nb = Number(b.subject) || 0;
+      if (na !== nb) return na - nb;
+      const ct = cmpStr(a.topic, b.topic);
+      return ct !== 0 ? ct : cmpStr(a.id, b.id);
+    });
+    const dueIds = due.map(function (c) { return c.id; });
+    const freshIds = fresh.map(function (c) { return c.id; });
+    const limit = (o.limit == null || o.limit === false) ? null : Math.max(0, Math.floor(Number(o.limit) || 0));
+    let queue, todayNew;
+    if (limit == null) {
+      todayNew = freshIds.slice();
+      queue = dueIds.concat(todayNew);
+    } else {
+      queue = dueIds.slice(0, limit);
+      todayNew = freshIds.slice(0, Math.max(0, limit - queue.length));
+      queue = queue.concat(todayNew);
+    }
+    return { due: dueIds, fresh: freshIds, todayNew: todayNew, queue: queue, limit: limit };
+  }
+
+  /**
+   * 문항을 틀렸을 때(또는 찍어서 맞혔을 때) 연결 카드를 "내 메모리 노트"로 편입.
+   * 부르는 쪽이 오답·찍음 여부를 판단한다(이 함수는 시도를 보지 않는다).
+   * 이미 상태가 있으면 박스①·오늘 만기로 내리고 lapses는 올리지 않는다(카드를 틀린 게 아니다).
+   * @returns {{states:object, enrolled:string[]}} states는 새 객체(원본 불변)
+   */
+  function enrollCardsForMistake(q, cards, states, todayStr) {
+    const t = todayStr || today();
+    const st = (states && typeof states === "object") ? states : {};
+    const ids = (q && Array.isArray(q.cards)) ? q.cards : [];
+    const known = Array.isArray(cards)
+      ? cardsArray(cards).reduce(function (m, c) { m[c.id] = true; return m; }, {})
+      : null;
+    const out = Object.assign({}, st);
+    const enrolled = [];
+    ids.forEach(function (cid) {
+      if (!cid || enrolled.indexOf(cid) !== -1) return;
+      if (known && !known[cid]) return;
+      const prev = out[cid];
+      out[cid] = Object.assign(cardStateDefault(), (prev && typeof prev === "object") ? prev : null,
+        { box: 1, due: t, streak: 0, auto: true });
+      enrolled.push(cid);
+    });
+    return { states: out, enrolled: enrolled };
+  }
+
+  /** 카드 홈 요약. 박스 합 + unseen = total */
+  function cardBoxSummary(states, cardsAll, todayStr) {
+    const t = todayStr || today();
+    const st = states || {};
+    const list = cardsArray(cardsAll);
+    const boxes = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let unseen = 0, dueToday = 0, autoCount = 0;
+    list.forEach(function (c) {
+      const s = st[c.id];
+      if (s && s.auto === true) autoCount += 1;
+      if (!s || !s.due) { unseen += 1; return; }
+      boxes[cardBox(s.box)] += 1;
+      if (s.due <= t) dueToday += 1;
+    });
+    return { boxes: boxes, unseen: unseen, dueToday: dueToday, autoCount: autoCount, total: list.length };
+  }
+
+  PLCore.dueCards = dueCards;
+  PLCore.enrollCardsForMistake = enrollCardsForMistake;
+  PLCore.cardBoxSummary = cardBoxSummary;
+
+  /* 카드 연동 숙달도 — 카드 "모름"은 관련 문항 mastery −10 --------- */
+  const CARD_PENALTY = 10;        // 박스①에 있는 카드 1장당 −10
+  const CARD_PENALTY_DAYS = 3;    // 최근 3일 안에 본 카드만 센다(오래된 건 이미 잊은 게 아니라 안 본 것)
+
+  /** 문항에 연결된 카드 중 "최근에 모름 처리된"(박스① + last 3일 이내) 장수 × 10 */
+  function cardPenalty(q, states, todayStr) {
+    if (!states || !q || !Array.isArray(q.cards) || !q.cards.length) return 0;
+    const t = todayStr || today();
+    const seen = {};
+    let n = 0;
+    q.cards.forEach(function (cid) {
+      if (!cid || seen[cid]) return;
+      seen[cid] = true;
+      const s = states[cid];
+      if (!s || cardBox(s.box) !== 1 || !s.last) return;
+      const d = daysBetween(s.last, t);
+      if (d != null && d >= 0 && d <= CARD_PENALTY_DAYS) n += 1;
+    });
+    return n * CARD_PENALTY;
+  }
+
+  /** questionMastery − 카드 벌점(하한 0). 시도가 없으면 null 그대로 */
+  function questionMasteryWithCards(atts, q, todayStr, states) {
+    const m = questionMastery(atts, q, todayStr);
+    if (m === null) return null;
+    return Math.max(0, m - cardPenalty(q, states, todayStr));
+  }
+
+  /** topicMastery와 같은 모양 + 카드 벌점 반영(states 없으면 topicMastery와 같은 값) */
+  function topicMasteryWithCards(topicId, questions, attemptsByQid, todayStr, states) {
+    const map = attemptsByQid || {};
+    const vals = [];
+    const qs = Array.isArray(questions) ? questions : [];
+    for (let i = 0; i < qs.length; i++) {
+      const q = qs[i];
+      if (!q || q.topic !== topicId) continue;
+      const a = map[q.id];
+      if (!a || !a.length) continue;
+      const m = questionMasteryWithCards(a, q, todayStr, states);
+      if (m === null) continue;
+      vals.push(m);
+    }
+    const n = vals.length;
+    if (n === 0) return { value: null, n: 0, measuring: true };
+    let sum = 0;
+    for (let i = 0; i < n; i++) sum += vals[i];
+    return { value: (sum / n) * Math.min(1, n / 4), n: n, measuring: n < 4 };
+  }
+
+  /** subjectMasteryDetail와 같은 모양 + 카드 벌점 반영 */
+  function subjectMasteryDetailWithCards(subjectId, topics, questions, attemptsByQid, todayStr, states) {
+    const subs = (Array.isArray(topics) ? topics : []).filter(function (t) {
+      return t && t.kind === "sub" && Number(t.subject) === Number(subjectId);
+    });
+    const byTopic = [];
+    let num = 0, den = 0, attempted = 0;
+    for (let i = 0; i < subs.length; i++) {
+      const t = subs[i];
+      const tm = topicMasteryWithCards(t.id, questions, attemptsByQid, todayStr, states);
+      const w = (typeof t.exp_q === "number" && t.exp_q > 0) ? t.exp_q : 1;
+      const used = tm.value === null ? 20 : tm.value;
+      if (tm.n > 0) attempted++;
+      byTopic.push({ id: t.id, name: t.name, exp_q: w, value: tm.value, used: used, n: tm.n, measuring: tm.measuring });
+      num += used * w;
+      den += w;
+    }
+    return {
+      value: den > 0 ? num / den : null,
+      byTopic: byTopic,
+      attemptedTopics: attempted,
+      totalTopics: subs.length,
+      measuring: attempted === 0
+    };
+  }
+
+  function subjectMasteryWithCards(subjectId, topics, questions, attemptsByQid, todayStr, states) {
+    return subjectMasteryDetailWithCards(subjectId, topics, questions, attemptsByQid, todayStr, states).value;
+  }
+
+  PLCore.questionMasteryWithCards = questionMasteryWithCards;
+  PLCore.topicMasteryWithCards = topicMasteryWithCards;
+  PLCore.subjectMasteryWithCards = subjectMasteryWithCards;
+  PLCore.subjectMasteryDetailWithCards = subjectMasteryDetailWithCards;
+
+  /* ================================================================
+   * 16. 프리셋 3종 — 약점 공격 · 법령/숫자 · 오늘 복습
+   * ================================================================ */
+  const PRESETS = {
+    weakness: { key: "weakness", name: "WEAKNESS ATTACK", ko: "약점 공격", n: 15, cards: 10,
+                desc: "숙달 하위 3개 세부항목만 집중" },
+    lawnum:   { key: "lawnum", name: "LAW & NUMBERS", ko: "법령·숫자", n: 15, cards: 10,
+                desc: "숫자·기한·한도 문항 + 숫자 카드" },
+    today:    { key: "today", name: "TODAY'S REVIEW", ko: "오늘 복습", n: 15, cards: null,
+                desc: "오늘 만기 오답 + 오늘 만기 카드" }
+  };
+  const PRESET_WEAK_TOPICS = 3;
+  const LAWNUM_QTYPES = ["limit_number", "calc", "table", "blank"];
+  const LAWNUM_TAGS = ["숫자", "기한", "한도"];
+  const UNTRIED_TOPIC_MASTERY = 20;    // 미시도 토픽은 20으로 본다(과목 숙달과 같은 규칙)
+
+  /**
+   * 취약 우선순위 P (CLAUDE.md 「적응형 출제」).
+   * buildAdaptiveSet 안의 adaptiveP와 같은 공식이다(그쪽은 세트 구성용 캐시를 따로 쓴다).
+   * @param {object} q
+   * @param {{topics?:Array, attemptsByQid?:object, mistakes?:object, todayStr?:string, cache?:object}} ctx
+   */
+  function questionPriority(q, ctx) {
+    if (!q) return 0;
+    const c = ctx || {};
+    const t = c.todayStr || today();
+    const byQid = c.attemptsByQid || {};
+    const mist = c.mistakes || {};
+    const cache = c.cache || {};
+    if (!cache.qm) cache.qm = {};
+    if (!cache.tp) {
+      const map = {};
+      let maxExp = 1;
+      (Array.isArray(c.topics) ? c.topics : []).forEach(function (tp) {
+        if (!tp || tp.kind !== "sub") return;
+        map[tp.id] = tp;
+        const e = Number(tp.exp_q) || 0;
+        if (e > maxExp) maxExp = e;
+      });
+      cache.tp = { map: map, maxExp: maxExp };
+    }
+
+    const atts = sortedAtts(byQid[q.id] || []);
+    let m = cache.qm[q.id];
+    if (m === undefined) { m = questionMastery(atts, q, t); cache.qm[q.id] = m; }
+    let p = 3 * (1 - (m == null ? 0 : m) / 100);
+
+    let wrongRecent = false;
+    const rec = mist[q.id];
+    if (rec && rec.lastWrong) {
+      const d = daysBetween(rec.lastWrong, t);
+      if (d != null && d >= 0 && d <= 3) wrongRecent = true;
+    }
+    if (!wrongRecent) {
+      for (let i = atts.length - 1; i >= 0; i--) {
+        if (atts[i].correct === true) continue;
+        const d = daysBetween(dateOf(atts[i].at), t);
+        if (d != null && d >= 0 && d <= 3) wrongRecent = true;
+        break;
+      }
+    }
+    if (wrongRecent) p += 2;
+
+    let streak = 0;
+    for (let i = atts.length - 1; i >= 0; i--) {
+      if (atts[i].correct === true) break;
+      streak += 1;
+    }
+    p += 1.5 * Math.min(streak, 3) / 3;
+
+    const last = atts[atts.length - 1];
+    if (last && (last.conf === 0 || last.conf === 1)) p += 1;
+
+    let secSum = 0, secN = 0;
+    atts.forEach(function (a) {
+      if (typeof a.sec === "number" && isFinite(a.sec)) { secSum += a.sec; secN += 1; }
+    });
+    const tlimit = (q.type === "short" ? TIME_TARGET.short : TIME_TARGET.mcq) * 1.5;
+    if (secN && (secSum / secN) > tlimit) p += 1;
+
+    p += 1.5 * (q.importance === "H" ? 1 : (q.importance === "M" ? 0.5 : 0));
+    const tp = cache.tp.map[q.topic];
+    p += (Number(tp && tp.exp_q) || 0) / cache.tp.maxExp;
+    return p;
+  }
+
+  /**
+   * 프리셋 세트(문항 + 카드).
+   * @param {"weakness"|"lawnum"|"today"} name
+   * @param {{questions:Array, cards:Array, topics:Array, attemptsByQid:object, mistakes:object,
+   *          cardStates:object, todayStr:string, rng?:function, n?:number, cardLimit?:number}} ctx
+   * @returns {{name:string, label:string, ko:string, qids:string[], cids:string[], topics:string[]}}
+   */
+  function buildPreset(name, ctx) {
+    const meta = PRESETS[name];
+    if (!meta) throw new Error('buildPreset: 알 수 없는 프리셋 "' + name + '"');
+    const c = ctx || {};
+    const t = c.todayStr || today();
+    const questions = (Array.isArray(c.questions) ? c.questions : []).filter(function (q) { return q && q.id; });
+    const cards = cardsArray(c.cards);
+    const topics = Array.isArray(c.topics) ? c.topics : [];
+    const byQid = c.attemptsByQid || {};
+    const mist = c.mistakes || {};
+    const states = c.cardStates || {};
+    const rng = typeof c.rng === "function" ? c.rng : seededRandom(20260919);
+    const n = (c.n == null || c.n === "") ? meta.n : Math.max(0, Math.floor(Number(c.n) || 0));
+    const cardLimit = (c.cardLimit == null || c.cardLimit === "")
+      ? meta.cards : Math.max(0, Math.floor(Number(c.cardLimit) || 0));
+
+    const pctx = { topics: topics, attemptsByQid: byQid, mistakes: mist, todayStr: t, cache: {} };
+    const shuffledIdx = {};
+    shuffle(questions, rng).forEach(function (q, i) { shuffledIdx[q.id] = i; });
+    function tried(q) { return ((byQid[q.id] || []).length) > 0; }
+    /** P 높은 순(동점은 seed 순). untriedFirst면 미출제 문항을 먼저 */
+    function rank(list, untriedFirst) {
+      return list.slice().sort(function (a, b) {
+        if (untriedFirst) {
+          const ta = tried(a) ? 1 : 0, tb = tried(b) ? 1 : 0;
+          if (ta !== tb) return ta - tb;
+        }
+        const pa = questionPriority(a, pctx), pb = questionPriority(b, pctx);
+        if (pb !== pa) return pb - pa;
+        return shuffledIdx[a.id] - shuffledIdx[b.id];
+      }).map(function (q) { return q.id; });
+    }
+    function out(qids, cids, tps) {
+      return { name: meta.key, label: meta.name, ko: meta.ko, qids: qids, cids: cids, topics: tps };
+    }
+
+    if (name === "weakness") {
+      const hasQ = {};
+      questions.forEach(function (q) { hasQ[q.topic] = true; });
+      const weak = topics
+        .filter(function (tp) { return tp && tp.kind === "sub" && hasQ[tp.id]; })
+        .map(function (tp) {
+          const tm = topicMasteryWithCards(tp.id, questions, byQid, t, states);
+          return { id: tp.id, value: tm.value == null ? UNTRIED_TOPIC_MASTERY : tm.value, exp: Number(tp.exp_q) || 0 };
+        })
+        .sort(function (a, b) {
+          if (a.value !== b.value) return a.value - b.value;      // 숙달 낮은 순
+          if (b.exp !== a.exp) return b.exp - a.exp;              // 같으면 예상 문항수 많은 쪽
+          return cmpStr(a.id, b.id);
+        })
+        .slice(0, PRESET_WEAK_TOPICS)
+        .map(function (x) { return x.id; });
+      const qids = rank(questions.filter(function (q) { return weak.indexOf(q.topic) !== -1; }), false).slice(0, n);
+      const dc = dueCards(cards, states, t, { filter: { topics: weak }, limit: cardLimit });
+      return out(qids, dc.queue, weak);
+    }
+
+    if (name === "lawnum") {
+      const isLawNum = function (q) {
+        if (LAWNUM_QTYPES.indexOf(q.qtype) !== -1) return true;
+        const tags = Array.isArray(q.tags) ? q.tags : [];
+        return tags.some(function (g) {
+          const s = String(g == null ? "" : g);
+          return LAWNUM_TAGS.some(function (k) { return s.indexOf(k) !== -1; });
+        });
+      };
+      const qids = rank(questions.filter(isLawNum), true).slice(0, n);
+      const dc = dueCards(cards, states, t, { filter: { kind: "number" }, limit: cardLimit });
+      return out(qids, dc.queue, []);
+    }
+
+    // today — 오늘 만기 오답 + 오늘 만기 카드(새 카드는 넣지 않는다)
+    const byId = {};
+    questions.forEach(function (q) { byId[q.id] = q; });
+    const qids = dueMistakes(mist, t).filter(function (id) { return !!byId[id]; }).slice(0, n);
+    const dc = dueCards(cards, states, t, { limit: cardLimit });
+    const cids = cardLimit == null ? dc.due.slice() : dc.due.slice(0, cardLimit);
+    return out(qids, cids, []);
+  }
+
+  PLCore.PRESETS = PRESETS;
+  PLCore.questionPriority = questionPriority;
+  PLCore.buildPreset = buildPreset;
+
+  /* ================================================================
+   * 17. 백업 병합 (pl.v1.* 6개 키)
+   * ================================================================ */
+  const BACKUP_KEYS = ["settings", "attempts", "mistakes", "cards", "session", "mocks"];
+  const BACKUP_PREFIX = "pl.v1.";
+
+  /** 백업 파일이 "settings" · "pl.v1.settings" · data.settings 어느 모양이어도 읽는다 */
+  function backupValue(obj, k) {
+    if (!obj || typeof obj !== "object") return undefined;
+    if (obj[k] !== undefined) return obj[k];
+    if (obj[BACKUP_PREFIX + k] !== undefined) return obj[BACKUP_PREFIX + k];
+    if (obj.data && typeof obj.data === "object" && obj.data[k] !== undefined) return obj.data[k];
+    return undefined;
+  }
+  function attemptKey(a) { return String(a && a.qid) + "|" + String(a && a.at); }
+  function mockKey(m) {
+    if (m && m.sid) return "sid:" + m.sid;
+    return "d:" + String(m && m.date) + ":" + String(m && m.raw);
+  }
+  /** 항목이 얼마나 최신인가 — last, 없으면 next(오답)·due(카드) */
+  function entryRecency(e) {
+    if (!e || typeof e !== "object") return "";
+    return String(e.last || e.next || e.due || "");
+  }
+  function copyEntry(e) { return (e && typeof e === "object") ? Object.assign({}, e) : e; }
+  /** 동의 기록은 지우지 않는다 — 참인 쪽을 남기고 새 키는 더한다 */
+  function mergeAccepted(a, b) {
+    const A = (a && typeof a === "object") ? a : {};
+    const B = (b && typeof b === "object") ? b : {};
+    const out = Object.assign({}, A);
+    Object.keys(B).forEach(function (k) { if (out[k] === undefined || !out[k]) out[k] = B[k]; });
+    return out;
+  }
+  /** 오답·카드 지도 병합 → { map, updated } */
+  function mergeEntryMap(localMap, inMap) {
+    const A = (localMap && typeof localMap === "object") ? localMap : {};
+    const B = (inMap && typeof inMap === "object") ? inMap : {};
+    const out = {};
+    let updated = 0;
+    Object.keys(A).forEach(function (k) { out[k] = copyEntry(A[k]); });
+    Object.keys(B).forEach(function (k) {
+      const b = B[k];
+      if (!b || typeof b !== "object") return;
+      const a = A[k];
+      if (!a || typeof a !== "object") { out[k] = copyEntry(b); updated += 1; return; }
+      if (entryRecency(b) > entryRecency(a)) { out[k] = copyEntry(b); updated += 1; }
+    });
+    return { map: out, updated: updated };
+  }
+
+  /**
+   * 백업 병합(가져오기 "병합" 모드). local = 지금 기기, incoming = 백업 파일.
+   * attempts (qid,at) 합집합 / mistakes·cards 항목별 최신 쪽 / mocks sid 합집합 /
+   * settings는 last_backup·user_accepted만 병합(나머지 local) / session은 진행 중인 local 우선.
+   * @returns {{merged:object, stats:{attemptsAdded:number,mistakesUpdated:number,cardsUpdated:number,mocksAdded:number}}}
+   */
+  function mergeBackup(local, incoming) {
+    const L = local || {}, I = incoming || {};
+    const arr = function (v) { return Array.isArray(v) ? v : []; };
+
+    /* attempts — (qid, at) 합집합, 시간 순 */
+    const seenAtt = {};
+    const attempts = [];
+    arr(backupValue(L, "attempts")).forEach(function (a) {
+      if (!a) return;
+      const k = attemptKey(a);
+      if (seenAtt[k]) return;
+      seenAtt[k] = true;
+      attempts.push(Object.assign({}, a));
+    });
+    let attemptsAdded = 0;
+    arr(backupValue(I, "attempts")).forEach(function (a) {
+      if (!a) return;
+      const k = attemptKey(a);
+      if (seenAtt[k]) return;
+      seenAtt[k] = true;
+      attempts.push(Object.assign({}, a));
+      attemptsAdded += 1;
+    });
+    attempts.sort(function (x, y) {
+      const dx = timeOf(x), dy = timeOf(y);
+      if (dx !== dy) return dx - dy;
+      return cmpStr(x.qid, y.qid);
+    });
+
+    /* mistakes · cards — 항목별 더 최근 쪽 */
+    const mi = mergeEntryMap(backupValue(L, "mistakes"), backupValue(I, "mistakes"));
+    const cd = mergeEntryMap(backupValue(L, "cards"), backupValue(I, "cards"));
+
+    /* mocks — sid 합집합, 날짜 순 */
+    const seenMock = {};
+    const mocks = [];
+    arr(backupValue(L, "mocks")).forEach(function (m) {
+      if (!m) return;
+      const k = mockKey(m);
+      if (seenMock[k]) return;
+      seenMock[k] = true;
+      mocks.push(Object.assign({}, m));
+    });
+    let mocksAdded = 0;
+    arr(backupValue(I, "mocks")).forEach(function (m) {
+      if (!m) return;
+      const k = mockKey(m);
+      if (seenMock[k]) return;
+      seenMock[k] = true;
+      mocks.push(Object.assign({}, m));
+      mocksAdded += 1;
+    });
+    mocks.sort(function (x, y) {
+      const c = cmpStr(x.date, y.date);
+      return c !== 0 ? c : cmpStr(x.sid, y.sid);
+    });
+
+    /* settings — last_backup·user_accepted만 병합 */
+    const ls = backupValue(L, "settings"), is = backupValue(I, "settings");
+    let settings = null;
+    if (ls && typeof ls === "object") {
+      settings = Object.assign({}, ls);
+      if (is && typeof is === "object") {
+        if (String(is.last_backup || "") > String(ls.last_backup || "")) settings.last_backup = is.last_backup;
+        const ua = mergeAccepted(ls.user_accepted, is.user_accepted);
+        if (Object.keys(ua).length || ls.user_accepted !== undefined) settings.user_accepted = ua;
+      }
+    } else if (is && typeof is === "object") {
+      settings = Object.assign({}, is);
+    }
+
+    /* session — 진행 중인 local을 건드리지 않는다. local이 없을 때만 incoming */
+    const lsn = backupValue(L, "session");
+    const isn = backupValue(I, "session");
+    let session = null;
+    if (lsn) session = copyEntry(lsn);
+    else if (isn) session = copyEntry(isn);
+
+    return {
+      merged: {
+        settings: settings, attempts: attempts, mistakes: mi.map,
+        cards: cd.map, session: session, mocks: mocks
+      },
+      stats: {
+        attemptsAdded: attemptsAdded, mistakesUpdated: mi.updated,
+        cardsUpdated: cd.updated, mocksAdded: mocksAdded
+      }
+    };
+  }
+
+  PLCore.BACKUP_KEYS = BACKUP_KEYS;
+  PLCore.mergeBackup = mergeBackup;
+
+  /* ================================================================
+   * 18. 암기노트 한 장 내보내기(마크다운)
+   * ================================================================ */
+  const SUBJECT_NAMES = { 1: "화장품법의 이해", 2: "화장품 제조 및 품질관리", 3: "유통 화장품 안전관리", 4: "맞춤형화장품의 이해" };
+  const BOX_MARK = ["①", "②", "③", "④", "⑤"];
+  const NOTE_MAX_CARDS = 60;
+  const NOTE_MAX_SENTENCES = 40;
+  const NOTE_BOX_MAX = 3;        // 박스③ 이하 = 아직 안 외운 것
+  const NOTE_LAW_LEN = 40;
+
+  function subjectLabel(sid) {
+    const n = Number(sid);
+    const mark = SUBJ_MARK[n - 1] || "";
+    const name = SUBJECT_NAMES[n];
+    if (!name) return "기타 과목";
+    return (mark ? mark + " " : "") + name;
+  }
+  function oneLine(s) { return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
+  function shortLaw(src) {
+    const law = (src && src.law) ? oneLine(src.law) : "";
+    if (!law) return "";
+    return law.length > NOTE_LAW_LEN ? law.slice(0, NOTE_LAW_LEN - 1) + "…" : law;
+  }
+
+  /**
+   * 암기노트 한 장(마크다운 문자열).
+   * 담는 것: auto(내 메모리 노트) 카드 + 박스③ 이하 카드 + 미졸업 오답의 memory_sentence.
+   * @param {Array} cards 카드 은행 / @param {object} states pl.v1.cards
+   * @param {Array} questions 문항 은행 / @param {object} mistakes pl.v1.mistakes
+   * @param {{maxCards?:number, maxSentences?:number, todayStr?:string, examDate?:string}} opts
+   */
+  function memoryNoteText(cards, states, questions, mistakes, opts) {
+    const o = opts || {};
+    const t = o.todayStr || today();
+    const st = states || {};
+    const mist = mistakes || {};
+    const maxCards = o.maxCards == null ? NOTE_MAX_CARDS : Math.max(0, Math.floor(Number(o.maxCards) || 0));
+    const maxSent = o.maxSentences == null ? NOTE_MAX_SENTENCES : Math.max(0, Math.floor(Number(o.maxSentences) || 0));
+
+    const picked = cardsArray(cards).filter(function (c) {
+      const s = st[c.id];
+      if (!s) return false;                                   // 아직 안 본 카드는 넣지 않는다
+      return s.auto === true || cardBox(s.box) <= NOTE_BOX_MAX;
+    }).sort(function (a, b) {
+      const sa = st[a.id], sb = st[b.id];
+      const ba = cardBox(sa.box), bb = cardBox(sb.box);
+      if (ba !== bb) return ba - bb;                          // 박스 낮은(약한) 카드부터
+      const aa = sa.auto === true ? 0 : 1, ab = sb.auto === true ? 0 : 1;
+      if (aa !== ab) return aa - ab;                          // 내 메모리 노트 먼저
+      const ia = impRank(a.importance), ib = impRank(b.importance);
+      if (ia !== ib) return ia - ib;
+      const na = Number(a.subject) || 0, nb = Number(b.subject) || 0;
+      if (na !== nb) return na - nb;
+      return cmpStr(a.id, b.id);
+    }).slice(0, maxCards);
+
+    const sents = (Array.isArray(questions) ? questions : []).filter(function (q) {
+      if (!q || !q.id) return false;
+      const m = mist[q.id];
+      return !!m && m.stage !== "graduated" && !!oneLine(q.memory_sentence);
+    }).sort(function (a, b) {
+      const ca = Number(mist[a.id].count) || 0, cb = Number(mist[b.id].count) || 0;
+      if (cb !== ca) return cb - ca;                          // 많이 틀린 것부터
+      return cmpStr(a.id, b.id);
+    }).slice(0, maxSent);
+
+    const dd = o.examDate ? dday(o.examDate, t) : null;
+    const autoN = picked.filter(function (c) { return st[c.id].auto === true; }).length;
+    const out = [];
+    out.push("# PASS LAB 암기노트 — " + t + (dd == null ? "" : " (D-" + dd + ")"));
+    out.push("");
+    out.push("카드 " + picked.length + "장 · 오답 한 줄 암기 " + sents.length + "개 (내 메모리 노트 " + autoN + "장)");
+
+    /* 카드 — 과목 → 카테고리 */
+    const groups = {};
+    const subjKeys = [];
+    picked.forEach(function (c) {
+      const key = String(Number(c.subject) || 0);
+      if (!groups[key]) { groups[key] = { cats: {}, order: [] }; subjKeys.push(key); }
+      const cat = oneLine(c.category) || "기타";
+      if (!groups[key].cats[cat]) { groups[key].cats[cat] = []; groups[key].order.push(cat); }
+      groups[key].cats[cat].push(c);
+    });
+    subjKeys.sort(function (a, b) { return Number(a) - Number(b); });
+    subjKeys.forEach(function (key) {
+      const g = groups[key];
+      out.push("");
+      out.push("## " + subjectLabel(key));
+      g.order.forEach(function (cat) {
+        out.push("");
+        out.push("### " + cat);
+        g.cats[cat].forEach(function (c) {
+          const s = st[c.id];
+          const mark = BOX_MARK[cardBox(s.box) - 1] + (s.auto === true ? "★" : "");
+          out.push("- " + mark + " **" + oneLine(c.front) + "** → " + oneLine(c.back));
+          const bits = [];
+          const law = shortLaw(c.source);
+          if (law) bits.push("근거 " + law);
+          const mn = oneLine(c.mnemonic);
+          if (mn) bits.push("암기 " + mn);
+          if (bits.length) out.push("  - " + bits.join(" · "));
+        });
+      });
+    });
+
+    /* 오답 한 줄 암기 — 과목별 */
+    if (sents.length) {
+      out.push("");
+      out.push("## 오답 한 줄 암기");
+      const sg = {};
+      const sk = [];
+      sents.forEach(function (q) {
+        const key = String(Number(q.subject) || 0);
+        if (!sg[key]) { sg[key] = []; sk.push(key); }
+        sg[key].push(q);
+      });
+      sk.sort(function (a, b) { return Number(a) - Number(b); });
+      sk.forEach(function (key) {
+        out.push("");
+        out.push("### " + subjectLabel(key));
+        sg[key].forEach(function (q) {
+          out.push("- " + oneLine(q.memory_sentence) + " (" + q.id + ")");
+        });
+      });
+    }
+    out.push("");
+    return out.join("\n");
+  }
+
+  PLCore.SUBJECT_NAMES = SUBJECT_NAMES;
+  PLCore.memoryNoteText = memoryNoteText;
+
   root.PLCore = PLCore;
   if (typeof module !== "undefined") module.exports = PLCore;
 })(typeof window !== "undefined" ? window : globalThis);
