@@ -1916,10 +1916,10 @@ function viewCardsHome() {
            '<p class="small">카드 데이터를 읽지 못했습니다. app/data 폴더와 manifest.js를 확인해 주세요.</p></div>';
   }
 
-  // D-3부터 마무리 규칙
-  if (dd != null && dd <= 3) {
-    h += '<div class="banner red"><span><b>' + esc(ddayText(dd)) + ' 마무리 규칙</b> — 매일 박스 ①~③ 전부 보고, ' +
-         '박스 ④⑤는 D-1에 한 번만 봅니다.</span></div>';
+  // D-3부터 마무리 규칙 (시험이 지난 뒤에는 띄우지 않는다)
+  if (dd != null && dd >= 0 && dd <= 3) {
+    h += '<div class="banner red"><span><b>' + esc(ddayText(dd)) + ' 마무리</b> — D-3부터는 모든 카드가 매일 ' +
+         '만기로 잡힙니다. 박스 ①~③은 꼭, ④⑤도 시간이 되면 훑으세요.</span></div>';
   }
 
   // 오늘 요약
@@ -2808,7 +2808,13 @@ function applyMerge() {
 function doReset() {
   KEYS.forEach(function (k) { Store.del(k); });
   loadState();
+  // 메모리에 남은 세션까지 모두 비운다 — 안 비우면 카드 세션이 살아남아
+  // [알아요] 한 번에 방금 지운 pl.v1.cards가 되살아난다.
   S.quiz = null; S.diagResult = null; S.summary = null; S.dataCheck = null;
+  S.cardRun = null; S.mockResult = null; S.mockPlans = null;
+  S.importPreview = null; S.importStage = 0;
+  S.openMistake = null; S.cardListOpen = false; S.claudeText = null;
+  stopMockTimer();
   S.resetStage = 0;
   S.screen = "home";
   toast("모두 지웠습니다. 처음 상태입니다.");
@@ -3152,7 +3158,20 @@ function onInput(e) {
 
 function onKeydown(e) {
   var t = e.target;
-  if (!t || !t.classList || !t.classList.contains("shortin")) return;
+  if (!t || !t.classList) return;
+  // 카드 앞면(role="button")은 엔터·스페이스로도 뒤집힌다
+  if (t.classList.contains("cardface")) {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar" &&
+        e.keyCode !== 13 && e.keyCode !== 32) return;
+    e.preventDefault();
+    if (ACTIONS["card-flip"]) {
+      ACTIONS["card-flip"](t, e);
+      var face = document.querySelector("#main .cardface");   // 다시 그린 뒤에도 초점을 카드에 둔다
+      if (face) face.focus();
+    }
+    return;
+  }
+  if (!t.classList.contains("shortin")) return;
   if (e.isComposing || e.keyCode === 229) return;           // 한글 조합 중이면 무시
   if (e.key !== "Enter" && e.keyCode !== 13) return;
   e.preventDefault();
