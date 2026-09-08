@@ -57,10 +57,19 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     front: "모발 성장주기 3기의 수명과 전체 모발 중 비율은?",
     back: "성장기 수명 3~6년·약 88 %, 퇴행기 2~3주·약 1 %, 휴지기 3~4개월·약 11 %. 성장 속도는 0.2~0.5 mm/일이다(월 성장량은 같은 문단에 '1~1.5 cm/월'과 '한 달에 1.2~1.5 cm'가 함께 적혀 있어 외우지 않는다)(4판 p.276).",
     mnemonic: "88 : 1 : 11 (성장기·퇴행기·휴지기)",
+    figure: {
+      type: "groups",
+      groups: [
+        { name: "성장기", items: ["3~6년", "약 88 %"] },
+        { name: "퇴행기", items: ["2~3주", "약 1 %"] },
+        { name: "휴지기", items: ["3~4개월", "약 11 %"] },
+        { name: "성장 속도", items: ["0.2~0.5 mm/일"] }
+      ]
+    },
     source: { law: null, guide: "4판 p.276", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-06"],
     verified: true,
-    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정(S2-V): 월 성장량 1.2~1.5 cm 단정을 가이드 내부 불일치(1~1.5 cm/월) 병기로 바꿈" }]
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-05", note: "검증 수정(S2-V): 월 성장량 1.2~1.5 cm 단정을 가이드 내부 불일치(1~1.5 cm/월) 병기로 바꿈" }, { date: "2026-09-08", note: "figure(groups) 추가 — mnemonic '88 : 1 : 11 (성장기·퇴행기·휴지기)'대로 주기별 상자에 수명과 비율을 함께 넣고, back에 있는 성장 속도를 네 번째 상자로. 세 주기가 시간 순서로 이어지는 한 절차가 아니어서 timeline은 쓰지 않았다. 글자는 back·mnemonic에 있는 것만 사용" }]
   },
   {
     id: "C-B6-05", subject: 4, topic: "4.2.2", category: "모발 구조 용어", kind: "definition",
@@ -68,10 +77,17 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     front: "모근부와 모간부는 각각 어떤 구조로 이루어지고, 모간부 3층의 구성비는?",
     back: "모근부 = 모구부·모유두·모모세포·내모근초/외모근초(뿌리 쪽). 모간부 = 모표피(전체 두발의 10~15 %)·모피질(85~90 %, 멜라닌 색소 존재)·모수질(중심부 공동, 가는 두발엔 없기도 함). 모표피는 에피·엑소·엔도큐티클 3층이다(4판 p.275~276, 279~280).",
     mnemonic: "뿌리는 구·유두·모모·근초 / 줄기는 표피 10~15 · 피질 85~90 · 수질",
+    figure: {
+      type: "groups",
+      groups: [
+        { name: "모근부", items: ["모구부", "모유두", "모모세포", "내모근초/외모근초"] },
+        { name: "모간부", items: ["모표피(전체 두발의 10~15 %)", "모피질(85~90 %, 멜라닌 색소 존재)", "모수질"] }
+      ]
+    },
     source: { law: null, guide: "4판 p.275~280", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-07", "Q-B6-08"],
     verified: true,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-08", note: "figure(groups) 추가 — mnemonic이 끊는 2묶음(뿌리=모근부 4요소 / 줄기=모간부 3층) 그대로. 모간부 3층은 포개진 층이 아니라 동심원이고 시험이 묻는 것은 구성비 숫자(10~15 · 85~90)라 raw 층 그림 대신 상자 2개로 충분하다. 글자는 back·mnemonic에 있는 것만 사용" }]
   },
   {
     id: "C-B6-06", subject: 4, topic: "4.2.3", category: "피부·모발 상태 분석 기기", kind: "list",
@@ -79,9 +95,20 @@ window.PL_CARDS = (window.PL_CARDS || []).concat([
     front: "수분·피지·탄력·주름·색소침착·모발은 각각 어떤 방법이나 기기로 분석하나?",
     back: "수분 corneometer(그 밖에 TEWL 측정, 전기적 저항·정전·전도), 피지 sebumeter(테이프를 30초간 눌러 수집, μg/cm2), 탄력 음압을 가한 뒤 회복 정도 측정(cutometer·dermaflex·reviscometer), 주름 replica 분석법·3차원 표면 형태 측정, 색소침착 우즈램프(자외선A 365 nm)·피부 색소 측정기, 모발 trichoscopy(특수 현미경)(4판 p.281~282).",
     mnemonic: "수-corneo / 피지-sebu(30초) / 탄력-음압 / 주름-replica / 색소-우즈램프 365 / 모발-trichoscopy",
+    figure: {
+      type: "groups",
+      groups: [
+        { name: "수분", items: ["corneometer", "TEWL 측정"] },
+        { name: "피지", items: ["sebumeter", "테이프를 30초간 눌러 수집"] },
+        { name: "탄력", items: ["음압을 가한 뒤 회복 정도 측정", "cutometer"] },
+        { name: "주름", items: ["replica 분석법", "3차원 표면 형태 측정"] },
+        { name: "색소침착", items: ["우즈램프(자외선A 365 nm)", "피부 색소 측정기"] },
+        { name: "모발", items: ["trichoscopy(특수 현미경)"] }
+      ]
+    },
     source: { law: null, guide: "4판 p.281~282", asof: "2026-09", confidence: "high" },
     related: ["Q-B6-09", "Q-B6-10"],
     verified: true,
-    history: [{ date: "2026-09-05", note: "신규 B6" }]
+    history: [{ date: "2026-09-05", note: "신규 B6" }, { date: "2026-09-08", note: "figure(groups) 추가 — mnemonic이 '/'로 끊는 여섯 쌍(수-corneo / 피지-sebu / 탄력-음압 / 주름-replica / 색소-우즈램프 / 모발-trichoscopy)을 측정 항목별 상자로. 글자는 back·mnemonic에 있는 것만 사용" }]
   }
 ]);
