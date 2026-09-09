@@ -1,6 +1,6 @@
 // app/data/manifest.js — 읽을 데이터 파일 목록(순서대로 concat) + 버전 꼬리표.
 // Task 5(S3)가 C1~C9 배치 파일(q_c*.js/c_c*.js)을 files에 추가하고 version을 올렸다.
-window.PL_MANIFEST = { version: "20260909f", files: [
+window.PL_MANIFEST = { version: "20260909g", files: [
   "q_seed_a5.js", "q_seed_cce.js", "c_seed_cce.js",
   "q_b1_11.js", "c_b1_11.js",
   "q_b2_23.js", "c_b2_23.js",
@@ -32,5 +32,7 @@ window.PL_MANIFEST = { version: "20260909f", files: [
   "q_e4_32.js", "c_e4_32.js",
   "q_e5_33.js", "c_e5_33.js",
   "q_e6_34b.js", "c_e6_34b.js",
-  "q_e7_351353.js", "c_e7_351353.js"
+  "q_e7_351353.js", "c_e7_351353.js",
+  "q_f1_subject2.js", "c_f1_subject2.js",
+  "q_f2_subject1.js", "c_f2_subject1.js"
 ] };
