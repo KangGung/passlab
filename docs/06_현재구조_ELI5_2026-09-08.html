@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PASS LAB 지금 버전은 어떻게 생겼나 — 아주 쉽게</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,'Apple SD Gothic Neo','Pretendard',sans-serif; background:#F7F5F0; color:#1a1a1a; line-height:1.5; padding:32px 16px 80px; }
+  .wrap { max-width:880px; margin:0 auto; }
+  .hero { background:#1a1a1a; color:#fff; border-radius:20px; padding:34px 28px; text-align:center; margin-bottom:28px; }
+  .hero .big { font-size:52px; }
+  .hero h1 { font-size:26px; margin:12px 0 8px; }
+  .hero p { font-size:15px; color:#ccc; }
+  .hero .chips { margin-top:14px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .hero .chip { background:#333; color:#fff; border-radius:999px; padding:6px 14px; font-size:13px; }
+  .hero .chip.red { background:#A82A1F; }
+  .card { background:#fff; border-radius:16px; padding:26px 24px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size:20px; margin-bottom:14px; }
+  .card h2 .n { display:inline-block; background:#A82A1F; color:#fff; border-radius:50%; width:28px; height:28px; text-align:center; line-height:28px; font-size:15px; margin-right:8px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .box { flex:1; min-width:150px; background:#F7F5F0; border-radius:12px; padding:16px 12px; text-align:center; }
+  .box .ico { font-size:38px; }
+  .box .title { font-size:15px; font-weight:700; margin:6px 0 2px; }
+  .box .sub { font-size:12.5px; color:#555; }
+  .box.off { opacity:.55; }
+  .box .tag { display:inline-block; margin-top:6px; font-size:11px; font-weight:700; border-radius:999px; padding:2px 9px; }
+  .tag.ok { background:#DCEBDF; color:#2A6F46; } .tag.no { background:#F7DED7; color:#B9331F; } .tag.mid { background:#F4E7C5; color:#8A5E10; }
+  .big3 { display:flex; gap:12px; flex-wrap:wrap; }
+  .big3 .b { flex:1; min-width:140px; background:#F7F5F0; border-radius:12px; padding:16px; text-align:center; }
+  .big3 .v { font-size:34px; font-weight:800; }
+  .big3 .c { font-size:13px; color:#555; }
+  .bar { display:grid; grid-template-columns:150px 1fr 90px; gap:8px; align-items:center; font-size:14px; margin:8px 0; }
+  .bar .track { background:#EDE6D8; border-radius:8px; height:22px; position:relative; overflow:hidden; }
+  .bar .fill { position:absolute; left:0; top:0; bottom:0; background:#2F5D8A; border-radius:8px; }
+  .bar .need { position:absolute; top:0; bottom:0; width:2px; background:#A82A1F; }
+  .bar .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .legend { font-size:12.5px; color:#666; margin-top:6px; }
+  table.cov { width:100%; border-collapse:collapse; font-size:13.5px; margin-top:6px; }
+  table.cov th, table.cov td { padding:7px 6px; border-bottom:1px solid #eee; text-align:center; }
+  table.cov th { background:#F7F5F0; }
+  table.cov td:first-child { text-align:left; }
+  .lv1 { background:#F7DED7; } .lv2 { background:#F4E7C5; } .lv3 { background:#DCEBDF; }
+  .flow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .flow .st { background:#F7F5F0; border-radius:12px; padding:12px 10px; text-align:center; min-width:96px; }
+  .flow .st .ico { font-size:28px; } .flow .st .t { font-size:12.5px; font-weight:600; margin-top:4px; }
+  .flow .ar { font-size:20px; color:#999; }
+  ul.plain { list-style:none; }
+  ul.plain li { padding:9px 0; border-bottom:1px solid #eee; font-size:14.5px; display:flex; gap:10px; align-items:flex-start; }
+  ul.plain li:last-child { border-bottom:none; }
+  ul.plain .ico { font-size:20px; flex:none; }
+  .small { font-size:13px; color:#666; margin-top:10px; }
+  .foot { text-align:center; color:#888; font-size:12px; margin-top:30px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="big">🧪📱</div>
+    <h1>PASS LAB, 지금 버전은 어떻게 생겼나?</h1>
+    <p>데이터 20260908c · 2026-09-08 배포본 · 아주 쉽게 한 장으로</p>
+    <div class="chips">
+      <span class="chip red">시험 9/19 · D-11</span>
+      <span class="chip">문항 200</span>
+      <span class="chip">암기카드 102 · 그림 92</span>
+      <span class="chip">정답 오류 0 (2번 검증)</span>
+    </div>
+  </div>
+
+  <!-- 1 앱 구성 -->
+  <div class="card">
+    <h2><span class="n">1</span>앱은 방 6개짜리 집이에요 (하단 탭)</h2>
+    <div class="row">
+      <div class="box"><div class="ico">🏠</div><div class="title">홈</div><div class="sub">D-day · 오늘 할 일 · 예상 점수와 SAFE/BORDERLINE/AT RISK · 과목별 숙달도(과락선) · QUICK 10·20</div><span class="tag ok">완성</span></div>
+      <div class="box"><div class="ico">✎</div><div class="title">학습</div><div class="sub">과목·세부항목·유형 골라 풀기 · 즉시 해설 · 확신도 · 오답 이유 · 프리셋 3종(약점 공격·법령 숫자·오늘 복습)</div><span class="tag ok">완성</span></div>
+      <div class="box"><div class="ico">◷</div><div class="title">모의</div><div class="sub">실전 100문항 120분 · 하프 50문항 60분 · 미니 25문항 · 닫아도 시계 유지 · 결과 분석</div><span class="tag ok">완성</span></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="box"><div class="ico">✕</div><div class="title">오답</div><div class="sub">틀린 문항 자동 수집 · 단계(새로→복습중→졸업) · 다음 복습일 · 만기 재시험</div><span class="tag ok">완성</span></div>
+      <div class="box"><div class="ico">▤</div><div class="title">카드</div><div class="sub">오늘 만기 카드 · 5박스 간격 반복 · 모름/애매/알아요 · 틀린 문항의 카드 자동 편입 · 암기노트 내보내기</div><span class="tag ok">완성(오늘)</span></div>
+      <div class="box"><div class="ico">⚙︎</div><div class="title">설정</div><div class="sub">시험일·하루 시간 · 백업 내보내기/가져오기(덮어쓰기·병합) · 초기화 · 데이터 점검</div><span class="tag ok">완성</span></div>
+    </div>
+    <p class="small">전부 인터넷 없이도 돌아가는 파일 하나짜리 앱이고, 기록은 폰 안(브라우저 저장소)에만 남아요. 서버·로그인 없음. 인터넷 주소는 폰에서 열기 위한 것뿐이에요.</p>
+  </div>
+
+  <!-- 2 문항 은행 -->
+  <div class="card">
+    <h2><span class="n">2</span>문제는 200개, 시험 한 번(100문항) 두 번 채우고도 남아요</h2>
+    <div class="big3">
+      <div class="b"><div class="v">200</div><div class="c">문항 (5지선다 144 · 단답 56)</div></div>
+      <div class="b"><div class="v">8·12·18</div><div class="c">배점 3종 = 107 · 80 · 13개</div></div>
+      <div class="b"><div class="v">100%</div><div class="c">전부 원문 검증 통과</div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="bar"><div>① 화장품법</div><div class="track"><div class="fill" style="width:36%"></div><div class="need" style="left:14%"></div></div><div class="num">26 / 시험 10</div></div>
+      <div class="bar"><div>② 제조·품질관리</div><div class="track"><div class="fill" style="width:100%"></div><div class="need" style="left:35%"></div></div><div class="num">71 / 시험 25</div></div>
+      <div class="bar"><div>③ 유통 안전관리</div><div class="track"><div class="fill" style="width:54%"></div><div class="need" style="left:35%"></div></div><div class="num">38 / 시험 25</div></div>
+      <div class="bar"><div>④ 맞춤형화장품</div><div class="track"><div class="fill" style="width:92%"></div><div class="need" style="left:56%"></div></div><div class="num">65 / 시험 40</div></div>
+      <div class="legend">파란 막대 = 우리가 가진 문항 수, 빨간 선 = 실제 시험에 나오는 문항 수. 어느 과목도 시험보다 적지 않아요. 단답형은 ①7 ②24 ③0(시험도 0) ④25.</div>
+    </div>
+    <p class="small">실전 모의고사는 배점표 그대로 100문항을 뽑아요. 지금 은행으로는 ④ 단답 18점 문항이 없어 1문항을 12점으로 대체하고 990점 만점을 1000점 기준으로 환산해 보여 줍니다(결과 화면에 안내가 뜸).</p>
+  </div>
+
+  <!-- 3 커버리지 -->
+  <div class="card">
+    <h2><span class="n">3</span>출제기준 19개 큰 항목을 얼마나 덮었나</h2>
+    <table class="cov">
+      <tr><th>출제기준 항목</th><th>우리 문항</th><th>시험 예상</th><th>두께</th></tr>
+      <tr><td>1.1 화장품법</td><td>17</td><td>8</td><td class="lv3">넉넉</td></tr>
+      <tr><td>1.2 개인정보 보호법</td><td>9</td><td>2</td><td class="lv3">넉넉</td></tr>
+      <tr><td>2.1 원료 종류·특성·제조</td><td>25</td><td>8</td><td class="lv3">넉넉</td></tr>
+      <tr><td>2.2 기능과 품질·문서</td><td>4</td><td>3</td><td class="lv2">보통</td></tr>
+      <tr><td>2.3 사용제한 원료·알레르기</td><td>27</td><td>6</td><td class="lv3">넉넉</td></tr>
+      <tr><td>2.4 화장품 관리·주의사항</td><td>10</td><td>5</td><td class="lv3">넉넉</td></tr>
+      <tr><td>2.5 위해사례 보고</td><td>5</td><td>3</td><td class="lv2">보통</td></tr>
+      <tr><td>3.1 작업장 위생</td><td>7</td><td>5</td><td class="lv2">보통</td></tr>
+      <tr><td>3.2 작업자 위생</td><td>7</td><td>4</td><td class="lv2">보통 (3.2.5 소독제 0)</td></tr>
+      <tr><td>3.3 설비·기구</td><td>6</td><td>4</td><td class="lv2">보통</td></tr>
+      <tr><td>3.4 원료·내용물·안전관리기준</td><td>15</td><td>9</td><td class="lv3">넉넉 (3.4.3·3.4.6 0)</td></tr>
+      <tr><td>3.5 포장재</td><td>3</td><td>3</td><td class="lv1">얇음 (세부 6개 중 4개 0)</td></tr>
+      <tr><td>4.1 맞춤형 개요·규정</td><td>16</td><td>5</td><td class="lv3">넉넉</td></tr>
+      <tr><td>4.2 피부·모발</td><td>13</td><td>6</td><td class="lv3">넉넉</td></tr>
+      <tr><td>4.3 관능평가</td><td>4</td><td>2</td><td class="lv2">보통</td></tr>
+      <tr><td>4.4 제품 상담·부작용</td><td>8</td><td>5</td><td class="lv2">보통</td></tr>
+      <tr><td>4.5 제품 안내·사용법</td><td>3</td><td>6</td><td class="lv1">얇음 (시험 예상보다 적음)</td></tr>
+      <tr><td>4.6 혼합·소분</td><td>16</td><td>12</td><td class="lv2">보통</td></tr>
+      <tr><td>4.7 충진·포장</td><td>5</td><td>4</td><td class="lv2">보통</td></tr>
+    </table>
+    <p class="small">"시험 예상"은 100문항이 항목별로 몇 개 나올지의 추정치(공식 배분은 비공개). 세부항목 70개 중 문항이 0개인 곳은 7개(3.2.5, 3.4.3, 3.4.6, 3.5.2, 3.5.4, 3.5.5, 3.5.6). 얇은 곳은 4.5 제품 안내와 3.5 포장재 — 다음 문항 배치의 1순위예요.</p>
+  </div>
+
+  <!-- 4 카드 -->
+  <div class="card">
+    <h2><span class="n">4</span>암기카드 102장, 그중 92장은 "설명하는 그림"이 붙어 있어요</h2>
+    <div class="big3">
+      <div class="b"><div class="v">102</div><div class="c">카드 (①15 ②38 ③18 ④31)</div></div>
+      <div class="b"><div class="v">92</div><div class="c">그림 있음 (묶음 59 · 비교표 20 · 시간선 8 · 나무 4 · 직접 1)</div></div>
+      <div class="b"><div class="v">10</div><div class="c">그림 없음 = 옛 시드 카드(의도적 제외)</div></div>
+    </div>
+    <p class="small">그림 속 글자·숫자는 전부 그 카드 뒷면 문장에서만 가져왔어요(점검 스크립트가 자동 확인). 카드는 문항 해설 아래, 오답노트, 카드 탭 세 곳에서 보여요.</p>
+  </div>
+
+  <!-- 5 검증 -->
+  <div class="card">
+    <h2><span class="n">5</span>문제는 어떻게 믿을 수 있나: 만든 사람과 검사한 사람이 달라요</h2>
+    <div class="flow">
+      <div class="st"><div class="ico">📚</div><div class="t">공식 원문 읽기<br><small>가이드 500쪽·법령 21개</small></div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">✍️</div><div class="t">출제 에이전트가<br>문항 작성</div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">🔍</div><div class="t">다른 에이전트가<br>원문 대조(1차)</div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">🔁</div><div class="t">2차 검수<br><small>정답·복수정답·해설</small></div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">✅</div><div class="t">앱에 등록<br><small>verified 표시</small></div></div>
+    </div>
+    <ul class="plain" style="margin-top:14px">
+      <li><span class="ico">🎯</span><div>정답이 틀린 문항: <b>0개</b>. 해설·카드 내용 정정 약 40건, 보기 교체 3건, 근거 없는 문항 삭제 6건(옛 합격코치 데이터).</div></li>
+      <li><span class="ico">📌</span><div>원문에서 확인한 시험 사실: 5지선다, 배점 8·12·18점, 합격 600점+과목 40%. 법령은 시험일 기준(2026-04-02 시행분까지, 개인정보보호법 9/11 개정 포함).</div></li>
+      <li><span class="ico">🧪</span><div>엔진 자동 테스트 180개 통과(채점·숙달도·오답 간격·모의고사·카드 간격·백업 병합).</div></li>
+    </ul>
+  </div>
+
+  <!-- 6 학습 루프 -->
+  <div class="card">
+    <h2><span class="n">6</span>공부는 이렇게 굴러가요</h2>
+    <div class="flow">
+      <div class="st"><div class="ico">❓</div><div class="t">문제 풀기</div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">💡</div><div class="t">바로 해설<br><small>+ 한 줄 암기</small></div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">✕</div><div class="t">틀리면 오답노트<br><small>1일→3일→6일</small></div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">▤</div><div class="t">연결 카드가<br>메모리 노트로</div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">◷</div><div class="t">모의고사</div></div>
+      <div class="ar">→</div>
+      <div class="st"><div class="ico">📈</div><div class="t">예상 점수<br><small>SAFE / AT RISK</small></div></div>
+    </div>
+    <p class="small">찍어서 맞힌 건 "안다"로 안 쳐요(숙달 0.15). 예상 점수는 모의고사가 없으면 "초기 추정 ±120", 모의 1회면 ±90, 2회부터 ±60으로 좁아져요.</p>
+  </div>
+
+  <!-- 7 없는 것 -->
+  <div class="card">
+    <h2><span class="n">7</span>아직 없는 것 · 다음 차례</h2>
+    <ul class="plain">
+      <li><span class="ico">📊</span><div><b>통계 화면·오늘의 학습 자동 구성 고도화·주간 리포트</b>(S5, 9/11~13 예정). 지금도 오늘 할 일 숫자와 약점 리포트 복사는 있어요.</div></li>
+      <li><span class="ico">🔥</span><div><b>FINAL CRAM 모드</b>(D-2·D-1 압축 복습, 9/14~16). 카드의 D-3 매일 만기 규칙은 이미 들어 있어요.</div></li>
+      <li><span class="ico">📄</span><div>얇은 항목 보강: 4.5 제품 안내, 3.5 포장재, 세부 0개 7곳. 색소 고시·준수사항 고시 원문 미확보.</div></li>
+      <li><span class="ico">📱</span><div>아이폰에서 백업 파일 공유(navigator.share)·다운로드 실기기 확인 필요.</div></li>
+    </ul>
+  </div>
+
+  <div class="foot">주소 https://kanggung.github.io/passlab/ · 상세: docs/STATUS.md · 검증표: docs/verify/ · 규칙: CLAUDE.md</div>
+</div>
+</body>
+</html>
