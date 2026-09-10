@@ -969,10 +969,16 @@
   /* ================================================================
    * 10. 모의고사 — 프리셋 · 슬롯 축소 · 편성
    * ================================================================ */
+  // 과목별 미니는 counts를 주지 않는다 → mockSlots가 블루프린트 슬롯을 그대로 써서
+  // 그 과목의 실제 시험 분량·배점이 나온다(환산 없음, 과목 과락선 그대로 비교 가능).
+  // 분 = 시험 페이스 1.2분/문항(100문항 120분).
   const MOCK_PRESETS = {
     full:  { name: "실전 모의고사", minutes: 120, subjects: [1, 2, 3, 4], scale: 1 },
     half:  { name: "하프 모의고사(①②③)", minutes: 60, subjects: [1, 2, 3], counts: { 1: 10, 2: 20, 3: 20 } },
-    mini3: { name: "3과목 미니", minutes: 30, subjects: [3], counts: { 3: 25 } }
+    mini1: { name: "① 화장품법 미니", minutes: 12, subjects: [1] },
+    mini2: { name: "② 제조·품질 미니", minutes: 30, subjects: [2] },
+    mini3: { name: "③ 유통 안전 미니", minutes: 30, subjects: [3] },
+    mini4: { name: "④ 맞춤형 미니", minutes: 48, subjects: [4] }
   };
   const POINT_KEYS = ["8", "12", "18"];
   const TOPIC_CAP = 3;              // 한 모의고사에 같은 세부항목 최대 3문항

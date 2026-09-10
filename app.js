@@ -979,7 +979,9 @@ function viewMistakes() {
  * 5-M. 모의고사 — 준비 · 시험 · 결과
  *   채점·편성·예상 점수는 전부 core.js가 한다. 여기서는 화면과 저장만 맡는다.
  * ================================================================ */
-var MOCK_ORDER = ["full", "half", "mini3"];
+var MOCK_ORDER = ["full", "half", "mini1", "mini2", "mini3", "mini4"];
+var MOCK_BIG = ["full", "half"];                            // 큰 카드 하나씩
+var MOCK_MINIS = ["mini1", "mini2", "mini3", "mini4"];      // "과목별 미니" 카드 안에 묶어서
 var MARK = ["①", "②", "③", "④"];
 var BADGE_CLS = { "안전": "green", "주의": "amber", "위험": "red", "미측정": "gray" };
 
@@ -1116,6 +1118,39 @@ function missingSummary(m) {
   return "문항 부족: " + parts + " → " + m.qids.length + "문항으로 진행, 점수는 환산";
 }
 
+/* 아래 3개는 실전·하프 카드와 과목별 미니 줄이 똑같이 쓰는 조각(문구·동작 동일) */
+function mockChipsHTML(m) {
+  return '<div class="row mt">' +
+         '<span class="chip ink">' + m.qids.length + '문항</span>' +
+         '<span class="chip">' + m.minutes + '분</span>' +
+         '<span class="chip">' + m.total_points + '점</span>' +
+         (m.partial ? '<span class="chip amber">환산 점수</span>' : '<span class="chip green">정규 편성</span>') +
+         '</div>';
+}
+function mockNoticeHTML(m) {
+  var miss = missingSummary(m), h = "";
+  if (miss) h += '<div class="banner"><span>' + esc(miss) + '</span></div>';
+  if (m.partial && !miss) {
+    h += '<div class="banner"><span>' +
+         esc(Number(m.substituted) > 0
+               ? "일부 배점 대체 " + m.substituted + "문항 — 점수는 1000점 만점으로 환산합니다"
+               : "축소 편성 " + m.qids.length + "문항 — 점수는 1000점 만점으로 환산합니다") + '</span></div>';
+  } else if (miss && Number(m.substituted) > 0) {
+    h += '<p class="tiny muted">배점을 대체한 문항 ' + m.substituted + '개 포함</p>';
+  }
+  return h;
+}
+function mockStartHTML(k, m) {
+  if (S.mockAskStart === k) {
+    return '<div class="banner blue"><span><b>시작하면 타이머가 돕니다.</b> 해설은 제출 후에만 나옵니다. ' +
+           '중간에 나가도 시간은 계속 흐릅니다.</span></div>' +
+           '<div class="acts"><button class="btn primary" data-act="mock-go" data-preset="' + k + '">네, 시작합니다</button>' +
+           '<button class="btn ghost" data-act="mock-cancel">취소</button></div>';
+  }
+  return '<button class="btn primary big mt" data-act="mock-ask" data-preset="' + k + '"' +
+         (m.qids.length ? "" : " disabled") + '>시작</button>';
+}
+
 function viewMockSetup() {
   var h = "";
   var sess = Store.get("session", null);
@@ -1138,45 +1173,30 @@ function viewMockSetup() {
        '제출한 뒤에 점수·과락·해설을 한 번에 봅니다.</p></div>';
 
   var plans = mockPlans();
-  MOCK_ORDER.forEach(function (k) {
+
+  MOCK_BIG.forEach(function (k) {
     var m = plans[k];
-    var rec = (k === "half");
     h += '<div class="card"><div class="row between">' +
          '<b style="font-size:17px">' + esc(m.name) + '</b>' +
-         (rec ? '<span class="chip amber">오늘 저녁 권장</span>' : "") + '</div>' +
-         '<div class="row mt">' +
-         '<span class="chip ink">' + m.qids.length + '문항</span>' +
-         '<span class="chip">' + m.minutes + '분</span>' +
-         '<span class="chip">' + m.total_points + '점</span>' +
-         (m.partial ? '<span class="chip amber">환산 점수</span>' : '<span class="chip green">정규 편성</span>') +
-         '</div>';
-
+         (k === "half" ? '<span class="chip amber">오늘 저녁 권장</span>' : "") + '</div>' +
+         mockChipsHTML(m);
     if (k === "full") h += '<p class="small muted mt">시험과 같은 100문항 · 120분. 네 과목 전부.</p>';
     if (k === "half") h += '<p class="small muted mt">①②③ 세 과목만 50문항 · 60분. ④가 빠져 <b>합격 판정은 하지 않고</b> 과목별 과락만 봅니다.</p>';
-    if (k === "mini3") h += '<p class="small muted mt">③ 유통 화장품 안전관리만 25문항 · 30분. 짧게 감을 잡을 때.</p>';
-
-    var miss = missingSummary(m);
-    if (miss) h += '<div class="banner"><span>' + esc(miss) + '</span></div>';
-    if (m.partial && !miss) {
-      h += '<div class="banner"><span>' +
-           esc(Number(m.substituted) > 0
-                 ? "일부 배점 대체 " + m.substituted + "문항 — 점수는 1000점 만점으로 환산합니다"
-                 : "축소 편성 " + m.qids.length + "문항 — 점수는 1000점 만점으로 환산합니다") + '</span></div>';
-    } else if (miss && Number(m.substituted) > 0) {
-      h += '<p class="tiny muted">배점을 대체한 문항 ' + m.substituted + '개 포함</p>';
-    }
-
-    if (S.mockAskStart === k) {
-      h += '<div class="banner blue"><span><b>시작하면 타이머가 돕니다.</b> 해설은 제출 후에만 나옵니다. ' +
-           '중간에 나가도 시간은 계속 흐릅니다.</span></div>' +
-           '<div class="acts"><button class="btn primary" data-act="mock-go" data-preset="' + k + '">네, 시작합니다</button>' +
-           '<button class="btn ghost" data-act="mock-cancel">취소</button></div>';
-    } else {
-      h += '<button class="btn primary big mt" data-act="mock-ask" data-preset="' + k + '"' +
-           (m.qids.length ? "" : " disabled") + '>시작</button>';
-    }
-    h += '</div>';
+    h += mockNoticeHTML(m) + mockStartHTML(k, m) + '</div>';
   });
+
+  h += '<div class="card"><h2>과목별 미니</h2>' +
+       '<p class="small muted">한 과목만 <b>실제 시험 분량 그대로</b> 봅니다. 환산이 아니라 진짜 점수라서 ' +
+       '그 과목 과락선과 바로 비교됩니다. 하루 120분을 나눠 쓸 때.</p>';
+  MOCK_MINIS.forEach(function (k) {
+    var m = plans[k];
+    var sub = (BP.subjects || [])[Number(k.slice(4)) - 1] || {};
+    h += '<div class="minirow"><div class="row between">' +
+         '<b>' + esc(m.name) + '</b>' +
+         '<span class="tiny muted">과락 ' + (Number(sub.pass_points) || 0) + '점</span></div>' +
+         mockChipsHTML(m) + mockNoticeHTML(m) + mockStartHTML(k, m) + '</div>';
+  });
+  h += '</div>';
 
   h += '<p class="small muted">검증된 문항 ' +
        S.questions.filter(function (q) { return q.verified === true; }).length +

@@ -68,6 +68,11 @@ hr.rule{border:0;border-top:1px dashed var(--rule);margin:12px 0}
 .card > h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;color:var(--ink-3);font-weight:700}
 .card.flat{background:var(--paper);}
 
+/* 과목별 미니 — 한 카드 안에 네 과목을 헤어라인으로 나눈다 */
+.minirow{padding:12px 0;border-top:1px dashed var(--rule)}
+.minirow:first-of-type{border-top:0;padding-top:4px}
+.minirow:last-child{padding-bottom:0}
+
 .chip{
   display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
   border:1px solid var(--rule);border-radius:999px;padding:2px 9px;
