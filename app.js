@@ -78,7 +78,8 @@ var DEFAULT_SETTINGS = {
   last_backup: null,
   user_accepted: {},
   schema: 1,
-  diag_done: false
+  diag_done: false,
+  map_open: null          // 전체 구조 지도 펼침 상태 {s:{과목id:1}, m:{주요항목id:1}}. null = 아직 안 열어봄
 };
 
 var Store = {
@@ -117,6 +118,7 @@ var S = {
   cardFilter: { subject: "", category: "", onlyAuto: false },
   cardRun: null,                  // 진행 중 카드 세션(카드 상태는 매장 즉시 pl.v1.cards에 저장)
   cardListOpen: false,            // 카드 홈 · 내 메모리 노트 목록 펼침
+  mapSub: null,                   // 전체 구조 지도 · 핵심을 펼친 세부항목 id
   importMode: "overwrite",        // 가져오기 방식 — 덮어쓰기 | 병합
   importPreview: null, importStage: 0,
   resetStage: 0,
@@ -333,6 +335,7 @@ function render(opts) {
     case "mockresult": html = viewMockResult(); break;
     case "cards": html = viewCardsHome(); break;
     case "cardrun": html = viewCardRun(); break;
+    case "map": html = viewMap(); break;
     case "settings": html = viewSettings(); break;
     default: html = viewHome();
   }
@@ -431,6 +434,10 @@ function viewHome() {
   h += '<div class="dday"><b>' + esc(ddayText(dd)) + '</b>' +
        '<span>제' + esc(String((BP.exam && BP.exam.round) || 12)) + '회 · 시험일 ' + esc(fmtExamDate(st.exam_date)) +
        ' ' + esc((BP.exam && BP.exam.start) || "10:00") + '</span></div>';
+
+  h += '<button class="btn mapbtn" data-act="map">' +
+       '<span>전체 구조 지도</span>' +
+       '<span class="tiny muted">과목 → 주요항목 → 세부항목 → 핵심</span></button>';
 
   // 백업 배너
   var lb = st.last_backup ? C.dateOf(st.last_backup) : null;
@@ -1149,6 +1156,185 @@ function mockStartHTML(k, m) {
   }
   return '<button class="btn primary big mt" data-act="mock-ask" data-preset="' + k + '"' +
          (m.qids.length ? "" : " disabled") + '>시작</button>';
+}
+
+/* ================================================================
+ * 전체 구조 지도 — 과목 > 주요항목 > 세부항목 > 핵심(카드·한 줄 암기)
+ * 새 데이터는 없다. topics.js 70항목 + 카드 + 문항의 memory_sentence를 읽어 4층으로 쌓는다.
+ * ================================================================ */
+var MARKS = ["①", "②", "③", "④"];
+
+/* 펼침 상태는 settings에 저장해 앱을 닫았다 열어도 남는다. */
+function mapOpen() {
+  var o = S.settings.map_open;
+  if (!o || typeof o !== "object") return null;
+  return { s: (o.s && typeof o.s === "object") ? o.s : {}, m: (o.m && typeof o.m === "object") ? o.m : {} };
+}
+/* 처음 열면 가장 약한 과목 하나만 펼쳐 둔다(구조와 약점을 동시에 보여주려고). */
+function mapOpenInit() {
+  var cur = mapOpen();
+  if (cur) return cur;
+  var t = todayStr(), worst = null, worstV = Infinity;
+  (BP.subjects || []).forEach(function (s) {
+    var v = C.subjectMasteryWithCards(s.id, TOPICS, S.questions, S.attByQid, t, S.cardState);
+    var n = (v === null) ? 20 : v;
+    if (n < worstV) { worstV = n; worst = s.id; }
+  });
+  var o = { s: {}, m: {} };
+  if (worst != null) o.s[String(worst)] = 1;
+  S.settings.map_open = o;
+  saveSettings();
+  return o;
+}
+function mapToggle(bag, key) {
+  var o = mapOpenInit();
+  if (o[bag][key]) delete o[bag][key]; else o[bag][key] = 1;
+  S.settings.map_open = o;
+  saveSettings();
+}
+
+/* 숙달도 → 색 등급. 40 = 과목 과락선(40%)과 같은 자리. */
+function mapGrade(v) {
+  if (v === null || v === undefined) return "n";
+  if (v >= 80) return "g";
+  if (v >= 40) return "a";
+  return "r";
+}
+function mapNum(v, measuring) {
+  var g = mapGrade(measuring ? null : v);
+  var txt = (g === "n") ? "—" : String(Math.round(v));
+  return '<span class="mp-score ' + g + '"><i class="mp-dot ' + g + '"></i>' + txt + '</span>';
+}
+function mapBar(v, measuring) {
+  var g = mapGrade(measuring ? null : v);
+  var w = (g === "n") ? 0 : clamp(Math.round(v), 0, 100);
+  return '<div class="mp-bar"><i class="' + g + '" style="width:' + w + '%"></i></div>';
+}
+
+/* 세부항목 하나의 "핵심" — 카드(앞면·암기법·그림) + 문항에서 뽑은 한 줄 암기 */
+function mapCoreHTML(sub) {
+  var cards = S.cards.filter(function (c) { return c.topic === sub.id; });
+  var qs = S.questions.filter(function (q) { return q.topic === sub.id; });
+  var h = '<div class="mp-core">';
+  h += '<h4>핵심 <span>카드 ' + cards.length + '장 · 문항 ' + qs.length +
+       (sub.exp_q ? ' · 출제 예상 ' + sub.exp_q + '문항' : "") + '</span></h4>';
+
+  if (cards.length) {
+    var first = cards[0];
+    h += '<div class="mp-kcard">' +
+         '<div class="mp-kind">' + esc(first.category || KINDKO[first.kind] || "카드") + '</div>' +
+         '<div class="mp-front">' + esc(first.front) + '</div>' +
+         (first.mnemonic ? '<div class="mp-ans">암기법 <b>' + esc(first.mnemonic) + '</b></div>'
+                         : '<div class="mp-ans">' + esc(oneLine(first.back, 120)) + '</div>') +
+         '</div>';
+    h += figureBox(first, "그림으로 보기");
+  }
+
+  // 한 줄 암기 — 같은 문장이 여러 문항에 붙어 있어 중복을 지운다
+  var seen = {}, lines = [];
+  qs.forEach(function (q) {
+    var s = (q.memory_sentence || "").trim();
+    if (!s || seen[s]) return;
+    seen[s] = 1;
+    lines.push(s);
+  });
+  var CAP = 6;
+  lines.slice(0, CAP).forEach(function (s) {
+    h += '<div class="mp-line"><b>한 줄</b>' + esc(s) + '</div>';
+  });
+  if (lines.length > CAP) {
+    h += '<details class="mp-more"><summary>한 줄 암기 ' + (lines.length - CAP) + '개 더</summary>';
+    lines.slice(CAP).forEach(function (s) { h += '<div class="mp-line">' + esc(s) + '</div>'; });
+    h += '</details>';
+  }
+  if (!cards.length && !lines.length) h += '<p class="small muted">아직 정리된 핵심이 없습니다.</p>';
+
+  // 나머지 카드는 앞면만 접어서
+  if (cards.length > 1) {
+    h += '<details class="mp-more"><summary>카드 ' + (cards.length - 1) + '장 더 보기</summary>';
+    cards.slice(1).forEach(function (c) {
+      h += '<div class="mp-kcard"><div class="mp-kind">' + esc(c.category || KINDKO[c.kind] || "카드") + '</div>' +
+           '<div class="mp-front">' + esc(c.front) + '</div>' +
+           (c.mnemonic ? '<div class="mp-ans">암기법 <b>' + esc(c.mnemonic) + '</b></div>' : "") + '</div>';
+    });
+    h += '</details>';
+  }
+
+  h += '<div class="acts">' +
+       '<button class="btn primary" data-act="map-drill" data-topic="' + esc(sub.id) + '"' +
+       (qs.length ? "" : " disabled") + '>이 항목 문제 풀기 ' + Math.min(qs.length, 10) + '</button>' +
+       '<button class="btn ghost" data-act="map-cards" data-topic="' + esc(sub.id) + '"' +
+       (cards.length ? "" : " disabled") + '>카드 ' + cards.length + '장 넘기기</button>' +
+       '</div></div>';
+  return h;
+}
+
+var KINDKO = { number: "숫자 카드", list: "목록 카드", definition: "정의 카드", compare: "비교 카드", procedure: "절차 카드" };
+
+function viewMap() {
+  var o = mapOpenInit(), t = todayStr();
+  var nOpen = Object.keys(o.s).length + Object.keys(o.m).length;
+  var h = "";
+
+  h += '<div class="row between"><div class="mp-title">' +
+       '<button class="mp-ans" data-act="go-home">‹ 홈</button><h3>전체 구조 지도</h3></div>' +
+       '<button class="btn sm ghost" data-act="map-collapse"' + (nOpen ? "" : " disabled") + '>모두 접기</button></div>';
+
+  h += '<p class="small muted">출제기준 그대로 <b>과목 → 주요항목 → 세부항목 → 핵심</b> 순서입니다. ' +
+       '누르면 펼쳐지고 다시 누르면 접힙니다. 여러 개를 같이 펼쳐 둬도 됩니다.</p>';
+  h += '<div class="mp-lgd"><span><i class="mp-dot g"></i>80 이상 익힘</span><span><i class="mp-dot a"></i>40~79</span>' +
+       '<span><i class="mp-dot r"></i>40 미만 약함</span><span><i class="mp-dot n"></i>아직 안 풂</span>' +
+       '<span>│ 세로선 = 과락선 40%</span></div>';
+
+  (BP.subjects || []).forEach(function (s) {
+    var sid = String(s.id);
+    var det = C.subjectMasteryDetailWithCards(s.id, TOPICS, S.questions, S.attByQid, t, S.cardState);
+    var majors = TOPICS.filter(function (x) { return x.kind === "major" && Number(x.subject) === Number(s.id); });
+    var subCount = TOPICS.filter(function (x) { return x.kind === "sub" && Number(x.subject) === Number(s.id); }).length;
+    var open = !!o.s[sid];
+
+    h += '<div class="mp-node' + (open ? " on" : "") + '">';
+    h += '<button class="mp-name" data-act="map-s" data-s="' + esc(sid) + '" aria-expanded="' + (open ? "true" : "false") + '">' +
+         '<span class="mp-mark">' + (MARKS[s.id - 1] || s.id) + '</span>' + esc(s.name) +
+         '<span class="mp-chev">' + (open ? "▾" : "▸") + '</span></button>';
+    h += mapBar(det.value, det.measuring);
+    h += '<div class="mp-meta"><span>주요항목 ' + majors.length + ' · 세부 ' + subCount +
+         ' · 출제 ' + s.count + '문항 ' + s.points + '점</span>' + mapNum(det.value, det.measuring) + '</div>';
+
+    if (open) {
+      h += '<div class="mp-kids">';
+      majors.forEach(function (mj) {
+        var md = C.majorMasteryWithCards(mj.id, TOPICS, S.questions, S.attByQid, t, S.cardState);
+        var mopen = !!o.m[mj.id];
+        h += '<button class="mp-major' + (mopen ? " on" : "") + '" data-act="map-m" data-m="' + esc(mj.id) + '"' +
+             ' aria-expanded="' + (mopen ? "true" : "false") + '">' +
+             '<span class="mp-tri">' + (mopen ? "▾" : "▸") + '</span>' +
+             '<span class="mp-code">' + esc(mj.id) + '</span>' + esc(mj.name) +
+             '<span class="mp-cnt">' + mapNum(md.value, md.measuring) + '</span>' +
+             '<span class="chip">' + md.totalTopics + '항목</span></button>';
+        if (mopen) {
+          h += '<div class="mp-subs">';
+          md.byTopic.forEach(function (bt) {
+            var sub = TOPICS.filter(function (x) { return x.id === bt.id; })[0] || { id: bt.id, name: bt.name };
+            var sel = (S.mapSub === bt.id);
+            h += '<button class="mp-sub' + (sel ? " on" : "") + '" data-act="map-sub" data-topic="' + esc(bt.id) + '"' +
+                 ' aria-expanded="' + (sel ? "true" : "false") + '">' +
+                 '<span class="mp-code">' + esc(bt.id) + '</span>' + esc(bt.name) +
+                 (sub.importance ? '<span class="chip">' + esc(sub.importance) + '</span>' : "") +
+                 mapNum(bt.value, bt.n === 0) + '</button>';
+            if (sel) h += mapCoreHTML(sub);
+          });
+          h += '</div>';
+        }
+      });
+      h += '</div>';
+    }
+    h += '</div>';
+  });
+
+  h += '<p class="tiny muted">세부항목 ' + S.subs.length + ' · 카드 ' + S.cards.length +
+       ' · 문항 ' + S.questions.length + '</p>';
+  return h;
 }
 
 function viewMockSetup() {
@@ -2861,6 +3047,33 @@ var ACTIONS = {
   },
   goto: function (t) { S.screen = t.getAttribute("data-screen"); render({ top: true }); },
   "go-home": function () { S.screen = "home"; render({ top: true }); },
+
+  /* --- 전체 구조 지도 --- */
+  map: function () { S.screen = "map"; render({ top: true }); },
+  "map-s": function (t) { mapToggle("s", t.getAttribute("data-s")); render(); },
+  "map-m": function (t) { mapToggle("m", t.getAttribute("data-m")); render(); },
+  "map-sub": function (t) {
+    var id = t.getAttribute("data-topic");
+    S.mapSub = (S.mapSub === id) ? null : id;
+    render();
+  },
+  "map-collapse": function () {
+    S.settings.map_open = { s: {}, m: {} };
+    S.mapSub = null;
+    saveSettings();
+    render({ top: true });
+  },
+  "map-drill": function (t) {
+    var id = t.getAttribute("data-topic");
+    var n = S.questions.filter(function (q) { return q.topic === id; }).length;
+    if (!n) { toast("이 항목에는 문항이 없습니다."); return; }
+    startStudy({ subject: null, topic: id, type: "all", mode: "mixed", n: Math.min(n, 10) });
+  },
+  "map-cards": function (t) {
+    var id = t.getAttribute("data-topic");
+    var cids = S.cards.filter(function (c) { return c.topic === id; }).map(function (c) { return c.id; });
+    startCardRun(cids, id + " 카드");
+  },
   "start-diag": function () { startDiagnostic(); },
   "start-today": function () {
     var t = todayStr();

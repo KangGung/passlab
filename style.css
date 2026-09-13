@@ -68,6 +68,77 @@ hr.rule{border:0;border-top:1px dashed var(--rule);margin:12px 0}
 .card > h2{margin:0 0 10px;font-size:12px;letter-spacing:.08em;color:var(--ink-3);font-weight:700}
 .card.flat{background:var(--paper);}
 
+/* ---------- 전체 구조 지도 ----------
+   이 화면 전용 클래스는 전부 mp- 로 시작한다. 앱의 기존 이름(.bar .subj .m .dot …)과
+   겹치면 홈·결과 화면이 조용히 망가지므로 새 이름을 여기에 섞지 않는다.
+   기존 것을 그대로 쓰는 건 .btn .chip .row .acts .small .tiny .muted .figbox 뿐이다. */
+.mapbtn{width:100%;flex-direction:column;align-items:flex-start;gap:2px;min-height:56px;margin:12px 0}
+.mapbtn > span:first-child{font-size:15px;font-weight:700}
+
+.mp-title{display:flex;align-items:center;gap:10px;min-width:0}
+.mp-title h3{margin:0;font-size:16px}
+.mp-back{border:0;background:none;color:var(--ink-3);font-size:13px;min-height:44px;padding:0 2px;cursor:pointer}
+.mp-lgd{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11px;color:var(--ink-3);margin:8px 0 4px}
+.mp-lgd span{display:inline-flex;align-items:center;gap:4px}
+
+.mp-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none;background:var(--ink-3)}
+.mp-dot.g{background:var(--green)}.mp-dot.a{background:var(--amber)}.mp-dot.r{background:var(--red)}
+.mp-dot.n{background:transparent;border:1.5px dashed var(--ink-3)}
+.mp-score{display:inline-flex;align-items:center;gap:5px;font-weight:600;font-size:12.5px;
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.mp-score.g{color:var(--green)}.mp-score.a{color:var(--amber)}
+.mp-score.r{color:var(--red)}.mp-score.n{color:var(--ink-3);font-weight:500}
+
+/* 숙달도 바 — 세로선이 과락선 40% */
+.mp-bar{position:relative;height:6px;border-radius:3px;background:var(--paper-3);overflow:visible;margin:8px 0}
+.mp-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px}
+.mp-bar i.g{background:var(--green)}.mp-bar i.a{background:var(--amber)}.mp-bar i.r{background:var(--red)}
+.mp-bar::after{content:"";position:absolute;left:40%;top:-3px;bottom:-3px;width:1.5px;background:var(--ink)}
+
+.mp-node{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--rule);
+  border-radius:12px;padding:12px 14px;margin:12px 0}
+.mp-node.on{border-color:var(--ink)}
+.mp-name{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;border:0;background:none;
+  font:inherit;font-size:15px;font-weight:700;color:inherit;text-align:left;padding:0;cursor:pointer}
+.mp-mark{font-size:18px;line-height:1;flex:none}
+.mp-chev{margin-left:auto;color:var(--ink-3);font-size:14px;flex:none}
+.mp-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+
+.mp-kids{display:flex;flex-direction:column;border-top:1px dashed var(--rule);margin-top:10px;padding-top:4px}
+.mp-major{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:9px 2px;
+  border:0;border-bottom:1px dashed var(--rule);background:none;font:inherit;font-size:13.5px;color:inherit;
+  text-align:left;cursor:pointer}
+.mp-major:last-of-type{border-bottom:0}
+.mp-major.on{background:var(--paper-2);border-radius:8px;padding-left:8px;padding-right:8px}
+.mp-tri{width:14px;color:var(--ink-3);flex:none}
+.mp-code{color:var(--ink-3);font-variant-numeric:tabular-nums;flex:none}
+.mp-cnt{margin-left:auto;flex:none}
+
+.mp-subs{display:flex;flex-direction:column;gap:4px;padding:4px 0 8px 14px}
+.mp-sub{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;padding:8px 10px;border:0;
+  border-left:3px solid transparent;border-radius:8px;background:none;font:inherit;font-size:13px;color:inherit;
+  text-align:left;cursor:pointer}
+.mp-sub .mp-score{margin-left:auto}
+.mp-sub .chip{flex:none;font-size:10.5px;padding:1px 6px}
+.mp-sub.on{background:var(--paper-2);border-left-color:var(--ink)}
+
+.mp-core{display:flex;flex-direction:column;gap:10px;background:var(--card);border:1px solid var(--rule);
+  border-left:3px solid var(--ink);border-radius:10px;padding:12px;margin:2px 0 8px 14px}
+.mp-core h4{margin:0;font-size:12px;letter-spacing:.08em;color:var(--ink-3);font-weight:700;
+  display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.mp-core h4 span{letter-spacing:0;font-weight:500}
+.mp-kcard{border:1px solid var(--rule);border-radius:8px;padding:9px 10px;background:var(--paper);
+  display:flex;flex-direction:column;gap:5px}
+.mp-kind{font-size:10.5px;color:var(--ink-3);letter-spacing:.04em}
+.mp-front{font-weight:600;font-size:13px}
+.mp-ans{font-size:12.5px;color:var(--ink-2);padding-left:10px;border-left:2px solid var(--amber)}
+.mp-ans b{color:var(--ink)}
+.mp-line{font-size:12.5px;color:var(--ink-2);background:var(--paper-2);border-radius:8px;padding:8px 10px}
+.mp-line b{color:var(--ink);font-size:11px;letter-spacing:.06em;margin-right:6px}
+.mp-more{border-top:1px dashed var(--rule);padding-top:8px}
+.mp-more > summary{font-size:12.5px;color:var(--ink-2);cursor:pointer;min-height:44px;display:flex;align-items:center}
+.mp-more .mp-line,.mp-more .mp-kcard{margin-top:6px}
+
 /* 과목별 미니 — 한 카드 안에 네 과목을 헤어라인으로 나눈다 */
 .minirow{padding:12px 0;border-top:1px dashed var(--rule)}
 .minirow:first-of-type{border-top:0;padding-top:4px}

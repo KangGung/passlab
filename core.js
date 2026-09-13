@@ -2607,10 +2607,41 @@
     return subjectMasteryDetailWithCards(subjectId, topics, questions, attemptsByQid, todayStr, states).value;
   }
 
+  /**
+   * 주요항목(4.2 같은 중간 층) 숙달도. 과목 계산과 같은 규칙을 parent 기준으로 적용한다.
+   * 전체 구조 지도의 2층 숫자가 이 함수 하나로 나온다.
+   * @returns {{value:number|null, byTopic:Array, attemptedTopics:number, totalTopics:number, measuring:boolean}}
+   */
+  function majorMasteryWithCards(majorId, topics, questions, attemptsByQid, todayStr, states) {
+    const subs = (Array.isArray(topics) ? topics : []).filter(function (t) {
+      return t && t.kind === "sub" && t.parent === majorId;
+    });
+    const byTopic = [];
+    let num = 0, den = 0, attempted = 0;
+    for (let i = 0; i < subs.length; i++) {
+      const t = subs[i];
+      const tm = topicMasteryWithCards(t.id, questions, attemptsByQid, todayStr, states);
+      const w = (typeof t.exp_q === "number" && t.exp_q > 0) ? t.exp_q : 1;
+      const used = tm.value === null ? 20 : tm.value;
+      if (tm.n > 0) attempted++;
+      byTopic.push({ id: t.id, name: t.name, exp_q: w, value: tm.value, used: used, n: tm.n, measuring: tm.measuring });
+      num += used * w;
+      den += w;
+    }
+    return {
+      value: den > 0 ? num / den : null,
+      byTopic: byTopic,
+      attemptedTopics: attempted,
+      totalTopics: subs.length,
+      measuring: attempted === 0
+    };
+  }
+
   PLCore.questionMasteryWithCards = questionMasteryWithCards;
   PLCore.topicMasteryWithCards = topicMasteryWithCards;
   PLCore.subjectMasteryWithCards = subjectMasteryWithCards;
   PLCore.subjectMasteryDetailWithCards = subjectMasteryDetailWithCards;
+  PLCore.majorMasteryWithCards = majorMasteryWithCards;
 
   /* ================================================================
    * 16. 프리셋 3종 — 약점 공격 · 법령/숫자 · 오늘 복습
